@@ -152,19 +152,19 @@ export default function AccountFormScreen({ navigation, route }: RootStackScreen
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  scroll: { padding: 16, paddingBottom: 100 },
-  input: { marginBottom: 12 },
-  sectionTitle: { marginTop: 16, marginBottom: 8, color: colors.text },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { marginBottom: 4 },
+  scroll: { padding: spacing.cardInset, paddingBottom: 100 },
+  input: { marginBottom: spacing.xs },
+  sectionTitle: { marginTop: spacing.lg, marginBottom: spacing.sm, color: colors.text },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
+  chip: { marginBottom: spacing.xs },
   chipSelected: { backgroundColor: colors.primary + '20' },
   chipTextSelected: { color: colors.primary },
-  pickerGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  pickerGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
   iconOption: {
-    width: 48, height: 48, borderRadius: 24,
+    width: spacing.huge, height: spacing.huge, borderRadius: spacing.xl,
     justifyContent: 'center', alignItems: 'center',
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
   },
-  saveButton: { marginTop: 24, backgroundColor: colors.primary, borderRadius: radius.capsule },
-  error: { color: colors.error, fontSize: 12, marginBottom: 8 },
+  saveButton: { marginTop: spacing.xl, backgroundColor: colors.primary, borderRadius: radius.capsule },
+  error: { color: colors.error, fontSize: 12, marginBottom: spacing.sm },
 });

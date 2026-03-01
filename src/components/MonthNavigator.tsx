@@ -13,14 +13,14 @@ export default function MonthNavigator({ label, onPrev, onNext }: MonthNavigator
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={onPrev} hitSlop={12}>
-        <Icon source="chevron-left" size={28} color={colors.primary} />
+        <Icon source="chevron-left" size={28} color={colors.text} />
       </TouchableOpacity>
       <Text variant="titleMedium" style={styles.label}>
         {label}
       </Text>
       <View style={styles.rightGroup}>
         <TouchableOpacity onPress={onNext} hitSlop={12}>
-          <Icon source="chevron-right" size={28} color={colors.primary} />
+          <Icon source="chevron-right" size={28} color={colors.text} />
         </TouchableOpacity>
         <TouchableOpacity hitSlop={12} style={styles.filterBtn}>
           <Icon source="filter-variant" size={22} color={colors.textSecondary} />

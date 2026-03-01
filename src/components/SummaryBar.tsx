@@ -20,7 +20,7 @@ export default function SummaryBar({ income, expense, balance, currency = 'USD' 
       </View>
       <View style={styles.item}>
         <Text style={styles.label}>INCOME</Text>
-        <Text style={styles.amount}>{formatMoney(income, currency)}</Text>
+        <Text style={[styles.amount, { color: colors.income }]}>{formatMoney(income, currency)}</Text>
       </View>
       <View style={styles.item}>
         <Text style={styles.label}>BALANCE</Text>
