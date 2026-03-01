@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
 import { Text, Card, Icon, Button, Divider } from 'react-native-paper';
+import { useFocusEffect } from '@react-navigation/native';
 import { useTransactionStore } from '../stores/useTransactionStore';
 import { useCategoryStore } from '../stores/useCategoryStore';
 import { useAccountStore } from '../stores/useAccountStore';
 import { transactionService } from '../services/transactionService';
 import { colors, spacing, radius } from '../theme';
 import { formatMoney } from '../utils/money';
-import { formatDate } from '../utils/dates';
+import { formatDate, formatTimeShort } from '../utils/dates';
 import type { TransactionWithSplits } from '../models/types';
 import type { RootStackScreenProps } from '../navigation/types';
 
@@ -22,9 +23,11 @@ export default function TransactionDetailScreen({
 
   const [transaction, setTransaction] = useState<TransactionWithSplits | null>(null);
 
-  useEffect(() => {
-    transactionService.getById(transactionId).then(setTransaction);
-  }, [transactionId]);
+  useFocusEffect(
+    useCallback(() => {
+      transactionService.getById(transactionId).then(setTransaction);
+    }, [transactionId])
+  );
 
   const accountMap = Object.fromEntries(accounts.map((a) => [a.id, a]));
   const category = transaction ? categories.find((c) => c.id === transaction.categoryId) : null;
@@ -64,37 +67,43 @@ export default function TransactionDetailScreen({
     );
   };
 
+  const hasTime = transaction.date.includes('T');
+  const dateLabel = formatDate(transaction.date);
+  const timeLabel = hasTime ? formatTimeShort(transaction.date) : null;
+  const heroBackground = isIncome ? '#1B5E20' : '#7F1D1D';
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Card style={styles.card}>
-        <Card.Content style={styles.amountSection}>
-          <View
-            style={[
-              styles.typeBadge,
-              { backgroundColor: isIncome ? colors.incomeBg : colors.expenseBg },
-            ]}
-          >
-            <Text style={{ color: isIncome ? colors.income : colors.expense, fontWeight: '600' }}>
+      <View style={[styles.heroCard, { backgroundColor: heroBackground }]}>
+        <View style={styles.heroBadgeRow}>
+          <View style={styles.heroBadge}>
+            <Icon
+              source={isIncome ? 'arrow-down-circle-outline' : 'arrow-up-circle-outline'}
+              size={16}
+              color="rgba(255,255,255,0.9)"
+            />
+            <Text style={styles.heroBadgeText}>
               {isIncome ? 'Income' : 'Expense'}
-              {isSplit ? ' (Split)' : ''}
+              {isSplit ? ' \u00B7 Split' : ''}
             </Text>
           </View>
-          <Text
-            variant="headlineLarge"
-            style={{
-              color: isIncome ? colors.income : colors.expense,
-              fontWeight: 'bold',
-              marginTop: spacing.sm,
-            }}
-          >
-            {isIncome ? '+' : '-'}
-            {formatMoney(transaction.totalAmountCents, transaction.currency)}
-          </Text>
-          <Text variant="bodyMedium" style={styles.date}>
-            {formatDate(transaction.date)}
-          </Text>
-        </Card.Content>
-      </Card>
+        </View>
+        <Text style={styles.heroAmount}>
+          {isIncome ? '+' : '-'}
+          {formatMoney(transaction.totalAmountCents, transaction.currency)}
+        </Text>
+        <View style={styles.heroDateRow}>
+          <Icon source="calendar-outline" size={14} color="rgba(255,255,255,0.65)" />
+          <Text style={styles.heroDateText}>{dateLabel}</Text>
+          {timeLabel && (
+            <>
+              <Text style={styles.heroDot}>{'\u00B7'}</Text>
+              <Icon source="clock-outline" size={14} color="rgba(255,255,255,0.65)" />
+              <Text style={styles.heroDateText}>{timeLabel}</Text>
+            </>
+          )}
+        </View>
+      </View>
 
       <Card style={styles.card}>
         <Card.Content>
@@ -155,10 +164,56 @@ export default function TransactionDetailScreen({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg },
+
+  heroCard: {
+    borderRadius: radius.lg,
+    padding: spacing.xl,
+    marginBottom: spacing.lg,
+    alignItems: 'center',
+  },
+  heroBadgeRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+  },
+  heroBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.capsule,
+  },
+  heroBadgeText: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  heroAmount: {
+    color: '#FFFFFF',
+    fontSize: 36,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+    marginBottom: spacing.sm,
+  },
+  heroDateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  heroDateText: {
+    color: 'rgba(255,255,255,0.65)',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  heroDot: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 13,
+    marginHorizontal: spacing.xxs,
+  },
+
   card: { marginBottom: spacing.lg, backgroundColor: colors.surface, borderRadius: radius.lg },
-  amountSection: { alignItems: 'center', paddingVertical: spacing.xxl },
-  typeBadge: { paddingHorizontal: spacing.lg, paddingVertical: spacing.xs, borderRadius: radius.full },
-  date: { color: colors.textSecondary, marginTop: spacing.xs },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

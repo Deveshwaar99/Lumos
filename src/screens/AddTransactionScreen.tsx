@@ -238,17 +238,25 @@ export default function AddTransactionScreen({
     }
 
     let splits;
-    if (splitEnabled && account2Id) {
-      const s1Dollars = evalExpression(split1Expression);
-      const s2Dollars = evalExpression(split2Expression);
-      const s1Cents = dollarsToCents(s1Dollars);
-      const s2Cents = dollarsToCents(s2Dollars);
-      if (s1Cents + s2Cents !== totalCents) {
-        setSnackbar('Split amounts must equal total');
+    if (splitEnabled) {
+      if (!account2Id) {
+        setSnackbar('Select a second account for the split');
         return;
       }
       if (account1Id === account2Id) {
         setSnackbar('Accounts must be different');
+        return;
+      }
+      const s1Dollars = evalExpression(split1Expression);
+      const s2Dollars = evalExpression(split2Expression);
+      const s1Cents = dollarsToCents(s1Dollars);
+      const s2Cents = dollarsToCents(s2Dollars);
+      if (s1Cents <= 0 || s2Cents <= 0) {
+        setSnackbar('Both split amounts must be greater than zero');
+        return;
+      }
+      if (s1Cents + s2Cents !== totalCents) {
+        setSnackbar('Split amounts must equal total');
         return;
       }
       splits = [

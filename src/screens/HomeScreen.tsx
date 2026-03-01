@@ -86,28 +86,30 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.topBar, { paddingTop: insets.top + spacing.xs }]}>
-        <TouchableOpacity hitSlop={12} onPress={() => navigation.navigate('Settings' as any)}>
-          <Icon source="menu" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text variant="titleLarge" style={styles.appTitle}>MyMoney</Text>
-        <TouchableOpacity hitSlop={12}>
-          <Icon source="magnify" size={24} color={colors.text} />
-        </TouchableOpacity>
+      <View style={styles.headerSection}>
+        <View style={[styles.topBar, { paddingTop: insets.top + spacing.xs }]}>
+          <TouchableOpacity hitSlop={12} onPress={() => navigation.navigate('Settings' as any)}>
+            <Icon source="menu" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text variant="titleLarge" style={styles.appTitle}>MyMoney</Text>
+          <TouchableOpacity hitSlop={12}>
+            <Icon source="magnify" size={24} color={colors.text} />
+          </TouchableOpacity>
+        </View>
+
+        <MonthNavigator
+          label={getMonthLabel(month)}
+          onPrev={handlePrevMonth}
+          onNext={handleNextMonth}
+        />
+
+        <SummaryBar
+          income={summary.totalIncome}
+          expense={summary.totalExpense}
+          balance={summary.net}
+          currency={settings.baseCurrency}
+        />
       </View>
-
-      <MonthNavigator
-        label={getMonthLabel(month)}
-        onPrev={handlePrevMonth}
-        onNext={handleNextMonth}
-      />
-
-      <SummaryBar
-        income={summary.totalIncome}
-        expense={summary.totalExpense}
-        balance={summary.net}
-        currency={settings.baseCurrency}
-      />
 
       <SectionList
         sections={sections}
@@ -152,6 +154,12 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  headerSection: {
+    backgroundColor: colors.surface,
+    paddingBottom: spacing.sm,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+  },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',

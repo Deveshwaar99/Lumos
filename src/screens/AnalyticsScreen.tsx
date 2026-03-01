@@ -53,42 +53,45 @@ export default function AnalyticsScreen({ navigation }: TabScreenProps<'Analytic
 
   return (
     <ScrollView style={[styles.container, { paddingTop: insets.top }]} contentContainerStyle={styles.content}>
-      <View style={styles.monthSelector}>
-        <TouchableOpacity onPress={() => setMonth(addMonths(month, -1))}>
-          <Icon source="chevron-left" size={28} color={colors.text} />
-        </TouchableOpacity>
-        <Text variant="titleMedium" style={{ fontWeight: '700' }}>{getMonthLabel(month)}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <TouchableOpacity onPress={() => setMonth(addMonths(month, 1))}>
-            <Icon source="chevron-right" size={28} color={colors.text} />
+      <View style={styles.headerSection}>
+        <View style={styles.monthSelector}>
+          <TouchableOpacity onPress={() => setMonth(addMonths(month, -1))}>
+            <Icon source="chevron-left" size={28} color={colors.text} />
           </TouchableOpacity>
-          <TouchableOpacity>
-            <Icon source="filter-variant" size={24} color={colors.textSecondary} />
-          </TouchableOpacity>
+          <Text variant="titleMedium" style={{ fontWeight: '700' }}>{getMonthLabel(month)}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <TouchableOpacity onPress={() => setMonth(addMonths(month, 1))}>
+              <Icon source="chevron-right" size={28} color={colors.text} />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Icon source="filter-variant" size={24} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.summaryRow}>
+          <View style={styles.summaryItem}>
+            <Text variant="labelSmall" style={styles.summaryLabel}>EXPENSE</Text>
+            <Text variant="titleSmall" style={{ color: colors.expense, fontWeight: '700' }}>
+              {formatMoney(summary.totalExpense, currency)}
+            </Text>
+          </View>
+          <View style={styles.summaryItem}>
+            <Text variant="labelSmall" style={styles.summaryLabel}>INCOME</Text>
+            <Text variant="titleSmall" style={{ color: colors.income, fontWeight: '700' }}>
+              {formatMoney(summary.totalIncome, currency)}
+            </Text>
+          </View>
+          <View style={styles.summaryItem}>
+            <Text variant="labelSmall" style={styles.summaryLabel}>BALANCE</Text>
+            <Text variant="titleSmall" style={{ color: summary.net >= 0 ? colors.income : colors.expense, fontWeight: '700' }}>
+              {formatMoney(summary.net, currency)}
+            </Text>
+          </View>
         </View>
       </View>
 
-      <View style={styles.summaryRow}>
-        <View style={styles.summaryItem}>
-          <Text variant="labelSmall" style={styles.summaryLabel}>EXPENSE</Text>
-          <Text variant="titleSmall" style={{ color: colors.expense, fontWeight: '700' }}>
-            {formatMoney(summary.totalExpense, currency)}
-          </Text>
-        </View>
-        <View style={styles.summaryItem}>
-          <Text variant="labelSmall" style={styles.summaryLabel}>INCOME</Text>
-          <Text variant="titleSmall" style={{ color: colors.income, fontWeight: '700' }}>
-            {formatMoney(summary.totalIncome, currency)}
-          </Text>
-        </View>
-        <View style={styles.summaryItem}>
-          <Text variant="labelSmall" style={styles.summaryLabel}>BALANCE</Text>
-          <Text variant="titleSmall" style={{ color: summary.net >= 0 ? colors.income : colors.expense, fontWeight: '700' }}>
-            {formatMoney(summary.net, currency)}
-          </Text>
-        </View>
-      </View>
-
+      <View style={styles.bodyContent}>
       {loading ? (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
       ) : (
@@ -174,23 +177,35 @@ export default function AnalyticsScreen({ navigation }: TabScreenProps<'Analytic
           </Button>
         </>
       )}
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, paddingBottom: 100 },
+  content: { paddingBottom: 100 },
+  headerSection: {
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    marginBottom: spacing.lg,
+  },
   monthSelector: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.md,
   },
+  bodyContent: {
+    paddingHorizontal: spacing.lg,
+  },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: spacing.lg,
     paddingHorizontal: spacing.xs,
   },
   summaryItem: { alignItems: 'flex-start' },
