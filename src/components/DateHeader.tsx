@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isToday, isYesterday } from 'date-fns';
 import { colors, spacing } from '../theme';
 
 interface DateHeaderProps {
@@ -10,11 +10,12 @@ interface DateHeaderProps {
 
 export default function DateHeader({ dateStr }: DateHeaderProps) {
   const date = dateStr.includes('T') ? parseISO(dateStr) : new Date(dateStr);
-  const label = format(date, 'MMM dd, EEEE');
+  const label = format(date, 'EEE, dd MMM');
+  const relative = isToday(date) ? 'Today' : isYesterday(date) ? 'Yesterday' : null;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.label}>{relative ?? label}</Text>
       <View style={styles.line} />
     </View>
   );
@@ -22,18 +23,22 @@ export default function DateHeader({ dateStr }: DateHeaderProps) {
 
 const styles = StyleSheet.create({
   container: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
+    paddingBottom: spacing.xs,
+    gap: spacing.md,
   },
   label: {
-    color: colors.text,
+    color: colors.textSecondary,
+    fontSize: 12,
     fontWeight: '600',
-    fontSize: 14,
-    marginBottom: 8,
+    letterSpacing: 0.4,
   },
   line: {
-    height: 1,
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
     backgroundColor: colors.border,
   },
 });

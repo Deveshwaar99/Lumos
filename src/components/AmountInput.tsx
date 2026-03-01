@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TextInput } from 'react-native-paper';
 import { dollarsToCents, centsToDollars } from '../utils/money';
 
@@ -18,9 +18,13 @@ export default function AmountInput({
   currencySymbol = '$',
 }: AmountInputProps) {
   const [text, setText] = useState(value > 0 ? centsToDollars(value).toFixed(2) : '');
+  const internalCents = useRef(value);
 
   useEffect(() => {
-    setText(value > 0 ? centsToDollars(value).toFixed(2) : '');
+    if (value !== internalCents.current) {
+      setText(value > 0 ? centsToDollars(value).toFixed(2) : '');
+      internalCents.current = value;
+    }
   }, [value]);
 
   const handleChange = (input: string) => {
@@ -30,8 +34,11 @@ export default function AmountInput({
     setText(formatted);
     const num = parseFloat(formatted);
     if (!isNaN(num)) {
-      onChange(dollarsToCents(num));
+      const cents = dollarsToCents(num);
+      internalCents.current = cents;
+      onChange(cents);
     } else if (formatted === '') {
+      internalCents.current = 0;
       onChange(0);
     }
   };

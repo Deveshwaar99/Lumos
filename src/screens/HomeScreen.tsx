@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { View, SectionList, StyleSheet, RefreshControl, Animated, TextInput as RNTextInput } from 'react-native';
-import { Text, FAB, Icon, Divider } from 'react-native-paper';
+import { Text, FAB, Icon } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { TouchableOpacity } from 'react-native';
@@ -15,7 +15,7 @@ import PeriodNavigator from '../components/PeriodNavigator';
 import TimePeriodPicker from '../components/TimePeriodPicker';
 import SummaryBar from '../components/SummaryBar';
 import DateHeader from '../components/DateHeader';
-import { colors, spacing, radius } from '../theme';
+import { colors, spacing, radius, elevation } from '../theme';
 import {
   getTimePeriodRange,
   getTimePeriodLabel,
@@ -213,7 +213,7 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
         renderSectionHeader={({ section }) => <DateHeader dateStr={section.title} />}
         renderItem={({ item, index }) => (
           <>
-            {index > 0 && <Divider style={styles.itemDivider} />}
+            {index > 0 && <View style={styles.itemDivider} />}
             <TransactionItem
               transaction={item}
               category={item.categoryId ? categoryMap[item.categoryId] : undefined}
@@ -225,13 +225,22 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Icon source={searchActive ? 'magnify' : 'receipt'} size={48} color={colors.textTertiary} />
-            <Text variant="bodyLarge" style={styles.emptyText}>
+            <View style={styles.emptyIconWrap}>
+              <Icon source={searchActive ? 'magnify' : 'receipt'} size={64} color={colors.primaryLight} />
+            </View>
+            <Text variant="titleMedium" style={styles.emptyTitle}>
               {searchActive && searchQuery.trim()
                 ? 'No matching transactions'
                 : searchActive
+                  ? 'Search your transactions'
+                  : 'No transactions yet'}
+            </Text>
+            <Text variant="bodyMedium" style={styles.emptySubtext}>
+              {searchActive && searchQuery.trim()
+                ? 'Try a different keyword or date range'
+                : searchActive
                   ? 'Type to search across all transactions'
-                  : 'No transactions in this period'}
+                  : 'Tap + to add your first transaction'}
             </Text>
           </View>
         }
@@ -248,7 +257,7 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
       {!searchActive && (
         <FAB
           icon="plus"
-          style={[styles.fab, { bottom: insets.bottom + 10}]}
+          style={[styles.fab, { bottom: insets.bottom + 16 }]}
           onPress={() => navigation.navigate('AddTransaction')}
           color="#fff"
         />
@@ -272,8 +281,8 @@ const styles = StyleSheet.create({
   headerSection: {
     backgroundColor: colors.surface,
     paddingBottom: spacing.sm,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
+    ...elevation.md,
+    zIndex: 1,
   },
   topBar: {
     flexDirection: 'row',
@@ -296,14 +305,38 @@ const styles = StyleSheet.create({
   },
   list: { flex: 1, marginTop: spacing.xs },
   listContent: { paddingBottom: 100 },
-  itemDivider: { backgroundColor: colors.border, marginLeft: 76 },
+  itemDivider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginLeft: 74 },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 80,
+    paddingHorizontal: spacing.xxl,
   },
-  emptyText: { color: colors.textSecondary, marginTop: spacing.lg },
-  fab: { position: 'absolute', right: spacing.lg, backgroundColor: colors.primary },
+  emptyIconWrap: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: colors.primaryContainer,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.lg,
+  },
+  emptyTitle: {
+    color: colors.text,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  emptySubtext: {
+    color: colors.textSecondary,
+    marginTop: spacing.sm,
+    textAlign: 'center',
+  },
+  fab: {
+    position: 'absolute',
+    right: spacing.lg,
+    backgroundColor: colors.primary,
+    ...elevation.lg,
+  },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
