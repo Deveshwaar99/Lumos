@@ -1,0 +1,29 @@
+/**
+ * Material Community Icon names for finance categories.
+ */
+export const CATEGORY_ICONS: { name: string; label: string }[] = [
+  { name: 'food', label: 'Food' },
+  { name: 'car', label: 'Car' },
+  { name: 'home', label: 'Home' },
+  { name: 'cart', label: 'Shopping' },
+  { name: 'movie', label: 'Entertainment' },
+  { name: 'heart-pulse', label: 'Health' },
+  { name: 'school', label: 'Education' },
+  { name: 'flash', label: 'Utilities' },
+  { name: 'account', label: 'Personal' },
+  { name: 'dots-horizontal', label: 'Other' },
+  { name: 'cash', label: 'Cash' },
+  { name: 'laptop', label: 'Technology' },
+  { name: 'chart-line', label: 'Investments' },
+  { name: 'gift', label: 'Gifts' },
+  { name: 'cash-multiple', label: 'Income' },
+  { name: 'airplane', label: 'Travel' },
+  { name: 'medical-bag', label: 'Medical' },
+  { name: 'dumbbell', label: 'Fitness' },
+  { name: 'music', label: 'Music' },
+  { name: 'book-open-variant', label: 'Books' },
+  { name: 'coffee', label: 'Coffee' },
+  { name: 'bus', label: 'Transit' },
+  { name: 'train', label: 'Transport' },
+  { name: 'tshirt-crew', label: 'Clothing' },
+];

@@ -1,0 +1,170 @@
+import React, { useEffect, useState } from 'react';
+import { View, ScrollView, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { TextInput, Button, Text, Icon, Chip, Snackbar } from 'react-native-paper';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useAccountStore } from '../stores/useAccountStore';
+import { accountSchema } from '../models/schemas';
+import { colors, spacing, radius } from '../theme';
+import { dollarsToCents, centsToDollars } from '../utils/money';
+import type { RootStackScreenProps } from '../navigation/types';
+
+const ACCOUNT_TYPES = [
+  { value: 'cash', label: 'Cash' },
+  { value: 'bank', label: 'Bank' },
+  { value: 'card', label: 'Card' },
+  { value: 'savings', label: 'Savings' },
+  { value: 'other', label: 'Other' },
+] as const;
+
+const ACCOUNT_ICONS = [
+  'wallet', 'bank', 'credit-card', 'piggy-bank', 'cash-register',
+  'safe', 'briefcase', 'store', 'bitcoin', 'currency-usd',
+];
+
+type FormData = {
+  name: string;
+  type: 'cash' | 'bank' | 'card' | 'savings' | 'other';
+  icon: string;
+  openingBalanceCents: number;
+  currency: string;
+};
+
+export default function AccountFormScreen({ navigation, route }: RootStackScreenProps<'AccountForm'>) {
+  const { accountId } = route.params ?? {};
+  const { accounts, addAccount, updateAccount } = useAccountStore();
+  const isEditing = !!accountId;
+  const existing = accountId ? accounts.find(a => a.id === accountId) : null;
+  const [snackbar, setSnackbar] = useState('');
+  const [balanceText, setBalanceText] = useState(
+    existing ? centsToDollars(existing.openingBalanceCents).toFixed(2) : '0.00'
+  );
+
+  const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
+    resolver: zodResolver(accountSchema),
+    defaultValues: {
+      name: existing?.name ?? '',
+      type: existing?.type ?? 'cash',
+      icon: existing?.icon ?? 'wallet',
+      openingBalanceCents: existing?.openingBalanceCents ?? 0,
+      currency: existing?.currency ?? 'USD',
+    },
+  });
+
+  const selectedType = watch('type');
+  const selectedIcon = watch('icon');
+
+  useEffect(() => {
+    navigation.setOptions({ title: isEditing ? 'Edit Account' : 'New Account' });
+  }, [isEditing]);
+
+  const handleBalanceChange = (text: string) => {
+    setBalanceText(text);
+    const num = parseFloat(text.replace(/[^0-9.-]/g, ''));
+    if (!isNaN(num)) {
+      setValue('openingBalanceCents', dollarsToCents(num));
+    }
+  };
+
+  const onSubmit = async (data: FormData) => {
+    try {
+      if (isEditing && accountId) {
+        await updateAccount(accountId, data);
+      } else {
+        await addAccount(data);
+      }
+      navigation.goBack();
+    } catch (e: any) {
+      setSnackbar(e.message || 'Failed to save');
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <Controller
+          control={control}
+          name="name"
+          render={({ field: { onChange, value } }) => (
+            <TextInput label="Account Name" value={value} onChangeText={onChange} mode="outlined" error={!!errors.name} style={styles.input} />
+          )}
+        />
+        {errors.name && <Text style={styles.error}>{errors.name.message}</Text>}
+
+        <Text variant="titleSmall" style={styles.sectionTitle}>Account Type</Text>
+        <View style={styles.chipRow}>
+          {ACCOUNT_TYPES.map(t => (
+            <Chip
+              key={t.value}
+              selected={selectedType === t.value}
+              onPress={() => setValue('type', t.value)}
+              style={[styles.chip, selectedType === t.value && styles.chipSelected]}
+              textStyle={selectedType === t.value ? styles.chipTextSelected : undefined}
+            >
+              {t.label}
+            </Chip>
+          ))}
+        </View>
+
+        <Text variant="titleSmall" style={styles.sectionTitle}>Icon</Text>
+        <View style={styles.pickerGrid}>
+          {ACCOUNT_ICONS.map(icon => (
+            <TouchableOpacity
+              key={icon}
+              style={[styles.iconOption, selectedIcon === icon && { borderColor: colors.primary, borderWidth: 2 }]}
+              onPress={() => setValue('icon', icon)}
+            >
+              <Icon source={icon as any} size={24} color={selectedIcon === icon ? colors.primary : colors.text} />
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <TextInput
+          label="Opening Balance"
+          value={balanceText}
+          onChangeText={handleBalanceChange}
+          mode="outlined"
+          keyboardType="decimal-pad"
+          left={<TextInput.Affix text="$" />}
+          style={styles.input}
+        />
+
+        <Controller
+          control={control}
+          name="currency"
+          render={({ field: { onChange, value } }) => (
+            <TextInput label="Currency Code" value={value} onChangeText={onChange} mode="outlined" style={styles.input} maxLength={3} autoCapitalize="characters" />
+          )}
+        />
+
+        <Button mode="contained" onPress={handleSubmit(onSubmit)} style={styles.saveButton}>
+          {isEditing ? 'Update' : 'Create'} Account
+        </Button>
+      </ScrollView>
+      </KeyboardAvoidingView>
+      <Snackbar visible={!!snackbar} onDismiss={() => setSnackbar('')} duration={3000}>
+        {snackbar}
+      </Snackbar>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  scroll: { padding: 16 },
+  input: { marginBottom: 12 },
+  sectionTitle: { marginTop: 16, marginBottom: 8, color: colors.text },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: { marginBottom: 4 },
+  chipSelected: { backgroundColor: colors.primary + '20' },
+  chipTextSelected: { color: colors.primary },
+  pickerGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  iconOption: {
+    width: 48, height: 48, borderRadius: 24,
+    justifyContent: 'center', alignItems: 'center',
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+  },
+  saveButton: { marginTop: 24, backgroundColor: colors.primary, borderRadius: radius.capsule },
+  error: { color: colors.error, fontSize: 12, marginBottom: 8 },
+});

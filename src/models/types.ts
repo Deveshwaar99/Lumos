@@ -1,0 +1,124 @@
+export interface Transaction {
+  id: string;
+  type: 'income' | 'expense';
+  totalAmountCents: number;
+  currency: string;
+  categoryId: string;
+  note: string | null;
+  date: string;
+  linkedTransactionId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TransactionSplit {
+  id: string;
+  transactionId: string;
+  accountId: string;
+  amountCents: number;
+}
+
+export interface TransactionWithSplits extends Transaction {
+  splits: TransactionSplit[];
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  type: 'income' | 'expense';
+  icon: string;
+  color: string;
+}
+
+export interface Account {
+  id: string;
+  name: string;
+  type: 'cash' | 'bank' | 'card' | 'savings' | 'other';
+  icon: string;
+  openingBalanceCents: number;
+  currency: string;
+}
+
+export interface Budget {
+  id: string;
+  month: string;
+  categoryId: string;
+  limitCents: number;
+  alertThresholdPct: number;
+  enabled: boolean;
+}
+
+export interface AppSettings {
+  baseCurrency: string;
+  decimalPlaces: number;
+  currencySymbol: string;
+  lastBackupAt: string | null;
+}
+
+export interface TransactionFilter {
+  dateFrom: string | null;
+  dateTo: string | null;
+  type: 'income' | 'expense' | null;
+  accountId: string | null;
+  categoryId: string | null;
+}
+
+export interface MonthSummary {
+  totalIncome: number;
+  totalExpense: number;
+  net: number;
+}
+
+export interface CategoryBreakdown {
+  categoryId: string;
+  categoryName: string;
+  color: string;
+  icon: string;
+  total: number;
+}
+
+export interface DailyCashFlow {
+  date: string;
+  income: number;
+  expense: number;
+  net: number;
+}
+
+export interface AccountBalance {
+  accountId: string;
+  accountName: string;
+  type: Account['type'];
+  balance: number;
+}
+
+export interface BudgetWithSpent extends Budget {
+  spent: number;
+  remaining: number;
+  percentage: number;
+}
+
+export interface BackupData {
+  version: number;
+  exportedAt: string;
+  categories: Category[];
+  accounts: Account[];
+  transactions: Transaction[];
+  transactionSplits: TransactionSplit[];
+  budgets: Budget[];
+  settings: Record<string, string>;
+}
+
+export interface SplitInput {
+  accountId: string;
+  amountCents: number;
+}
+
+export interface CreateTransactionInput {
+  type: 'income' | 'expense';
+  totalAmountCents: number;
+  currency: string;
+  categoryId: string;
+  note?: string | null;
+  date: string;
+  splits: SplitInput[];
+}
