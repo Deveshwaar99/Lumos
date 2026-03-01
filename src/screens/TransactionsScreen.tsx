@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTransactionStore } from '../stores/useTransactionStore';
 import { useCategoryStore } from '../stores/useCategoryStore';
 import { useAccountStore } from '../stores/useAccountStore';
+import { useSettingsStore } from '../stores/useSettingsStore';
 import TransactionList from '../components/TransactionList';
 import FilterBar from '../components/FilterBar';
 import { colors, spacing } from '../theme';
@@ -26,6 +27,7 @@ export default function TransactionsScreen({
   } = useTransactionStore();
   const { categories, loadCategories } = useCategoryStore();
   const { accounts, loadAccounts } = useAccountStore();
+  const { settings } = useSettingsStore();
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
@@ -59,6 +61,7 @@ export default function TransactionsScreen({
         accounts={accounts}
         loading={loading}
         hasMore={hasMore}
+        currencySymbol={settings.currencySymbol}
         onLoadMore={loadMore}
         onRefresh={() => loadTransactions(true)}
         onItemPress={handleItemPress}

@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 async function createSchema(db: SQLiteDatabase): Promise<void> {
   await db.execAsync(`
@@ -88,20 +88,13 @@ async function createSchema(db: SQLiteDatabase): Promise<void> {
 }
 
 async function migrateV2(db: SQLiteDatabase): Promise<void> {
+  // V2 originally created tags/transaction_tags tables — now removed
+}
+
+async function migrateV3(db: SQLiteDatabase): Promise<void> {
   await db.execAsync(`
-    CREATE TABLE IF NOT EXISTS tags (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL UNIQUE,
-      color TEXT NOT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS transaction_tags (
-      transaction_id TEXT NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
-      tag_id TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
-      PRIMARY KEY (transaction_id, tag_id)
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_transaction_tags_tag ON transaction_tags(tag_id);
+    DROP TABLE IF EXISTS transaction_tags;
+    DROP TABLE IF EXISTS tags;
   `);
 }
 
@@ -122,6 +115,9 @@ export async function runMigrations(db: SQLiteDatabase): Promise<void> {
   }
   if (currentVersion < 2) {
     await migrateV2(db);
+  }
+  if (currentVersion < 3) {
+    await migrateV3(db);
   }
   if (currentVersion < SCHEMA_VERSION) {
     await db.runAsync(

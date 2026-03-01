@@ -80,7 +80,7 @@ export default function AccountTransactionsScreen({
         </View>
         <Text style={styles.headerName}>{account?.name ?? 'Account'}</Text>
         <Text style={[styles.headerBalance, balance < 0 && { color: colors.expense }]}>
-          {formatMoney(balance, settings.baseCurrency)}
+          {formatMoney(balance, settings.baseCurrency, 2, settings.currencySymbol)}
         </Text>
       </View>
 
@@ -99,6 +99,7 @@ export default function AccountTransactionsScreen({
               transaction={item}
               category={item.categoryId ? categoryMap[item.categoryId] : undefined}
               accountMap={accountMap}
+              currencySymbol={settings.currencySymbol}
               onPress={() => navigation.navigate('AddTransaction', { transactionId: item.id })}
             />
           </>

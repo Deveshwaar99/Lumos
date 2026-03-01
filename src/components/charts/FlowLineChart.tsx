@@ -1,19 +1,39 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text } from 'react-native-paper';
-import Svg, { Polyline, Line, Circle as SvgCircle, Text as SvgText } from 'react-native-svg';
-import { colors } from '../../theme';
+import Svg, {
+  Polyline,
+  Line,
+  Circle as SvgCircle,
+  Text as SvgText,
+  Defs,
+  LinearGradient,
+  Stop,
+  Polygon,
+} from 'react-native-svg';
+import { colors, spacing } from '../../theme';
 import { formatMoney } from '../../utils/money';
 import type { DailyCashFlow } from '../../models/types';
 
 interface FlowLineChartProps {
   data: DailyCashFlow[];
   currency: string;
+  currencySymbol?: string;
   valueKey: 'income' | 'expense' | 'net';
   lineColor: string;
 }
 
-export default function FlowLineChart({ data, currency, valueKey, lineColor }: FlowLineChartProps) {
+function formatCompactY(val: number, currency: string, currencySymbol?: string): string {
+  const abs = Math.abs(val) / 100;
+  const sign = val < 0 ? '-' : '';
+  const sym = currencySymbol || '';
+  if (abs === 0) return `${sym}0`;
+  if (abs >= 100000) return `${sign}${sym}${(abs / 100000).toFixed(1)}L`;
+  if (abs >= 1000) return `${sign}${sym}${(abs / 1000).toFixed(1)}K`;
+  return `${sign}${sym}${abs.toFixed(0)}`;
+}
+
+export default function FlowLineChart({ data, currency, currencySymbol, valueKey, lineColor }: FlowLineChartProps) {
   if (data.length === 0) {
     return (
       <View style={styles.container}>
@@ -27,14 +47,12 @@ export default function FlowLineChart({ data, currency, valueKey, lineColor }: F
     return d[valueKey];
   });
 
-  const maxVal = Math.max(...values.map(Math.abs), 1);
-
-  const chartWidth = Math.max(data.length * 14, 360);
-  const chartHeight = 200;
-  const paddingLeft = 10;
-  const paddingRight = 10;
-  const paddingTop = 20;
-  const paddingBottom = 30;
+  const chartWidth = Math.max(data.length * 14, 320);
+  const chartHeight = 180;
+  const paddingLeft = 8;
+  const paddingRight = 8;
+  const paddingTop = 16;
+  const paddingBottom = 28;
   const plotWidth = chartWidth - paddingLeft - paddingRight;
   const plotHeight = chartHeight - paddingTop - paddingBottom;
 
@@ -42,9 +60,8 @@ export default function FlowLineChart({ data, currency, valueKey, lineColor }: F
   const yMax = Math.max(...values, 0);
   const yRange = Math.max(yMax - yMin, 1);
 
-  const getY = (val: number) => {
-    return paddingTop + plotHeight - ((val - yMin) / yRange) * plotHeight;
-  };
+  const getY = (val: number) =>
+    paddingTop + plotHeight - ((val - yMin) / yRange) * plotHeight;
 
   const points = data.map((d, i) => {
     const x = paddingLeft + (i / Math.max(data.length - 1, 1)) * plotWidth;
@@ -55,6 +72,12 @@ export default function FlowLineChart({ data, currency, valueKey, lineColor }: F
 
   const polyPoints = points.map((p) => `${p.x},${p.y}`).join(' ');
 
+  const fillPoints = [
+    `${points[0].x},${chartHeight - paddingBottom}`,
+    ...points.map((p) => `${p.x},${p.y}`),
+    `${points[points.length - 1].x},${chartHeight - paddingBottom}`,
+  ].join(' ');
+
   const yTicks = 4;
   const yLabels: { val: number; y: number }[] = [];
   for (let i = 0; i <= yTicks; i++) {
@@ -62,26 +85,34 @@ export default function FlowLineChart({ data, currency, valueKey, lineColor }: F
     yLabels.push({ val, y: getY(val) });
   }
 
-  const xLabelIndices = [0, Math.floor(data.length / 4), Math.floor(data.length / 2), Math.floor((3 * data.length) / 4), data.length - 1];
-
-  const formatYLabel = (val: number) => {
-    const abs = Math.abs(val);
-    if (abs === 0) return formatMoney(0, currency);
-    return formatMoney(val, currency);
-  };
+  const xLabelCount = Math.min(5, data.length);
+  const xLabelIndices = [
+    ...new Set(
+      Array.from({ length: xLabelCount }, (_, i) =>
+        Math.round((i / Math.max(xLabelCount - 1, 1)) * (data.length - 1))
+      )
+    ),
+  ];
 
   return (
     <View style={styles.container}>
       <View style={styles.yAxisLabels}>
-        {yLabels.reverse().map((label, i) => (
+        {[...yLabels].reverse().map((label, i) => (
           <Text key={i} variant="labelSmall" style={styles.yLabel}>
-            {formatYLabel(label.val)}
+            {formatCompactY(label.val, currency, currencySymbol)}
           </Text>
         ))}
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollWrap}>
         <View>
           <Svg width={chartWidth} height={chartHeight}>
+            <Defs>
+              <LinearGradient id="flowGrad" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor={lineColor} stopOpacity="0.2" />
+                <Stop offset="1" stopColor={lineColor} stopOpacity="0.01" />
+              </LinearGradient>
+            </Defs>
+
             {yLabels.map((label, i) => (
               <Line
                 key={`grid-${i}`}
@@ -95,11 +126,14 @@ export default function FlowLineChart({ data, currency, valueKey, lineColor }: F
               />
             ))}
 
+            <Polygon points={fillPoints} fill="url(#flowGrad)" />
+
             <Polyline
               points={polyPoints}
               fill="none"
               stroke={lineColor}
               strokeWidth={2}
+              strokeLinejoin="round"
             />
 
             {points.filter((p) => p.val !== 0).map((p, i) => (
@@ -107,7 +141,7 @@ export default function FlowLineChart({ data, currency, valueKey, lineColor }: F
                 key={i}
                 cx={p.x}
                 cy={p.y}
-                r={3}
+                r={2.5}
                 fill={lineColor}
               />
             ))}
@@ -115,18 +149,17 @@ export default function FlowLineChart({ data, currency, valueKey, lineColor }: F
             {xLabelIndices.map((idx) => {
               if (idx >= data.length) return null;
               const x = paddingLeft + (idx / Math.max(data.length - 1, 1)) * plotWidth;
-              const day = data[idx].date.split('-');
-              const label = `${day[1]}/${day[2]}`;
+              const dayNum = parseInt(data[idx].date.split('-')[2], 10);
               return (
                 <SvgText
                   key={`xlabel-${idx}`}
                   x={x}
-                  y={chartHeight - 5}
+                  y={chartHeight - 6}
                   fill={colors.textSecondary}
                   fontSize={10}
                   textAnchor="middle"
                 >
-                  {label}
+                  {dayNum}
                 </SvgText>
               );
             })}
@@ -140,19 +173,18 @@ export default function FlowLineChart({ data, currency, valueKey, lineColor }: F
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    paddingVertical: 8,
   },
   empty: { color: colors.textSecondary, textAlign: 'center', padding: 40, flex: 1 },
   yAxisLabels: {
     justifyContent: 'space-between',
-    paddingTop: 20,
-    paddingBottom: 30,
-    paddingRight: 4,
-    width: 90,
+    paddingTop: 16,
+    paddingBottom: 28,
+    paddingRight: 6,
+    width: 52,
   },
   yLabel: {
     color: colors.textSecondary,
-    fontSize: 10,
+    fontSize: 9,
     textAlign: 'right',
   },
   scrollWrap: {

@@ -166,7 +166,7 @@ export default function FDDetailScreen({
         <View style={styles.heroCard}>
           <Text style={styles.heroLabel}>Principal</Text>
           <Text style={styles.heroAmount}>
-            {formatMoney(fd.principalCents, currency)}
+            {formatMoney(fd.principalCents, currency, 2, settings.currencySymbol)}
           </Text>
           <View style={styles.heroMeta}>
             <Text style={styles.heroRate}>
@@ -282,13 +282,13 @@ export default function FDDetailScreen({
           <View style={styles.breakdownRow}>
             <Text style={styles.breakdownLabel}>Gross Interest</Text>
             <Text style={styles.breakdownValue}>
-              {formatMoney(breakdown.gross, currency)}
+              {formatMoney(breakdown.gross, currency, 2, settings.currencySymbol)}
             </Text>
           </View>
           <View style={styles.breakdownRow}>
             <Text style={styles.breakdownLabel}>TDS ({fd.taxRate}%)</Text>
             <Text style={[styles.breakdownValue, { color: colors.expense }]}>
-              -{formatMoney(breakdown.tds, currency)}
+              -{formatMoney(breakdown.tds, currency, 2, settings.currencySymbol)}
             </Text>
           </View>
           <View style={styles.breakdownDivider} />
@@ -302,7 +302,7 @@ export default function FDDetailScreen({
                 { color: colors.income, fontWeight: '800' },
               ]}
             >
-              {formatMoney(breakdown.net, currency)}
+              {formatMoney(breakdown.net, currency, 2, settings.currencySymbol)}
             </Text>
           </View>
           <View style={styles.breakdownRow}>
@@ -315,7 +315,7 @@ export default function FDDetailScreen({
                 { color: colors.primary, fontWeight: '800' },
               ]}
             >
-              {formatMoney(breakdown.maturityValue, currency)}
+              {formatMoney(breakdown.maturityValue, currency, 2, settings.currencySymbol)}
             </Text>
           </View>
         </View>
@@ -353,7 +353,7 @@ export default function FDDetailScreen({
                   ]}
                 >
                   {txn.type === 'income' ? '+' : '-'}
-                  {formatMoney(txn.totalAmountCents, currency)}
+                  {formatMoney(txn.totalAmountCents, currency, 2, settings.currencySymbol)}
                 </Text>
               </View>
             ))}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
-import { colors, spacing } from '../../theme';
+import { colors, spacing, radius } from '../../theme';
 import { getMonthLabel } from '../../utils/dates';
 import type { DailyCashFlow } from '../../models/types';
 
@@ -12,10 +12,10 @@ interface CalendarGridProps {
   valueColor: string;
 }
 
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAY_NAMES = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 function formatCompact(cents: number): string {
-  if (cents === 0) return '.';
+  if (cents === 0) return '';
   const abs = Math.abs(cents) / 100;
   const sign = cents < 0 ? '-' : '';
   if (abs >= 1000) return `${sign}${(abs / 1000).toFixed(1)}k`;
@@ -40,11 +40,11 @@ export default function CalendarGrid({ month, data, valueKey, valueColor }: Cale
 
   return (
     <View style={styles.container}>
-      <Text variant="titleSmall" style={styles.title}>{getMonthLabel(month)}</Text>
+      <Text variant="labelMedium" style={styles.title}>Daily Breakdown</Text>
 
       <View style={styles.headerRow}>
-        {DAY_NAMES.map((d) => (
-          <View key={d} style={styles.cell}>
+        {DAY_NAMES.map((d, i) => (
+          <View key={i} style={styles.headerCell}>
             <Text variant="labelSmall" style={styles.headerText}>{d}</Text>
           </View>
         ))}
@@ -62,19 +62,28 @@ export default function CalendarGrid({ month, data, valueKey, valueColor }: Cale
             else if (valueKey === 'expense') val = -day.expense;
             else val = day.net;
 
+            const hasValue = val !== 0;
+
             return (
-              <View key={di} style={styles.cell}>
+              <View
+                key={di}
+                style={[
+                  styles.cell,
+                  hasValue && { backgroundColor: valueColor + '10' },
+                ]}
+              >
                 <Text variant="labelSmall" style={styles.dayNum}>{dayNum}</Text>
-                <Text
-                  variant="labelSmall"
-                  style={[
-                    styles.dayVal,
-                    { color: val === 0 ? colors.textTertiary : valueColor },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {formatCompact(val)}
-                </Text>
+                {hasValue ? (
+                  <Text
+                    variant="labelSmall"
+                    style={[styles.dayVal, { color: valueColor }]}
+                    numberOfLines={1}
+                  >
+                    {formatCompact(val)}
+                  </Text>
+                ) : (
+                  <View style={styles.emptyDot} />
+                )}
               </View>
             );
           })}
@@ -86,44 +95,58 @@ export default function CalendarGrid({ month, data, valueKey, valueColor }: Cale
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: spacing.md,
+    paddingTop: spacing.xs,
   },
   title: {
-    color: colors.income,
-    fontWeight: '700',
+    color: colors.textSecondary,
+    fontWeight: '600',
     marginBottom: spacing.sm,
-    paddingHorizontal: 4,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    fontSize: 11,
   },
   headerRow: {
     flexDirection: 'row',
-    borderBottomWidth: 0.5,
-    borderBottomColor: colors.border,
-    paddingBottom: 6,
-    marginBottom: 4,
+    marginBottom: 2,
+  },
+  headerCell: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 4,
   },
   headerText: {
-    color: colors.textSecondary,
+    color: colors.textTertiary,
     textAlign: 'center',
     fontSize: 11,
+    fontWeight: '600',
   },
   weekRow: {
     flexDirection: 'row',
-    borderBottomWidth: 0.5,
-    borderBottomColor: colors.border,
+    gap: 2,
+    marginBottom: 2,
   },
   cell: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 6,
-    minHeight: 42,
+    minHeight: 40,
+    borderRadius: 6,
   },
   dayNum: {
     color: colors.textSecondary,
-    fontSize: 11,
+    fontSize: 10,
     marginBottom: 2,
   },
   dayVal: {
-    fontSize: 10,
-    fontWeight: '600',
+    fontSize: 9,
+    fontWeight: '700',
+  },
+  emptyDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: colors.border,
+    marginTop: 1,
   },
 });

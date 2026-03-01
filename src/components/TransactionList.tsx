@@ -12,6 +12,7 @@ interface TransactionListProps {
   accounts: Account[];
   loading: boolean;
   hasMore: boolean;
+  currencySymbol?: string;
   onLoadMore: () => void;
   onRefresh: () => void;
   onItemPress: (transaction: TransactionWithSplits) => void;
@@ -24,6 +25,7 @@ export default function TransactionList({
   accounts,
   loading,
   hasMore,
+  currencySymbol,
   onLoadMore,
   onRefresh,
   onItemPress,
@@ -38,6 +40,7 @@ export default function TransactionList({
         transaction={item}
         category={categoryMap[item.categoryId]}
         accountMap={accountMap}
+        currencySymbol={currencySymbol}
         onPress={() => onItemPress(item)}
       />
     ),

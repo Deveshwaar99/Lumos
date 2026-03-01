@@ -86,8 +86,8 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
             </View>
             <Text variant="bodySmall" style={styles.remaining}>
               {item.remaining >= 0
-                ? `${formatMoney(item.remaining, currency)} left`
-                : `${formatMoney(Math.abs(item.remaining), currency)} over`}
+                ? `${formatMoney(item.remaining, currency, 2, settings.currencySymbol)} left`
+                : `${formatMoney(Math.abs(item.remaining), currency, 2, settings.currencySymbol)} over`}
             </Text>
           </View>
           <BudgetProgressBar
@@ -95,6 +95,7 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
             limit={item.limitCents}
             alertThreshold={item.alertThresholdPct}
             currency={currency}
+            currencySymbol={settings.currencySymbol}
           />
         </View>
       </TouchableOpacity>
@@ -159,7 +160,7 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
             <View style={styles.summaryItem}>
               <Text variant="labelSmall" style={styles.summaryLabel}>BUDGETED</Text>
               <Text variant="titleSmall" style={{ color: colors.text, fontWeight: '700' }}>
-                {formatMoney(totalBudgeted, currency)}
+                {formatMoney(totalBudgeted, currency, 2, settings.currencySymbol)}
               </Text>
             </View>
             <View style={styles.summaryItem}>
@@ -168,7 +169,7 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
                 variant="titleSmall"
                 style={{ color: totalSpent > totalBudgeted ? colors.expense : colors.text, fontWeight: '700' }}
               >
-                {formatMoney(totalSpent, currency)}
+                {formatMoney(totalSpent, currency, 2, settings.currencySymbol)}
               </Text>
             </View>
             <View style={styles.summaryItem}>
@@ -180,7 +181,7 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
                   fontWeight: '700',
                 }}
               >
-                {formatMoney(totalBudgeted - totalSpent, currency)}
+                {formatMoney(totalBudgeted - totalSpent, currency, 2, settings.currencySymbol)}
               </Text>
             </View>
           </Card.Content>

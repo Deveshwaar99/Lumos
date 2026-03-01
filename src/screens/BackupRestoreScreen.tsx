@@ -57,7 +57,7 @@ export default function BackupRestoreScreen({ navigation }: RootStackScreenProps
               try {
                 await backupService.restoreFromData(backupData);
                 await Promise.all([loadCategories(), loadAccounts(), loadTransactions(true), loadBudgets()]);
-                setSnackbar('Data restored successfully!');
+                navigation.navigate('Tabs');
               } catch (e: any) {
                 setSnackbar(e.message || 'Restore failed');
               } finally {

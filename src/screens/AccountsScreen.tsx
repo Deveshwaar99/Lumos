@@ -106,7 +106,7 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
         styles.balanceHero,
         { color: portfolioData.netBalance >= 0 ? colors.income : colors.expense },
       ]}>
-        {formatMoney(portfolioData.netBalance, currency)}
+        {formatMoney(portfolioData.netBalance, currency, 2, settings.currencySymbol)}
       </Text>
 
       <View style={styles.summaryRow}>
@@ -116,7 +116,7 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
             <Text style={styles.summaryLabel}>Assets</Text>
           </View>
           <Text style={[styles.summaryAmount, { color: colors.income }]}>
-            {formatMoney(portfolioData.totalAssets, currency)}
+            {formatMoney(portfolioData.totalAssets, currency, 2, settings.currencySymbol)}
           </Text>
         </View>
 
@@ -128,7 +128,7 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
             <Text style={styles.summaryLabel}>Liabilities</Text>
           </View>
           <Text style={[styles.summaryAmount, { color: colors.warning }]}>
-            {formatMoney(portfolioData.totalLiabilities, currency)}
+            {formatMoney(portfolioData.totalLiabilities, currency, 2, settings.currencySymbol)}
           </Text>
         </View>
       </View>
@@ -181,7 +181,7 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
           <View style={styles.accountDetails}>
             <Text variant="bodyLarge" style={styles.accountName}>{item.name}</Text>
             <Text variant="titleMedium" style={[styles.accountBalance, balance < 0 && { color: colors.expense }]}>
-              {formatMoney(balance, item.currency)}
+              {formatMoney(balance, item.currency, 2, settings.currencySymbol)}
             </Text>
           </View>
           <Menu
@@ -235,14 +235,14 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
           <View style={styles.fdStat}>
             <Text style={styles.fdStatLabel}>Principal</Text>
             <Text style={styles.fdStatValue}>
-              {formatMoney(item.principalCents, currency)}
+              {formatMoney(item.principalCents, currency, 2, settings.currencySymbol)}
             </Text>
           </View>
           <View style={styles.fdStatDivider} />
           <View style={styles.fdStat}>
             <Text style={styles.fdStatLabel}>Net Interest</Text>
             <Text style={[styles.fdStatValue, { color: colors.income }]}>
-              {formatMoney(net, currency)}
+              {formatMoney(net, currency, 2, settings.currencySymbol)}
             </Text>
           </View>
         </View>

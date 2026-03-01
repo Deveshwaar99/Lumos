@@ -20,15 +20,8 @@ export interface TransactionSplit {
   amountCents: number;
 }
 
-export interface Tag {
-  id: string;
-  name: string;
-  color: string;
-}
-
 export interface TransactionWithSplits extends Transaction {
   splits: TransactionSplit[];
-  tags?: Tag[];
 }
 
 export interface Category {
@@ -62,6 +55,7 @@ export interface AppSettings {
   decimalPlaces: number;
   currencySymbol: string;
   lastBackupAt: string | null;
+  username: string;
 }
 
 export interface TransactionFilter {
@@ -71,7 +65,6 @@ export interface TransactionFilter {
   accountId: string | null;
   categoryId: string | null;
   searchQuery?: string | null;
-  tagIds?: string[] | null;
 }
 
 export interface MonthSummary {
@@ -131,8 +124,6 @@ export interface BackupData {
   transactionSplits: TransactionSplit[];
   budgets: Budget[];
   fixedDeposits?: FixedDeposit[];
-  tags?: Tag[];
-  transactionTags?: { transaction_id: string; tag_id: string }[];
   settings: Record<string, string>;
 }
 
@@ -149,7 +140,6 @@ export interface CreateTransactionInput {
   note?: string | null;
   date: string;
   splits: SplitInput[];
-  tagIds?: string[];
 }
 
 export type FDStatus = 'active' | 'matured' | 'closed';

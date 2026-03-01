@@ -5,4 +5,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
   decimalPlaces: 2,
   currencySymbol: '$',
   lastBackupAt: null,
+  username: '',
 };

@@ -5,6 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useTransactionStore } from '../stores/useTransactionStore';
 import { useCategoryStore } from '../stores/useCategoryStore';
 import { useAccountStore } from '../stores/useAccountStore';
+import { useSettingsStore } from '../stores/useSettingsStore';
 import { transactionService } from '../services/transactionService';
 import { colors, spacing, radius } from '../theme';
 import { formatMoney } from '../utils/money';
@@ -20,6 +21,7 @@ export default function TransactionDetailScreen({
   const { removeTransaction } = useTransactionStore();
   const { categories } = useCategoryStore();
   const { accounts } = useAccountStore();
+  const { settings } = useSettingsStore();
 
   const [transaction, setTransaction] = useState<TransactionWithSplits | null>(null);
 
@@ -96,7 +98,7 @@ export default function TransactionDetailScreen({
           </View>
         </View>
         <Text style={styles.heroAmount}>
-          {amountPrefix}{formatMoney(transaction.totalAmountCents, transaction.currency)}
+          {amountPrefix}{formatMoney(transaction.totalAmountCents, transaction.currency, 2, settings.currencySymbol)}
         </Text>
         <View style={styles.heroDateRow}>
           <Icon source="calendar-outline" size={14} color="rgba(255,255,255,0.65)" />
@@ -122,7 +124,7 @@ export default function TransactionDetailScreen({
                   <Text variant="bodyLarge">{fromAcc?.name ?? 'Unknown'}</Text>
                 </View>
                 <Text variant="bodyLarge" style={{ fontWeight: '600' }}>
-                  {formatMoney(transaction.totalAmountCents, transaction.currency)}
+                  {formatMoney(transaction.totalAmountCents, transaction.currency, 2, settings.currencySymbol)}
                 </Text>
               </View>
 
@@ -135,7 +137,7 @@ export default function TransactionDetailScreen({
                   <Text variant="bodyLarge">{toAcc?.name ?? 'Unknown'}</Text>
                 </View>
                 <Text variant="bodyLarge" style={{ fontWeight: '600' }}>
-                  {formatMoney(transaction.totalAmountCents, transaction.currency)}
+                  {formatMoney(transaction.totalAmountCents, transaction.currency, 2, settings.currencySymbol)}
                 </Text>
               </View>
             </>
@@ -165,7 +167,7 @@ export default function TransactionDetailScreen({
                       <Text variant="bodyLarge">{acc?.name ?? 'Unknown'}</Text>
                     </View>
                     <Text variant="bodyLarge" style={{ fontWeight: '600' }}>
-                      {formatMoney(split.amountCents, transaction.currency)}
+                      {formatMoney(split.amountCents, transaction.currency, 2, settings.currencySymbol)}
                     </Text>
                   </View>
                 );
@@ -183,22 +185,6 @@ export default function TransactionDetailScreen({
             </View>
           )}
 
-          {transaction.tags && transaction.tags.length > 0 && (
-            <View>
-              <Divider style={{ marginTop: spacing.sm }} />
-              <View style={styles.detailRow}>
-                <Text variant="bodyMedium" style={styles.detailLabel}>Tags</Text>
-                <View style={styles.tagChipRow}>
-                  {transaction.tags.map((tag) => (
-                    <View key={tag.id} style={[styles.tagChip, { backgroundColor: tag.color + '22' }]}>
-                      <View style={[styles.tagDot, { backgroundColor: tag.color }]} />
-                      <Text style={[styles.tagChipText, { color: tag.color }]}>{tag.name}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            </View>
-          )}
         </Card.Content>
       </Card>
 
@@ -282,31 +268,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.sm,
     paddingLeft: spacing.xs,
-  },
-  tagChipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    justifyContent: 'flex-end',
-    flex: 1,
-    marginLeft: spacing.md,
-  },
-  tagChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: radius.capsule,
-  },
-  tagDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  tagChipText: {
-    fontSize: 13,
-    fontWeight: '600',
   },
   actions: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.sm },
   editButton: { flex: 1, backgroundColor: colors.primary, borderRadius: radius.capsule },

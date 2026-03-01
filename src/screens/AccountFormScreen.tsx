@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
-import { TextInput, Button, Text, Icon, Chip, Snackbar } from 'react-native-paper';
-import { useForm, Controller } from 'react-hook-form';
+import { View, ScrollView, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, TextInput as RNTextInput } from 'react-native';
+import { Button, Text, Icon, Chip, Snackbar } from 'react-native-paper';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAccountStore } from '../stores/useAccountStore';
 import { accountSchema } from '../models/schemas';
 import { colors, spacing, radius } from '../theme';
 import { dollarsToCents, centsToDollars } from '../utils/money';
+import { useSettingsStore } from '../stores/useSettingsStore';
 import type { RootStackScreenProps } from '../navigation/types';
 
 const ACCOUNT_TYPES = [
@@ -43,9 +44,50 @@ type FormData = {
   currency: string;
 };
 
+const TypePicker = React.memo(function TypePicker({ selectedType, setValue }: { selectedType: string; setValue: (name: 'type', val: FormData['type']) => void }) {
+  return (
+    <>
+      <Text variant="titleSmall" style={styles.sectionTitle}>Account Type</Text>
+      <View style={styles.chipRow}>
+        {ACCOUNT_TYPES.map(t => (
+          <Chip
+            key={t.value}
+            selected={selectedType === t.value}
+            onPress={() => setValue('type', t.value)}
+            style={[styles.chip, selectedType === t.value && styles.chipSelected]}
+            textStyle={selectedType === t.value ? styles.chipTextSelected : undefined}
+          >
+            {t.label}
+          </Chip>
+        ))}
+      </View>
+    </>
+  );
+});
+
+const IconPicker = React.memo(function IconPicker({ selectedIcon, setValue }: { selectedIcon: string; setValue: (name: 'icon', val: string) => void }) {
+  return (
+    <>
+      <Text variant="titleSmall" style={styles.sectionTitle}>Icon</Text>
+      <View style={styles.pickerGrid}>
+        {ACCOUNT_ICONS.map(icon => (
+          <TouchableOpacity
+            key={icon}
+            style={[styles.iconOption, selectedIcon === icon && { borderColor: colors.primary, borderWidth: 2 }]}
+            onPress={() => setValue('icon', icon)}
+          >
+            <Icon source={icon as any} size={24} color={selectedIcon === icon ? colors.primary : colors.text} />
+          </TouchableOpacity>
+        ))}
+      </View>
+    </>
+  );
+});
+
 export default function AccountFormScreen({ navigation, route }: RootStackScreenProps<'AccountForm'>) {
   const { accountId } = route.params ?? {};
   const { accounts, addAccount, updateAccount } = useAccountStore();
+  const { settings } = useSettingsStore();
   const isEditing = !!accountId;
   const existing = accountId ? accounts.find(a => a.id === accountId) : null;
   const [snackbar, setSnackbar] = useState('');
@@ -53,19 +95,19 @@ export default function AccountFormScreen({ navigation, route }: RootStackScreen
     existing ? centsToDollars(existing.openingBalanceCents).toFixed(2) : '0.00'
   );
 
-  const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
+  const { control, handleSubmit, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(accountSchema),
     defaultValues: {
       name: existing?.name ?? '',
       type: existing?.type ?? 'cash',
       icon: existing?.icon ?? 'wallet',
       openingBalanceCents: existing?.openingBalanceCents ?? 0,
-      currency: existing?.currency ?? 'USD',
+      currency: existing?.currency ?? settings.baseCurrency,
     },
   });
 
-  const selectedType = watch('type');
-  const selectedIcon = watch('icon');
+  const selectedType = useWatch({ control, name: 'type' });
+  const selectedIcon = useWatch({ control, name: 'icon' });
 
   useEffect(() => {
     navigation.setOptions({ title: isEditing ? 'Edit Account' : 'New Account' });
@@ -96,58 +138,55 @@ export default function AccountFormScreen({ navigation, route }: RootStackScreen
     <View style={styles.container}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 80}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <Text style={styles.label}>Account Name</Text>
         <Controller
           control={control}
           name="name"
-          render={({ field: { onChange, value } }) => (
-            <TextInput label="Account Name" value={value} onChangeText={onChange} mode="outlined" error={!!errors.name} style={styles.input} />
+          render={({ field: { onChange, onBlur, value } }) => (
+            <RNTextInput
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              placeholder="e.g. Main Checking"
+              placeholderTextColor={colors.textTertiary}
+              style={[styles.textInput, errors.name && styles.textInputError]}
+            />
           )}
         />
         {errors.name && <Text style={styles.error}>{errors.name.message}</Text>}
 
-        <Text variant="titleSmall" style={styles.sectionTitle}>Account Type</Text>
-        <View style={styles.chipRow}>
-          {ACCOUNT_TYPES.map(t => (
-            <Chip
-              key={t.value}
-              selected={selectedType === t.value}
-              onPress={() => setValue('type', t.value)}
-              style={[styles.chip, selectedType === t.value && styles.chipSelected]}
-              textStyle={selectedType === t.value ? styles.chipTextSelected : undefined}
-            >
-              {t.label}
-            </Chip>
-          ))}
+        <TypePicker selectedType={selectedType} setValue={setValue} />
+
+        <IconPicker selectedIcon={selectedIcon} setValue={setValue} />
+
+        <Text style={styles.label}>Opening Balance</Text>
+        <View style={styles.balanceRow}>
+          <Text style={styles.currencyPrefix}>{settings.currencySymbol}</Text>
+          <RNTextInput
+            value={balanceText}
+            onChangeText={handleBalanceChange}
+            keyboardType="decimal-pad"
+            placeholder="0.00"
+            placeholderTextColor={colors.textTertiary}
+            style={[styles.textInput, { flex: 1 }]}
+          />
         </View>
 
-        <Text variant="titleSmall" style={styles.sectionTitle}>Icon</Text>
-        <View style={styles.pickerGrid}>
-          {ACCOUNT_ICONS.map(icon => (
-            <TouchableOpacity
-              key={icon}
-              style={[styles.iconOption, selectedIcon === icon && { borderColor: colors.primary, borderWidth: 2 }]}
-              onPress={() => setValue('icon', icon)}
-            >
-              <Icon source={icon as any} size={24} color={selectedIcon === icon ? colors.primary : colors.text} />
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <TextInput
-          label="Opening Balance"
-          value={balanceText}
-          onChangeText={handleBalanceChange}
-          mode="outlined"
-          keyboardType="decimal-pad"
-          left={<TextInput.Affix text="$" />}
-          style={styles.input}
-        />
-
+        <Text style={styles.label}>Currency Code</Text>
         <Controller
           control={control}
           name="currency"
-          render={({ field: { onChange, value } }) => (
-            <TextInput label="Currency Code" value={value} onChangeText={onChange} mode="outlined" style={styles.input} maxLength={3} autoCapitalize="characters" />
+          render={({ field: { onChange, onBlur, value } }) => (
+            <RNTextInput
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              placeholder="USD"
+              placeholderTextColor={colors.textTertiary}
+              maxLength={3}
+              autoCapitalize="characters"
+              style={styles.textInput}
+            />
           )}
         />
 
@@ -166,7 +205,21 @@ export default function AccountFormScreen({ navigation, route }: RootStackScreen
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   scroll: { padding: spacing.cardInset, paddingBottom: 100 },
-  input: { marginBottom: spacing.xs },
+  label: { color: colors.textSecondary, fontSize: 13, marginBottom: spacing.xs, marginTop: spacing.md },
+  textInput: {
+    backgroundColor: colors.surface,
+    color: colors.text,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: Platform.OS === 'ios' ? 14 : 10,
+    marginBottom: spacing.xs,
+  },
+  textInputError: { borderColor: colors.error },
+  balanceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  currencyPrefix: { color: colors.textSecondary, fontSize: 18, marginBottom: spacing.xs },
   sectionTitle: { marginTop: spacing.lg, marginBottom: spacing.sm, color: colors.text },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
   chip: { marginBottom: spacing.xs },

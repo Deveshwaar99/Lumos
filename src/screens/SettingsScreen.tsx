@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, Alert, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
-import { Text, Snackbar, TextInput, Button, Icon } from 'react-native-paper';
+import { Text, Snackbar, TextInput, Icon } from 'react-native-paper';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { seedDemoTransactions } from '../db/seed';
 import { getDatabase, resetDatabase } from '../db/database';
@@ -50,21 +50,7 @@ export default function SettingsScreen({ navigation }: RootStackScreenProps<'Set
   const { loadAccounts } = useAccountStore();
   const { loadBudgets } = useBudgetStore();
   const [snackbar, setSnackbar] = useState('');
-  const [currencyInput, setCurrencyInput] = useState(settings.baseCurrency);
-  const [symbolInput, setSymbolInput] = useState(settings.currencySymbol);
-
   useEffect(() => { loadSettings(); }, []);
-
-  useEffect(() => {
-    setCurrencyInput(settings.baseCurrency);
-    setSymbolInput(settings.currencySymbol);
-  }, [settings]);
-
-  const handleSaveCurrency = async () => {
-    await updateSetting('baseCurrency', currencyInput);
-    await updateSetting('currencySymbol', symbolInput);
-    setSnackbar('Currency settings saved');
-  };
 
   const handleSeedDemo = () => {
     Alert.alert('Load Demo Data', 'This will add ~20 sample transactions. Continue?', [
@@ -75,7 +61,7 @@ export default function SettingsScreen({ navigation }: RootStackScreenProps<'Set
           const db = await getDatabase();
           await seedDemoTransactions(db);
           await loadTransactions(true);
-          setSnackbar('Demo data loaded!');
+          setSnackbar('Demo data loaded');
         },
       },
     ]);
@@ -124,35 +110,62 @@ export default function SettingsScreen({ navigation }: RootStackScreenProps<'Set
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.content}>
 
+        <Text style={styles.sectionHeader}>Profile</Text>
+        <GroupedCard>
+          <CardRow
+            icon="account-outline"
+            title="Name"
+            right={
+              <TextInput
+                value={settings.username}
+                onChangeText={(v) => updateSetting('username', v)}
+                placeholder="Your name"
+                placeholderTextColor={colors.textTertiary}
+                mode="flat"
+                style={styles.nameInput}
+                contentStyle={styles.inlineInputContent}
+                underlineStyle={styles.inlineInputUnderline}
+                maxLength={20}
+              />
+            }
+            isLast
+          />
+        </GroupedCard>
+
         <Text style={styles.sectionHeader}>Currency</Text>
         <GroupedCard>
-          <View style={styles.currencyRow}>
-            <TextInput
-              label="Currency Code"
-              value={currencyInput}
-              onChangeText={setCurrencyInput}
-              mode="outlined"
-              style={styles.currencyInput}
-              maxLength={3}
-              autoCapitalize="characters"
-            />
-            <TextInput
-              label="Symbol"
-              value={symbolInput}
-              onChangeText={setSymbolInput}
-              mode="outlined"
-              style={styles.symbolInput}
-              maxLength={3}
-            />
-          </View>
-          <Button
-            mode="contained"
-            onPress={handleSaveCurrency}
-            style={styles.saveBtn}
-            labelStyle={styles.saveBtnLabel}
-          >
-            Save Currency
-          </Button>
+          <CardRow
+            icon="cash"
+            title="Code"
+            right={
+              <TextInput
+                value={settings.baseCurrency}
+                onChangeText={(v) => updateSetting('baseCurrency', v.toUpperCase())}
+                mode="flat"
+                style={styles.inlineInput}
+                contentStyle={styles.inlineInputContent}
+                underlineStyle={styles.inlineInputUnderline}
+                maxLength={3}
+                autoCapitalize="characters"
+              />
+            }
+          />
+          <CardRow
+            icon="currency-usd"
+            title="Symbol"
+            right={
+              <TextInput
+                value={settings.currencySymbol}
+                onChangeText={(v) => updateSetting('currencySymbol', v)}
+                mode="flat"
+                style={styles.inlineInput}
+                contentStyle={styles.inlineInputContent}
+                underlineStyle={styles.inlineInputUnderline}
+                maxLength={3}
+              />
+            }
+            isLast
+          />
         </GroupedCard>
 
         <Text style={styles.sectionHeader}>Data</Text>
@@ -248,21 +261,27 @@ const styles = StyleSheet.create({
   cardRowRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   cardRowValue: { color: colors.textSecondary, fontWeight: '600', fontSize: 14 },
   cardDivider: { height: 1, backgroundColor: colors.border, marginLeft: spacing.cardInset + 32 },
-  currencyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.cardInset,
-    paddingTop: spacing.cardInset,
-    gap: 10,
+  nameInput: {
+    backgroundColor: 'transparent',
+    height: 36,
+    maxWidth: 160,
+    textAlign: 'right',
   },
-  currencyInput: { flex: 1 },
-  symbolInput: { width: 70 },
-  saveBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.capsule,
-    margin: spacing.cardInset,
+  inlineInput: {
+    backgroundColor: 'transparent',
+    height: 36,
+    width: 60,
+    textAlign: 'right',
   },
-  saveBtnLabel: { fontWeight: '600' },
+  inlineInputContent: {
+    color: colors.textSecondary,
+    fontWeight: '600',
+    fontSize: 14,
+    textAlign: 'right',
+  },
+  inlineInputUnderline: {
+    display: 'none',
+  },
   privacyInner: { padding: spacing.cardInset },
   privacyText: { color: colors.textSecondary, lineHeight: 22 },
   copyright: {

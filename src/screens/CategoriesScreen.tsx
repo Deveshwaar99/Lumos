@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, FlatList, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { FAB, SegmentedButtons, Snackbar, Icon, Text, Menu } from 'react-native-paper';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCategoryStore } from '../stores/useCategoryStore';
 import { colors, spacing, radius } from '../theme';
@@ -15,9 +16,9 @@ export default function CategoriesScreen({ navigation }: TabScreenProps<'Categor
   const [menuVisible, setMenuVisible] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     loadCategories();
-  }, [loadCategories]);
+  }, []));
 
   const filtered = categories.filter((c) => c.type === selectedType);
 

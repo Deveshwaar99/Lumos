@@ -23,6 +23,7 @@ interface TransactionItemProps {
   transaction: TransactionWithSplits;
   category?: Category;
   accountMap: Record<string, Account>;
+  currencySymbol?: string;
   onPress: () => void;
 }
 
@@ -30,6 +31,7 @@ function TransactionItemComponent({
   transaction,
   category,
   accountMap,
+  currencySymbol,
   onPress,
 }: TransactionItemProps) {
   const isIncome = transaction.type === 'income';
@@ -79,15 +81,6 @@ function TransactionItemComponent({
             })}
           </View>
         )}
-        {transaction.tags && transaction.tags.length > 0 && (
-          <View style={styles.badgeRow}>
-            {transaction.tags.map((tag) => (
-              <View key={tag.id} style={[styles.badge, { backgroundColor: tag.color + '22' }]}>
-                <Text style={[styles.badgeText, { color: tag.color }]}>{tag.name}</Text>
-              </View>
-            ))}
-          </View>
-        )}
         {transaction.note ? (
           <Text variant="bodySmall" style={styles.note} numberOfLines={1}>
             {transaction.note}
@@ -96,7 +89,7 @@ function TransactionItemComponent({
       </View>
       <View style={styles.right}>
         <Text variant="titleSmall" style={{ color: amountColor, fontWeight: '600' }}>
-          {prefix}{formatMoney(transaction.totalAmountCents, transaction.currency)}
+          {prefix}{formatMoney(transaction.totalAmountCents, transaction.currency, 2, currencySymbol)}
         </Text>
         <Text variant="bodySmall" style={styles.date}>
           {formatDateTimeShort(transaction.date)}

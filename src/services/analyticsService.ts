@@ -7,7 +7,7 @@ import {
   AccountPeriodBalance,
   NetWorthPoint,
 } from '../models/types';
-import { getMonthRange, getDaysInMonth } from '../utils/dates';
+import { getMonthRange, getDaysInMonth, getDaysInRange } from '../utils/dates';
 
 export const analyticsService = {
   async getMonthSummary(month: string): Promise<MonthSummary> {
@@ -217,6 +217,126 @@ export const analyticsService = {
   async getAccountPeriodBalances(month: string): Promise<AccountPeriodBalance[]> {
     const db = await getDatabase();
     const { start, end } = getMonthRange(month);
+
+    const rows = await db.getAllAsync<any>(
+      `SELECT a.id as accountId, a.name as accountName, a.type, a.icon,
+        COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
+            JOIN transactions t ON s.transaction_id = t.id
+            WHERE s.account_id = a.id AND t.type = 'income'
+              AND t.date >= ? AND t.date < ?), 0) as periodIncome,
+        COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
+            JOIN transactions t ON s.transaction_id = t.id
+            WHERE s.account_id = a.id AND t.type = 'expense'
+              AND t.date >= ? AND t.date < ?), 0) as periodExpense
+      FROM accounts a ORDER BY a.name`,
+      start, end, start, end
+    );
+
+    return rows.map((r: any) => ({
+      accountId: r.accountId,
+      accountName: r.accountName,
+      type: r.type,
+      icon: r.icon ?? 'wallet',
+      periodIncome: r.periodIncome ?? 0,
+      periodExpense: r.periodExpense ?? 0,
+    }));
+  },
+
+  // --- Range-based overloads (start/end as yyyy-MM-dd, half-open) ---
+
+  async getSummaryForRange(start: string, end: string): Promise<MonthSummary> {
+    const db = await getDatabase();
+
+    const incomeResult = await db.getFirstAsync<{ total: number }>(
+      "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'income' AND date >= ? AND date < ?",
+      start, end
+    );
+    const expenseResult = await db.getFirstAsync<{ total: number }>(
+      "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'expense' AND date >= ? AND date < ?",
+      start, end
+    );
+
+    const totalIncome = incomeResult?.total ?? 0;
+    const totalExpense = expenseResult?.total ?? 0;
+    return { totalIncome, totalExpense, net: totalIncome - totalExpense };
+  },
+
+  async getCategoryBreakdownForRange(
+    start: string,
+    end: string,
+    type: 'income' | 'expense',
+  ): Promise<CategoryBreakdown[]> {
+    const db = await getDatabase();
+
+    const rows = await db.getAllAsync<any>(
+      `SELECT t.category_id as categoryId, c.name as categoryName, c.color, c.icon,
+        SUM(t.total_amount_cents) as total
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.id
+      WHERE t.type = ? AND t.date >= ? AND t.date < ?
+      GROUP BY t.category_id`,
+      type, start, end
+    );
+
+    return rows.map((r: any) => ({
+      categoryId: r.categoryId,
+      categoryName: r.categoryName ?? 'Unknown',
+      color: r.color ?? '#999999',
+      icon: r.icon ?? 'help-circle',
+      total: r.total ?? 0,
+    }));
+  },
+
+  async getDailyExpenseFlowForRange(start: string, end: string): Promise<DailyCashFlow[]> {
+    const db = await getDatabase();
+
+    const rows = await db.getAllAsync<any>(
+      `SELECT substr(t.date, 1, 10) as date,
+        COALESCE(SUM(t.total_amount_cents), 0) as expense
+      FROM transactions t
+      WHERE t.type = 'expense' AND t.date >= ? AND t.date < ?
+      GROUP BY substr(t.date, 1, 10)`,
+      start, end
+    );
+
+    const byDate = new Map<string, number>();
+    rows.forEach((r: any) => byDate.set(r.date, r.expense ?? 0));
+
+    const days = getDaysInRange(start, end);
+    return days.map((dateStr) => ({
+      date: dateStr,
+      income: 0,
+      expense: byDate.get(dateStr) ?? 0,
+      net: -(byDate.get(dateStr) ?? 0),
+    }));
+  },
+
+  async getDailyIncomeFlowForRange(start: string, end: string): Promise<DailyCashFlow[]> {
+    const db = await getDatabase();
+
+    const rows = await db.getAllAsync<any>(
+      `SELECT substr(t.date, 1, 10) as date,
+        COALESCE(SUM(t.total_amount_cents), 0) as income
+      FROM transactions t
+      WHERE t.type = 'income' AND t.date >= ? AND t.date < ?
+      GROUP BY substr(t.date, 1, 10)`,
+      start, end
+    );
+
+    const byDate = new Map<string, number>();
+    rows.forEach((r: any) => byDate.set(r.date, r.income ?? 0));
+
+    const days = getDaysInRange(start, end);
+    return days.map((dateStr) => ({
+      date: dateStr,
+      income: byDate.get(dateStr) ?? 0,
+      expense: 0,
+      net: byDate.get(dateStr) ?? 0,
+    }));
+  },
+
+  async getAccountPeriodBalancesForRange(start: string, end: string): Promise<AccountPeriodBalance[]> {
+    const db = await getDatabase();
 
     const rows = await db.getAllAsync<any>(
       `SELECT a.id as accountId, a.name as accountName, a.type, a.icon,

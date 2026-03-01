@@ -20,14 +20,6 @@ export const backupService = {
     } catch {
       // table may not exist on older schemas
     }
-    let tags: any[] = [];
-    let transactionTags: any[] = [];
-    try {
-      tags = await db.getAllAsync('SELECT * FROM tags');
-      transactionTags = await db.getAllAsync('SELECT * FROM transaction_tags');
-    } catch {
-      // tables may not exist on older schemas
-    }
     const settingsRows = await db.getAllAsync<{ key: string; value: string }>(
       'SELECT * FROM settings'
     );
@@ -45,8 +37,6 @@ export const backupService = {
       transactionSplits: transactionSplits as any,
       budgets: budgets as any,
       fixedDeposits: fixedDeposits as any,
-      tags: tags as any,
-      transactionTags: transactionTags as any,
       settings,
     };
 
@@ -107,8 +97,6 @@ export const backupService = {
   async restoreFromData(backup: BackupData): Promise<void> {
     const db = await getDatabase();
 
-    try { await db.execAsync('DELETE FROM transaction_tags'); } catch { /* may not exist */ }
-    try { await db.execAsync('DELETE FROM tags'); } catch { /* may not exist */ }
     try { await db.execAsync('DELETE FROM fixed_deposits'); } catch { /* may not exist */ }
     await db.execAsync('DELETE FROM transaction_splits');
     await db.execAsync('DELETE FROM transactions');
@@ -213,29 +201,6 @@ export const backupService = {
       } catch {
         // skip if table doesn't exist
       }
-    }
-
-    const backupTags = backup.tags ?? [];
-    for (const tag of backupTags) {
-      const t = tag as any;
-      try {
-        await db.runAsync(
-          'INSERT INTO tags (id, name, color) VALUES (?, ?, ?)',
-          t.id, t.name, t.color,
-        );
-      } catch { /* skip duplicates */ }
-    }
-
-    const backupTxnTags = backup.transactionTags ?? [];
-    for (const tt of backupTxnTags) {
-      const t = tt as any;
-      try {
-        await db.runAsync(
-          'INSERT INTO transaction_tags (transaction_id, tag_id) VALUES (?, ?)',
-          t.transaction_id ?? t.transactionId,
-          t.tag_id ?? t.tagId,
-        );
-      } catch { /* skip */ }
     }
 
     for (const [key, value] of Object.entries(backup.settings)) {

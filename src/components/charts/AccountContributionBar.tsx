@@ -10,9 +10,10 @@ const BAR_COLORS = ['#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#F44336', '#00B
 interface AccountContributionBarProps {
   data: AccountBalance[];
   currency?: string;
+  currencySymbol?: string;
 }
 
-export default function AccountContributionBar({ data, currency = 'USD' }: AccountContributionBarProps) {
+export default function AccountContributionBar({ data, currency = 'USD', currencySymbol }: AccountContributionBarProps) {
   if (data.length === 0) {
     return (
       <View style={styles.container}>
@@ -37,7 +38,7 @@ export default function AccountContributionBar({ data, currency = 'USD' }: Accou
               <View style={[styles.bar, { width: `${width}%`, backgroundColor: color }]} />
             </View>
             <Text variant="bodySmall" style={[styles.value, item.balance < 0 && { color: colors.error }]}>
-              {formatMoney(item.balance, currency)}
+              {formatMoney(item.balance, currency, 2, currencySymbol)}
             </Text>
           </View>
         );

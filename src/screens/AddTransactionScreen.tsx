@@ -29,7 +29,6 @@ import CategoryPicker from '../components/CategoryPicker';
 import AccountPicker from '../components/AccountPicker';
 import CalculatorPad from '../components/CalculatorPad';
 import InlineCalendar from '../components/InlineCalendar';
-import TagPicker from '../components/TagPicker';
 import { colors, spacing, radius } from '../theme';
 import { dollarsToCents, formatMoney } from '../utils/money';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -85,7 +84,6 @@ export default function AddTransactionScreen({
   const [split1Expression, setSplit1Expression] = useState('');
   const [split2Expression, setSplit2Expression] = useState('');
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [tagIds, setTagIds] = useState<string[]>([]);
 
   const [categoryPickerVisible, setCategoryPickerVisible] = useState(false);
   const [account1PickerVisible, setAccount1PickerVisible] = useState(false);
@@ -137,9 +135,6 @@ export default function AddTransactionScreen({
             setSplitEnabled(true);
             setAccount2Id(txn.splits[1].accountId);
             setSplit2Expression(String(txn.splits[1].amountCents / 100));
-          }
-          if (txn.tags && txn.tags.length > 0) {
-            setTagIds(txn.tags.map((t) => t.id));
           }
         }
         setLoaded(true);
@@ -312,7 +307,6 @@ export default function AddTransactionScreen({
         note: note || null,
         date: fullDate,
         splits,
-        tagIds,
       };
 
       if (isEditing && transactionId) {
@@ -583,11 +577,6 @@ export default function AddTransactionScreen({
               activeUnderlineColor="transparent"
               textColor={colors.text}
             />
-          </View>
-
-          {/* ── Tags ── */}
-          <View style={styles.selectorsCard}>
-            <TagPicker selectedTagIds={tagIds} onTagsChange={setTagIds} />
           </View>
 
           {/* ── Date & Time ── */}

@@ -3,13 +3,14 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, Icon } from 'react-native-paper';
 import { colors, spacing } from '../theme';
 
-interface MonthNavigatorProps {
+interface PeriodNavigatorProps {
   label: string;
   onPrev: () => void;
   onNext: () => void;
+  onFilterPress?: () => void;
 }
 
-export default function MonthNavigator({ label, onPrev, onNext }: MonthNavigatorProps) {
+export default function PeriodNavigator({ label, onPrev, onNext, onFilterPress }: PeriodNavigatorProps) {
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={onPrev} hitSlop={12}>
@@ -22,7 +23,7 @@ export default function MonthNavigator({ label, onPrev, onNext }: MonthNavigator
         <TouchableOpacity onPress={onNext} hitSlop={12}>
           <Icon source="chevron-right" size={28} color={colors.text} />
         </TouchableOpacity>
-        <TouchableOpacity hitSlop={12} style={styles.filterBtn}>
+        <TouchableOpacity hitSlop={12} style={styles.filterBtn} onPress={onFilterPress}>
           <Icon source="filter-variant" size={22} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>

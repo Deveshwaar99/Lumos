@@ -9,9 +9,10 @@ import type { DailyCashFlow } from '../../models/types';
 interface CashFlowLineProps {
   data: DailyCashFlow[];
   currency?: string;
+  currencySymbol?: string;
 }
 
-export default function CashFlowLine({ data, currency = 'USD' }: CashFlowLineProps) {
+export default function CashFlowLine({ data, currency = 'USD', currencySymbol }: CashFlowLineProps) {
   if (data.length === 0) {
     return (
       <View style={styles.container}>
@@ -56,10 +57,10 @@ export default function CashFlowLine({ data, currency = 'USD' }: CashFlowLinePro
       </ScrollView>
       <View style={styles.summary}>
         <Text variant="bodySmall" style={styles.summaryText}>
-          Best day: {formatMoney(Math.max(...values), currency)}
+          Best day: {formatMoney(Math.max(...values), currency, 2, currencySymbol)}
         </Text>
         <Text variant="bodySmall" style={styles.summaryText}>
-          Worst day: {formatMoney(Math.min(...values), currency)}
+          Worst day: {formatMoney(Math.min(...values), currency, 2, currencySymbol)}
         </Text>
       </View>
     </View>

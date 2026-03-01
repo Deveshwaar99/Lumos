@@ -9,9 +9,10 @@ interface IncomeExpensePieProps {
   income: number;
   expense: number;
   currency?: string;
+  currencySymbol?: string;
 }
 
-export default function IncomeExpensePie({ income, expense, currency = 'USD' }: IncomeExpensePieProps) {
+export default function IncomeExpensePie({ income, expense, currency = 'USD', currencySymbol }: IncomeExpensePieProps) {
   const total = income + expense;
   if (total === 0) {
     return (
@@ -59,11 +60,11 @@ export default function IncomeExpensePie({ income, expense, currency = 'USD' }: 
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.dot, { backgroundColor: colors.income }]} />
-          <Text variant="bodySmall">Income: {formatMoney(income, currency)}</Text>
+          <Text variant="bodySmall">Income: {formatMoney(income, currency, 2, currencySymbol)}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.dot, { backgroundColor: colors.expense }]} />
-          <Text variant="bodySmall">Expense: {formatMoney(expense, currency)}</Text>
+          <Text variant="bodySmall">Expense: {formatMoney(expense, currency, 2, currencySymbol)}</Text>
         </View>
       </View>
     </View>

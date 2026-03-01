@@ -4,7 +4,6 @@ import { Text, FAB, Icon, Divider } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { TouchableOpacity } from 'react-native';
-import { format, parseISO } from 'date-fns';
 import { useTransactionStore } from '../stores/useTransactionStore';
 import { useCategoryStore } from '../stores/useCategoryStore';
 import { useAccountStore } from '../stores/useAccountStore';
@@ -12,11 +11,17 @@ import { useBudgetStore } from '../stores/useBudgetStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { analyticsService } from '../services/analyticsService';
 import TransactionItem from '../components/TransactionItem';
-import MonthNavigator from '../components/MonthNavigator';
+import PeriodNavigator from '../components/PeriodNavigator';
+import TimePeriodPicker from '../components/TimePeriodPicker';
 import SummaryBar from '../components/SummaryBar';
 import DateHeader from '../components/DateHeader';
 import { colors, spacing, radius } from '../theme';
-import { getCurrentMonth, getMonthLabel, addMonths, getMonthRange } from '../utils/dates';
+import {
+  getTimePeriodRange,
+  getTimePeriodLabel,
+  stepAnchor,
+  type TimePeriod,
+} from '../utils/dates';
 import { transactionService } from '../services/transactionService';
 import type { TabScreenProps } from '../navigation/types';
 import type { TransactionWithSplits, MonthSummary } from '../models/types';
@@ -33,10 +38,15 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
   const { settings, loadSettings } = useSettingsStore();
   const insets = useSafeAreaInsets();
 
-  const [month, setMonth] = useState(getCurrentMonth());
+  const [anchor, setAnchor] = useState(() => new Date());
+  const [period, setPeriod] = useState<TimePeriod>('month');
+  const [filterVisible, setFilterVisible] = useState(false);
   const [transactions, setTransactions] = useState<TransactionWithSplits[]>([]);
   const [summary, setSummary] = useState<MonthSummary>({ totalIncome: 0, totalExpense: 0, net: 0 });
   const [refreshing, setRefreshing] = useState(false);
+
+  const range = useMemo(() => getTimePeriodRange(anchor, period), [anchor, period]);
+  const navLabel = useMemo(() => getTimePeriodLabel(anchor, period), [anchor, period]);
 
   const [searchActive, setSearchActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -78,8 +88,7 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
 
   const loadData = useCallback(async () => {
     await Promise.all([loadCategories(), loadAccounts(), loadBudgets(), loadSettings()]);
-    const range = getMonthRange(month);
-    const [monthTxns, monthSummary] = await Promise.all([
+    const [txns, rangeSummary] = await Promise.all([
       transactionService.getAll(
         {
           dateFrom: range.start,
@@ -90,11 +99,11 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
         },
         500,
       ),
-      analyticsService.getMonthSummary(month),
+      analyticsService.getSummaryForRange(range.start, range.end),
     ]);
-    setTransactions(monthTxns);
-    setSummary(monthSummary);
-  }, [month]);
+    setTransactions(txns);
+    setSummary(rangeSummary);
+  }, [range.start, range.end]);
 
   useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
 
@@ -104,8 +113,8 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
     setRefreshing(false);
   };
 
-  const handlePrevMonth = () => setMonth((m) => addMonths(m, -1));
-  const handleNextMonth = () => setMonth((m) => addMonths(m, 1));
+  const handlePrev = () => setAnchor((a) => stepAnchor(a, period, -1));
+  const handleNext = () => setAnchor((a) => stepAnchor(a, period, 1));
 
   const categoryMap = useMemo(() => Object.fromEntries(categories.map(c => [c.id, c])), [categories]);
   const accountMap = useMemo(() => Object.fromEntries(accounts.map(a => [a.id, a])), [accounts]);
@@ -166,19 +175,25 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
               <TouchableOpacity hitSlop={12} onPress={() => navigation.navigate('Settings' as any)}>
                 <Icon source="menu" size={24} color={colors.text} />
               </TouchableOpacity>
-              <Text variant="titleLarge" style={styles.appTitle}>
-                {'L'}
-                <Text style={styles.appTitleRest}>umos</Text>
-              </Text>
+              {settings.username ? (
+                <Text variant="titleLarge" style={styles.appTitle}>
+                  Hi {settings.username}!
+                </Text>
+              ) : (
+                <Text variant="titleLarge" style={styles.appTitle}>
+                  {'L'}<Text style={styles.appTitleRest}>umos</Text>
+                </Text>
+              )}
               <TouchableOpacity hitSlop={12} onPress={openSearch}>
                 <Icon source="magnify" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
 
-            <MonthNavigator
-              label={getMonthLabel(month)}
-              onPrev={handlePrevMonth}
-              onNext={handleNextMonth}
+            <PeriodNavigator
+              label={navLabel}
+              onPrev={handlePrev}
+              onNext={handleNext}
+              onFilterPress={() => setFilterVisible(true)}
             />
 
             <SummaryBar
@@ -186,6 +201,7 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
               expense={summary.totalExpense}
               balance={summary.net}
               currency={settings.baseCurrency}
+              currencySymbol={settings.currencySymbol}
             />
           </>
         )}
@@ -202,6 +218,7 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
               transaction={item}
               category={item.categoryId ? categoryMap[item.categoryId] : undefined}
               accountMap={accountMap}
+              currencySymbol={settings.currencySymbol}
               onPress={() => navigation.navigate('TransactionDetail', { transactionId: item.id })}
             />
           </>
@@ -214,7 +231,7 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
                 ? 'No matching transactions'
                 : searchActive
                   ? 'Type to search across all transactions'
-                  : 'No transactions this month'}
+                  : 'No transactions in this period'}
             </Text>
           </View>
         }
@@ -236,6 +253,16 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
           color="#fff"
         />
       )}
+
+      <TimePeriodPicker
+        visible={filterVisible}
+        onDismiss={() => setFilterVisible(false)}
+        selected={period}
+        onSelect={(p) => {
+          setPeriod(p);
+          setAnchor(new Date());
+        }}
+      />
     </View>
   );
 }

@@ -9,22 +9,23 @@ interface SummaryBarProps {
   expense: number;
   balance: number;
   currency?: string;
+  currencySymbol?: string;
 }
 
-export default function SummaryBar({ income, expense, balance, currency = 'USD' }: SummaryBarProps) {
+export default function SummaryBar({ income, expense, balance, currency = 'USD', currencySymbol }: SummaryBarProps) {
   return (
     <View style={styles.container}>
       <View style={styles.item}>
         <Text style={styles.label}>EXPENSE</Text>
-        <Text style={[styles.amount, { color: colors.expense }]}>{formatMoney(expense, currency)}</Text>
+        <Text style={[styles.amount, { color: colors.expense }]}>{formatMoney(expense, currency, 2, currencySymbol)}</Text>
       </View>
       <View style={styles.item}>
         <Text style={styles.label}>INCOME</Text>
-        <Text style={[styles.amount, { color: colors.income }]}>{formatMoney(income, currency)}</Text>
+        <Text style={[styles.amount, { color: colors.income }]}>{formatMoney(income, currency, 2, currencySymbol)}</Text>
       </View>
       <View style={styles.item}>
         <Text style={styles.label}>BALANCE</Text>
-        <Text style={styles.amount}>{formatMoney(balance, currency)}</Text>
+        <Text style={styles.amount}>{formatMoney(balance, currency, 2, currencySymbol)}</Text>
       </View>
     </View>
   );

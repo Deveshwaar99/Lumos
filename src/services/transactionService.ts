@@ -7,7 +7,6 @@ import {
   CreateTransactionInput,
 } from '../models/types';
 import { generateId } from '../utils/uuid';
-import { tagService } from './tagService';
 
 function mapRow(row: any): Transaction {
   return {
@@ -51,13 +50,6 @@ function buildWhereClause(filter: TransactionFilter): { sql: string; params: any
     );
     params.push(q, q, q);
   }
-  if (filter.tagIds && filter.tagIds.length > 0) {
-    const placeholders = filter.tagIds.map(() => '?').join(',');
-    conditions.push(
-      `t.id IN (SELECT transaction_id FROM transaction_tags WHERE tag_id IN (${placeholders}))`
-    );
-    params.push(...filter.tagIds);
-  }
   const sql = conditions.length > 0 ? ' WHERE ' + conditions.join(' AND ') : '';
   return { sql, params };
 }
@@ -80,8 +72,7 @@ export const transactionService = {
     const splits = await db.getAllAsync<any>(
       'SELECT * FROM transaction_splits WHERE transaction_id = ?', id
     );
-    const tags = await tagService.getTagsForTransaction(id);
-    return { ...txn, splits: splits.map(mapSplitRow), tags };
+    return { ...txn, splits: splits.map(mapSplitRow) };
   },
 
   async create(data: CreateTransactionInput): Promise<TransactionWithSplits> {
@@ -106,18 +97,12 @@ export const transactionService = {
       splits.push({ id: splitId, transactionId: id, accountId: sp.accountId, amountCents: sp.amountCents });
     }
 
-    if (data.tagIds && data.tagIds.length > 0) {
-      await tagService.setTransactionTags(id, data.tagIds);
-    }
-
-    const tags = data.tagIds ? await tagService.getTagsForTransaction(id) : [];
-
     return {
       id, type: data.type, totalAmountCents: data.totalAmountCents,
       currency: data.currency, categoryId: data.categoryId ?? null,
       note: data.note ?? null, date: data.date,
       linkedTransactionId: null, createdAt: now, updatedAt: now,
-      splits, tags,
+      splits,
     };
   },
 
@@ -149,9 +134,6 @@ export const transactionService = {
       }
     }
 
-    if (data.tagIds !== undefined) {
-      await tagService.setTransactionTags(id, data.tagIds ?? []);
-    }
   },
 
   async delete(id: string): Promise<void> {
@@ -309,7 +291,6 @@ export const transactionService = {
       existing.push(split);
       splitMap.set(split.transactionId, existing);
     }
-    const tagMap = await tagService.getTagsForTransactions(ids);
-    return txns.map(t => ({ ...t, splits: splitMap.get(t.id) ?? [], tags: tagMap.get(t.id) ?? [] }));
+    return txns.map(t => ({ ...t, splits: splitMap.get(t.id) ?? [] }));
   },
 };
