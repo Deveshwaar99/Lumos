@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#2D2B2B"
+      "backgroundColor": "#242220"
     },
     "ios": {
       "supportsTablet": true,
@@ -17,13 +17,13 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#2D2B2B",
+        "backgroundColor": "#242220",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "navigationBarColor": "#2D2B2B",
-      "navigationBarStyle": "dark-content",
+      "navigationBarColor": "#242220",
+      "navigationBarStyle": "light-content",
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -34,7 +34,7 @@
     ],
     "androidStatusBar": {
       "barStyle": "light-content",
-      "backgroundColor": "#2D2B2B",
+      "backgroundColor": "#242220",
       "translucent": true
     }
   }

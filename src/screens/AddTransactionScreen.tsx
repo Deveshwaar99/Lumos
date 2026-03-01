@@ -367,7 +367,7 @@ export default function AddTransactionScreen({
       </ScrollView>
       </KeyboardAvoidingView>
 
-      <View style={styles.bottomSection}>
+      <View style={[styles.bottomSection, { paddingBottom: insets.bottom + spacing.sm }]}>
         <AmountDisplay
           expression={expression}
           currencySymbol={settings.currencySymbol}

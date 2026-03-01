@@ -32,18 +32,18 @@ export const colors = {
   successContainer: '#1B5E20',
   onSuccess: '#FFFFFF',
 
-  background: '#2D2B2B',
-  surface: '#3A3836',
-  surfaceVariant: '#4A4845',
-  surfaceElevated: '#4A4845',
+  background: '#242220',
+  surface: '#332F2D',
+  surfaceVariant: '#433F3C',
+  surfaceElevated: '#433F3C',
 
-  outline: '#5A5855',
-  outlineVariant: '#4A4845',
+  outline: '#544F4C',
+  outlineVariant: '#433F3C',
 
   text: '#E8E4DE',
   textSecondary: '#9E9A94',
   textTertiary: '#7A7672',
-  textInverse: '#2D2B2B',
+  textInverse: '#242220',
 
   income: '#4CAF50',
   incomeBg: '#1B5E20',
@@ -52,7 +52,7 @@ export const colors = {
   transfer: '#42A5F5',
   transferBg: '#0D47A1',
 
-  border: '#4A4845',
+  border: '#433F3C',
 
   scrim: 'rgba(0, 0, 0, 0.6)',
   backdrop: 'rgba(0, 0, 0, 0.7)',
