@@ -1,10 +1,10 @@
 export const colors = {
-  primary: '#FC4C02',
-  primaryLight: '#FF7A3D',
-  primaryDark: '#C63A00',
-  primaryContainer: '#3D1200',
+  primary: '#6453B8',
+  primaryLight: '#8B7DD1',
+  primaryDark: '#4A3D8F',
+  primaryContainer: '#1E1545',
   onPrimary: '#FFFFFF',
-  onPrimaryContainer: '#FFB899',
+  onPrimaryContainer: '#C5BFEF',
 
   secondary: '#5C6BC0',
   secondaryLight: '#7986CB',
@@ -32,18 +32,18 @@ export const colors = {
   successContainer: '#1B5E20',
   onSuccess: '#FFFFFF',
 
-  background: '#242220',
-  surface: '#332F2D',
-  surfaceVariant: '#433F3C',
-  surfaceElevated: '#433F3C',
+  background: '#1A1A2E',
+  surface: '#252540',
+  surfaceVariant: '#2F2F4A',
+  surfaceElevated: '#2F2F4A',
 
-  outline: '#544F4C',
-  outlineVariant: '#433F3C',
+  outline: '#3D3D5C',
+  outlineVariant: '#2F2F4A',
 
-  text: '#E8E4DE',
-  textSecondary: '#9E9A94',
-  textTertiary: '#7A7672',
-  textInverse: '#242220',
+  text: '#E8E6F0',
+  textSecondary: '#9896A8',
+  textTertiary: '#6E6C82',
+  textInverse: '#1A1A2E',
 
   income: '#4CAF50',
   incomeBg: '#1B5E20',
@@ -52,14 +52,14 @@ export const colors = {
   transfer: '#42A5F5',
   transferBg: '#0D47A1',
 
-  border: '#433F3C',
+  border: '#2F2F4A',
 
   scrim: 'rgba(0, 0, 0, 0.6)',
   backdrop: 'rgba(0, 0, 0, 0.7)',
 } as const;
 
 export const CATEGORY_COLORS = [
-  '#FC4C02',
+  '#6453B8',
   '#5C6BC0',
   '#FF7043',
   '#AB47BC',

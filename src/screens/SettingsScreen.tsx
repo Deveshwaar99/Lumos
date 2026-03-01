@@ -131,7 +131,7 @@ export default function SettingsScreen({ navigation }: RootStackScreenProps<'Set
         <GroupedCard>
           <View style={styles.privacyInner}>
             <Text variant="bodyMedium" style={styles.privacyText}>
-              MyMoney stores all your data locally on your device. No data is sent to any server. No internet
+              Lumos stores all your data locally on your device. No data is sent to any server. No internet
               connection is required. Your financial data stays private and secure on your device.
             </Text>
           </View>
@@ -146,11 +146,18 @@ export default function SettingsScreen({ navigation }: RootStackScreenProps<'Set
           />
           <CardRow
             icon="heart-outline"
-            title="MyMoney"
+            title="Lumos"
             right={<Text style={styles.cardRowValue}>Finance Manager</Text>}
+          />
+          <CardRow
+            icon="code-tags"
+            title="Built by"
+            right={<Text style={styles.cardRowValue}>Devesh</Text>}
             isLast
           />
         </GroupedCard>
+
+        <Text style={styles.copyright}>{'\u00A9'} 2026 Devesh. All rights reserved.</Text>
 
       </ScrollView>
       </KeyboardAvoidingView>
@@ -208,4 +215,11 @@ const styles = StyleSheet.create({
   saveBtnLabel: { fontWeight: '600' },
   privacyInner: { padding: spacing.cardInset },
   privacyText: { color: colors.textSecondary, lineHeight: 22 },
+  copyright: {
+    color: colors.textTertiary,
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: spacing.xl,
+    marginBottom: spacing.lg,
+  },
 });

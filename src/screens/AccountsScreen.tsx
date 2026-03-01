@@ -11,22 +11,6 @@ import EmptyState from '../components/EmptyState';
 import type { TabScreenProps } from '../navigation/types';
 import type { Account } from '../models/types';
 
-const ACCOUNT_TYPE_COLORS: Record<string, string> = {
-  savings: '#4CAF50',
-  bank: '#42A5F5',
-  cash: '#FFA726',
-  card: '#EF5350',
-  other: '#AB47BC',
-};
-
-const ACCOUNT_TYPE_LABELS: Record<string, string> = {
-  savings: 'Savings',
-  bank: 'Bank',
-  cash: 'Cash / Wallet',
-  card: 'Credit Cards',
-  other: 'Other',
-};
-
 export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'>) {
   const { accounts, balances, loadAccounts, removeAccount } = useAccountStore();
   const { settings } = useSettingsStore();
@@ -42,32 +26,19 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
   const portfolioData = useMemo(() => {
     let totalAssets = 0;
     let totalLiabilities = 0;
-    const typeGroups: Record<string, number> = {};
 
     for (const acc of accounts) {
       const bal = balances[acc.id] ?? acc.openingBalanceCents;
-      const accType = acc.type;
 
-      if (!typeGroups[accType]) typeGroups[accType] = 0;
-      typeGroups[accType] += bal;
-
-      if (accType === 'card' || bal < 0) {
+      if (acc.type === 'card' || bal < 0) {
         totalLiabilities += Math.abs(bal);
       } else {
         totalAssets += bal;
       }
     }
 
-    const typeEntries = Object.entries(typeGroups)
-      .filter(([, amount]) => amount !== 0 || accounts.some(a => a.type === Object.keys(typeGroups).find(k => typeGroups[k] === amount)))
-      .map(([type, amount]) => ({
-        type,
-        label: ACCOUNT_TYPE_LABELS[type] || type,
-        color: ACCOUNT_TYPE_COLORS[type] || '#AB47BC',
-        amount,
-      }));
-
-    return { totalAssets, totalLiabilities, typeEntries };
+    const netBalance = totalAssets - totalLiabilities;
+    return { totalAssets, totalLiabilities, netBalance };
   }, [accounts, balances]);
 
   const handleDelete = useCallback(async (acc: Account) => {
@@ -106,38 +77,37 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
     <View style={styles.portfolioCard}>
       <Text style={styles.portfolioTitle}>My Portfolio</Text>
 
-      <View style={styles.portfolioRow}>
-        <View style={[styles.portfolioDot, { backgroundColor: colors.income }]} />
-        <Text style={styles.portfolioLabel}>Total Assets</Text>
-      </View>
-      <Text style={styles.portfolioAssetAmount}>
-        {formatMoney(portfolioData.totalAssets, currency)}
+      <Text style={styles.balanceCaption}>Total Balance</Text>
+      <Text style={[
+        styles.balanceHero,
+        { color: portfolioData.netBalance >= 0 ? colors.income : colors.expense },
+      ]}>
+        {formatMoney(portfolioData.netBalance, currency)}
       </Text>
 
-      <View style={[styles.portfolioRow, { marginTop: spacing.md }]}>
-        <View style={[styles.portfolioDot, { backgroundColor: colors.warning }]} />
-        <Text style={styles.portfolioLabel}>Total Liabilities</Text>
-      </View>
-      <Text style={styles.portfolioLiabilityAmount}>
-        {formatMoney(portfolioData.totalLiabilities, currency)}
-      </Text>
-
-      {portfolioData.typeEntries.length > 0 && (
-        <View style={styles.typeGrid}>
-          {portfolioData.typeEntries.map((entry) => (
-            <View key={entry.type} style={styles.typeGridItem}>
-              <View style={[styles.typeDot, { backgroundColor: entry.color }]} />
-              <Text style={styles.typeLabel}>{entry.label}</Text>
-              <Text style={[
-                styles.typeAmount,
-                entry.amount < 0 && { color: colors.expense },
-              ]}>
-                {formatMoney(entry.amount, currency)}
-              </Text>
-            </View>
-          ))}
+      <View style={styles.summaryRow}>
+        <View style={styles.summaryItem}>
+          <View style={styles.summaryHeader}>
+            <View style={[styles.portfolioDot, { backgroundColor: colors.income }]} />
+            <Text style={styles.summaryLabel}>Assets</Text>
+          </View>
+          <Text style={[styles.summaryAmount, { color: colors.income }]}>
+            {formatMoney(portfolioData.totalAssets, currency)}
+          </Text>
         </View>
-      )}
+
+        <View style={styles.summaryDivider} />
+
+        <View style={styles.summaryItem}>
+          <View style={styles.summaryHeader}>
+            <View style={[styles.portfolioDot, { backgroundColor: colors.warning }]} />
+            <Text style={styles.summaryLabel}>Liabilities</Text>
+          </View>
+          <Text style={[styles.summaryAmount, { color: colors.warning }]}>
+            {formatMoney(portfolioData.totalLiabilities, currency)}
+          </Text>
+        </View>
+      </View>
     </View>
   );
 
@@ -219,66 +189,57 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: spacing.lg,
   },
-  portfolioRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  portfolioDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  portfolioLabel: {
+  balanceCaption: {
     color: colors.textSecondary,
     fontSize: 13,
     fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
-  portfolioAssetAmount: {
-    color: colors.income,
-    fontSize: 28,
-    fontWeight: '700',
+  balanceHero: {
+    fontSize: 32,
+    fontWeight: '800',
     marginTop: spacing.xs,
-    marginLeft: spacing.lg,
+    marginBottom: spacing.lg,
   },
-  portfolioLiabilityAmount: {
-    color: colors.warning,
-    fontSize: 22,
-    fontWeight: '700',
-    marginTop: spacing.xs,
-    marginLeft: spacing.lg,
-  },
-  typeGrid: {
+  summaryRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: spacing.lg,
-    borderTopWidth: 0.5,
-    borderTopColor: colors.border,
-    paddingTop: spacing.md,
+    alignItems: 'stretch',
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: radius.md,
+    padding: spacing.md,
   },
-  typeGridItem: {
-    width: '50%',
-    paddingVertical: spacing.sm,
-    paddingRight: spacing.sm,
+  summaryItem: {
+    flex: 1,
+    paddingHorizontal: spacing.sm,
   },
-  typeDot: {
+  summaryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  summaryLabel: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  summaryAmount: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  summaryDivider: {
+    width: 1,
+    backgroundColor: colors.border,
+    marginVertical: spacing.xxs,
+  },
+  portfolioDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginBottom: spacing.xs,
   },
-  typeLabel: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  typeAmount: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '700',
-    marginTop: spacing.xxs,
-  },
-
   accountCard: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,

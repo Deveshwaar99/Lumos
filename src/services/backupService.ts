@@ -33,7 +33,7 @@ export const backupService = {
       settings,
     };
 
-    const fileName = `mymoney-backup-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+    const fileName = `lumos-backup-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
     const file = new File(Paths.cache, fileName);
     file.write(JSON.stringify(backup, null, 2));
 
@@ -48,7 +48,7 @@ export const backupService = {
   async shareBackup(filePath: string): Promise<void> {
     await Sharing.shareAsync(filePath, {
       mimeType: 'application/json',
-      dialogTitle: 'Save MyMoney Backup',
+      dialogTitle: 'Save Lumos Backup',
     });
   },
 

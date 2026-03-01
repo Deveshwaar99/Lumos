@@ -91,7 +91,7 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
           <TouchableOpacity hitSlop={12} onPress={() => navigation.navigate('Settings' as any)}>
             <Icon source="menu" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text variant="titleLarge" style={styles.appTitle}>MyMoney</Text>
+          <Text variant="titleLarge" style={styles.appTitle}>Lumos</Text>
           <TouchableOpacity hitSlop={12}>
             <Icon source="magnify" size={24} color={colors.text} />
           </TouchableOpacity>

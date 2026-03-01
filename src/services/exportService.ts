@@ -80,7 +80,7 @@ export const exportService = {
     });
 
     const csv = generateCSV(headers, csvRows);
-    const fileName = `mymoney-transactions-${new Date().toISOString().replace(/[:.]/g, '-')}.csv`;
+    const fileName = `lumos-transactions-${new Date().toISOString().replace(/[:.]/g, '-')}.csv`;
     const file = new File(Paths.cache, fileName);
     file.write(csv);
     await Sharing.shareAsync(file.uri, {
