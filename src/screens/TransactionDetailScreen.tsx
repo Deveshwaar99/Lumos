@@ -43,7 +43,8 @@ export default function TransactionDetailScreen({
   }
 
   const isIncome = transaction.type === 'income';
-  const isSplit = transaction.splits.length > 1;
+  const isTransfer = transaction.type === 'transfer';
+  const isSplit = !isTransfer && transaction.splits.length > 1;
 
   const handleEdit = () => {
     navigation.navigate('AddTransaction', { transactionId: transaction.id });
@@ -70,27 +71,32 @@ export default function TransactionDetailScreen({
   const hasTime = transaction.date.includes('T');
   const dateLabel = formatDate(transaction.date);
   const timeLabel = hasTime ? formatTimeShort(transaction.date) : null;
-  const heroBackground = isIncome ? '#1B5E20' : '#7F1D1D';
+  const heroBackground = isTransfer ? colors.transferBg : isIncome ? '#1B5E20' : '#7F1D1D';
+  const heroIcon = isTransfer
+    ? 'swap-horizontal-circle-outline'
+    : isIncome
+      ? 'arrow-down-circle-outline'
+      : 'arrow-up-circle-outline';
+  const heroLabel = isTransfer ? 'Transfer' : isIncome ? 'Income' : 'Expense';
+  const amountPrefix = isTransfer ? '' : isIncome ? '+' : '-';
+
+  const fromAcc = isTransfer && transaction.splits[0] ? accountMap[transaction.splits[0].accountId] : null;
+  const toAcc = isTransfer && transaction.splits[1] ? accountMap[transaction.splits[1].accountId] : null;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={[styles.heroCard, { backgroundColor: heroBackground }]}>
         <View style={styles.heroBadgeRow}>
           <View style={styles.heroBadge}>
-            <Icon
-              source={isIncome ? 'arrow-down-circle-outline' : 'arrow-up-circle-outline'}
-              size={16}
-              color="rgba(255,255,255,0.9)"
-            />
+            <Icon source={heroIcon} size={16} color="rgba(255,255,255,0.9)" />
             <Text style={styles.heroBadgeText}>
-              {isIncome ? 'Income' : 'Expense'}
+              {heroLabel}
               {isSplit ? ' \u00B7 Split' : ''}
             </Text>
           </View>
         </View>
         <Text style={styles.heroAmount}>
-          {isIncome ? '+' : '-'}
-          {formatMoney(transaction.totalAmountCents, transaction.currency)}
+          {amountPrefix}{formatMoney(transaction.totalAmountCents, transaction.currency)}
         </Text>
         <View style={styles.heroDateRow}>
           <Icon source="calendar-outline" size={14} color="rgba(255,255,255,0.65)" />
@@ -107,35 +113,65 @@ export default function TransactionDetailScreen({
 
       <Card style={styles.card}>
         <Card.Content>
-          <View style={styles.detailRow}>
-            <Text variant="bodyMedium" style={styles.detailLabel}>Category</Text>
-            <View style={styles.detailValue}>
-              {category && (
-                <Icon source={category.icon as any} size={18} color={category.color} />
-              )}
-              <Text variant="bodyLarge">{category?.name ?? 'Unknown'}</Text>
-            </View>
-          </View>
-
-          <Divider />
-
-          <Text variant="titleSmall" style={styles.splitHeader}>
-            {isSplit ? 'Split Breakdown' : 'Account'}
-          </Text>
-          {transaction.splits.map((split, idx) => {
-            const acc = accountMap[split.accountId];
-            return (
-              <View key={split.id} style={styles.splitRow}>
+          {isTransfer ? (
+            <>
+              <Text variant="titleSmall" style={styles.splitHeader}>From</Text>
+              <View style={styles.splitRow}>
                 <View style={styles.detailValue}>
-                  {acc && <Icon source={acc.icon as any} size={18} color={idx === 0 ? colors.primary : colors.secondary} />}
-                  <Text variant="bodyLarge">{acc?.name ?? 'Unknown'}</Text>
+                  {fromAcc && <Icon source={fromAcc.icon as any} size={18} color={colors.expense} />}
+                  <Text variant="bodyLarge">{fromAcc?.name ?? 'Unknown'}</Text>
                 </View>
                 <Text variant="bodyLarge" style={{ fontWeight: '600' }}>
-                  {formatMoney(split.amountCents, transaction.currency)}
+                  {formatMoney(transaction.totalAmountCents, transaction.currency)}
                 </Text>
               </View>
-            );
-          })}
+
+              <Divider />
+
+              <Text variant="titleSmall" style={styles.splitHeader}>To</Text>
+              <View style={styles.splitRow}>
+                <View style={styles.detailValue}>
+                  {toAcc && <Icon source={toAcc.icon as any} size={18} color={colors.income} />}
+                  <Text variant="bodyLarge">{toAcc?.name ?? 'Unknown'}</Text>
+                </View>
+                <Text variant="bodyLarge" style={{ fontWeight: '600' }}>
+                  {formatMoney(transaction.totalAmountCents, transaction.currency)}
+                </Text>
+              </View>
+            </>
+          ) : (
+            <>
+              <View style={styles.detailRow}>
+                <Text variant="bodyMedium" style={styles.detailLabel}>Category</Text>
+                <View style={styles.detailValue}>
+                  {category && (
+                    <Icon source={category.icon as any} size={18} color={category.color} />
+                  )}
+                  <Text variant="bodyLarge">{category?.name ?? 'Unknown'}</Text>
+                </View>
+              </View>
+
+              <Divider />
+
+              <Text variant="titleSmall" style={styles.splitHeader}>
+                {isSplit ? 'Split Breakdown' : 'Account'}
+              </Text>
+              {transaction.splits.map((split, idx) => {
+                const acc = accountMap[split.accountId];
+                return (
+                  <View key={split.id} style={styles.splitRow}>
+                    <View style={styles.detailValue}>
+                      {acc && <Icon source={acc.icon as any} size={18} color={idx === 0 ? colors.primary : colors.secondary} />}
+                      <Text variant="bodyLarge">{acc?.name ?? 'Unknown'}</Text>
+                    </View>
+                    <Text variant="bodyLarge" style={{ fontWeight: '600' }}>
+                      {formatMoney(split.amountCents, transaction.currency)}
+                    </Text>
+                  </View>
+                );
+              })}
+            </>
+          )}
 
           {transaction.note && (
             <View>

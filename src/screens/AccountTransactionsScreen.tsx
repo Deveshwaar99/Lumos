@@ -97,7 +97,7 @@ export default function AccountTransactionsScreen({
             {index > 0 && <Divider style={styles.itemDivider} />}
             <TransactionItem
               transaction={item}
-              category={categoryMap[item.categoryId]}
+              category={item.categoryId ? categoryMap[item.categoryId] : undefined}
               accountMap={accountMap}
               onPress={() => navigation.navigate('AddTransaction', { transactionId: item.id })}
             />

@@ -10,6 +10,7 @@ interface AccountPickerProps {
   onSelect: (account: Account) => void;
   accounts: Account[];
   selectedId?: string;
+  title?: string;
 }
 
 export default function AccountPicker({
@@ -18,12 +19,13 @@ export default function AccountPicker({
   onSelect,
   accounts,
   selectedId,
+  title,
 }: AccountPickerProps) {
   return (
     <Portal>
       <Modal visible={visible} onDismiss={onDismiss} contentContainerStyle={styles.modal}>
         <Text variant="titleMedium" style={styles.title}>
-          Select Account
+          {title ?? 'Select Account'}
         </Text>
         <FlatList
           data={accounts}

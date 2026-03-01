@@ -32,6 +32,7 @@ import InlineCalendar from '../components/InlineCalendar';
 import { colors, spacing, radius } from '../theme';
 import { dollarsToCents, formatMoney } from '../utils/money';
 import type { RootStackScreenProps } from '../navigation/types';
+import type { TransactionType } from '../models/types';
 
 type PanelType = 'none' | 'calculator' | 'calendar';
 
@@ -70,7 +71,8 @@ export default function AddTransactionScreen({
   const [loaded, setLoaded] = useState(!transactionId);
   const isEditing = !!existing;
 
-  const [type, setType] = useState<'income' | 'expense'>(initialType);
+  const isTransfer = (t: TransactionType) => t === 'transfer';
+  const [type, setType] = useState<TransactionType>(initialType);
   const [expression, setExpression] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [account1Id, setAccount1Id] = useState('');
@@ -90,9 +92,10 @@ export default function AddTransactionScreen({
 
   const [activePanel, setActivePanel] = useState<PanelType>('none');
   const panelAnim = useRef(new Animated.Value(0)).current;
-  const typeAnim = useRef(new Animated.Value(initialType === 'income' ? 0 : 1)).current;
+  const typeAnimVal = initialType === 'income' ? 0 : initialType === 'expense' ? 1 : 2;
+  const typeAnim = useRef(new Animated.Value(typeAnimVal)).current;
 
-  const filteredCategories = categories.filter((c) => c.type === type);
+  const filteredCategories = isTransfer(type) ? [] : categories.filter((c) => c.type === type);
   const selectedCategory = categories.find((c) => c.id === categoryId);
   const selectedAccount1 = accounts.find((a) => a.id === account1Id);
   const selectedAccount2 = accounts.find((a) => a.id === account2Id);
@@ -115,7 +118,7 @@ export default function AddTransactionScreen({
           setExisting(txn);
           setType(txn.type);
           setExpression(String(txn.totalAmountCents / 100));
-          setCategoryId(txn.categoryId);
+          setCategoryId(txn.categoryId ?? '');
           setNote(txn.note ?? '');
           setDateStr(txn.date.substring(0, 10));
           if (txn.date.includes('T')) {
@@ -126,7 +129,9 @@ export default function AddTransactionScreen({
             setAccount1Id(txn.splits[0].accountId);
             setSplit1Expression(String(txn.splits[0].amountCents / 100));
           }
-          if (txn.splits.length > 1) {
+          if (txn.type === 'transfer' && txn.splits.length > 1) {
+            setAccount2Id(txn.splits[1].accountId);
+          } else if (txn.splits.length > 1) {
             setSplitEnabled(true);
             setAccount2Id(txn.splits[1].accountId);
             setSplit2Expression(String(txn.splits[1].amountCents / 100));
@@ -138,11 +143,15 @@ export default function AddTransactionScreen({
   }, [transactionId]);
 
   useEffect(() => {
-    if (selectedCategory && selectedCategory.type !== type) {
+    if (isTransfer(type)) {
+      setCategoryId('');
+      setSplitEnabled(false);
+    } else if (selectedCategory && selectedCategory.type !== type) {
       setCategoryId('');
     }
+    const toVal = type === 'income' ? 0 : type === 'expense' ? 1 : 2;
     Animated.timing(typeAnim, {
-      toValue: type === 'income' ? 0 : 1,
+      toValue: toVal,
       duration: 250,
       useNativeDriver: false,
     }).start();
@@ -236,17 +245,30 @@ export default function AddTransactionScreen({
       setSnackbar('Enter an amount');
       return;
     }
-    if (!categoryId) {
+    if (!isTransfer(type) && !categoryId) {
       setSnackbar('Select a category');
       return;
     }
     if (!account1Id) {
-      setSnackbar('Select an account');
+      setSnackbar(isTransfer(type) ? 'Select a From account' : 'Select an account');
       return;
     }
 
     let splits;
-    if (splitEnabled) {
+    if (isTransfer(type)) {
+      if (!account2Id) {
+        setSnackbar('Select a To account');
+        return;
+      }
+      if (account1Id === account2Id) {
+        setSnackbar('From and To accounts must be different');
+        return;
+      }
+      splits = [
+        { accountId: account1Id, amountCents: totalCents },
+        { accountId: account2Id, amountCents: totalCents },
+      ];
+    } else if (splitEnabled) {
       if (!account2Id) {
         setSnackbar('Select a second account for the split');
         return;
@@ -281,7 +303,7 @@ export default function AddTransactionScreen({
         type,
         totalAmountCents: totalCents,
         currency: settings.baseCurrency,
-        categoryId,
+        categoryId: isTransfer(type) ? null : categoryId,
         note: note || null,
         date: fullDate,
         splits,
@@ -315,16 +337,15 @@ export default function AddTransactionScreen({
 
   if (!loaded) return null;
 
-  const amountColor = type === 'income' ? colors.income : colors.expense;
-  const amountBg = type === 'income' ? colors.incomeBg : colors.expenseBg;
+  const amountColor = type === 'income' ? colors.income : type === 'expense' ? colors.expense : colors.transfer;
   const dateLabel = format(new Date(dateStr + 'T00:00:00'), 'MMM d, yyyy');
   const [hh, mm] = timeStr.split(':').map(Number);
   const timeLabel = format(new Date(2000, 0, 1, hh, mm), 'h:mm a');
   const totalForSplit = evalExpression(expression);
 
   const typeSwitcherBg = typeAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [colors.income + '20', colors.expense + '20'],
+    inputRange: [0, 1, 2],
+    outputRange: [colors.income + '20', colors.expense + '20', colors.transfer + '20'],
   });
 
   return (
@@ -383,6 +404,23 @@ export default function AddTransactionScreen({
             Income
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.typeTab,
+            type === 'transfer' && [styles.typeTabActive, { backgroundColor: colors.transfer }],
+          ]}
+          onPress={() => setType('transfer')}
+          activeOpacity={0.7}
+        >
+          <Icon
+            source="swap-horizontal"
+            size={16}
+            color={type === 'transfer' ? '#fff' : colors.textSecondary}
+          />
+          <Text style={[styles.typeTabText, type === 'transfer' && styles.typeTabTextActive]}>
+            Transfer
+          </Text>
+        </TouchableOpacity>
       </Animated.View>
 
       <KeyboardAvoidingView
@@ -430,52 +468,98 @@ export default function AddTransactionScreen({
 
           {/* ── Account & Category Selectors ── */}
           <Text style={styles.sectionLabel}>DETAILS</Text>
-          <View style={styles.selectorsCard}>
-            <TouchableOpacity
-              style={styles.selectorRow}
-              onPress={() => setAccount1PickerVisible(true)}
-              activeOpacity={0.6}
-            >
-              <View style={[styles.selectorIconWrap, { backgroundColor: colors.primary + '18' }]}>
-                <Icon source={selectedAccount1?.icon ?? 'wallet'} size={20} color={colors.primary} />
-              </View>
-              <View style={styles.selectorTextCol}>
-                <Text style={styles.selectorLabel}>Account</Text>
-                <Text style={styles.selectorValue} numberOfLines={1}>
-                  {selectedAccount1?.name ?? 'Select account'}
-                </Text>
-              </View>
-              <Icon source="chevron-right" size={20} color={colors.textTertiary} />
-            </TouchableOpacity>
-
-            <View style={styles.selectorDivider} />
-
-            <TouchableOpacity
-              style={styles.selectorRow}
-              onPress={() => setCategoryPickerVisible(true)}
-              activeOpacity={0.6}
-            >
-              <View
-                style={[
-                  styles.selectorIconWrap,
-                  { backgroundColor: (selectedCategory?.color ?? colors.textSecondary) + '18' },
-                ]}
+          {isTransfer(type) ? (
+            <View style={styles.selectorsCard}>
+              <TouchableOpacity
+                style={styles.selectorRow}
+                onPress={() => setAccount1PickerVisible(true)}
+                activeOpacity={0.6}
               >
-                <Icon
-                  source={(selectedCategory?.icon ?? 'shape') as any}
-                  size={20}
-                  color={selectedCategory?.color ?? colors.textSecondary}
-                />
+                <View style={[styles.selectorIconWrap, { backgroundColor: colors.expense + '18' }]}>
+                  <Icon source={selectedAccount1?.icon ?? 'wallet'} size={20} color={colors.expense} />
+                </View>
+                <View style={styles.selectorTextCol}>
+                  <Text style={styles.selectorLabel}>From Account</Text>
+                  <Text style={styles.selectorValue} numberOfLines={1}>
+                    {selectedAccount1?.name ?? 'Select account'}
+                  </Text>
+                </View>
+                <Icon source="chevron-right" size={20} color={colors.textTertiary} />
+              </TouchableOpacity>
+
+              <View style={styles.selectorDivider} />
+
+              <View style={styles.transferArrowRow}>
+                <Icon source="arrow-down" size={18} color={colors.transfer} />
               </View>
-              <View style={styles.selectorTextCol}>
-                <Text style={styles.selectorLabel}>Category</Text>
-                <Text style={styles.selectorValue} numberOfLines={1}>
-                  {selectedCategory?.name ?? 'Select category'}
-                </Text>
-              </View>
-              <Icon source="chevron-right" size={20} color={colors.textTertiary} />
-            </TouchableOpacity>
-          </View>
+
+              <View style={styles.selectorDivider} />
+
+              <TouchableOpacity
+                style={styles.selectorRow}
+                onPress={() => setAccount2PickerVisible(true)}
+                activeOpacity={0.6}
+              >
+                <View style={[styles.selectorIconWrap, { backgroundColor: colors.income + '18' }]}>
+                  <Icon source={selectedAccount2?.icon ?? 'wallet'} size={20} color={colors.income} />
+                </View>
+                <View style={styles.selectorTextCol}>
+                  <Text style={styles.selectorLabel}>To Account</Text>
+                  <Text style={styles.selectorValue} numberOfLines={1}>
+                    {selectedAccount2?.name ?? 'Select account'}
+                  </Text>
+                </View>
+                <Icon source="chevron-right" size={20} color={colors.textTertiary} />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.selectorsCard}>
+              <TouchableOpacity
+                style={styles.selectorRow}
+                onPress={() => setAccount1PickerVisible(true)}
+                activeOpacity={0.6}
+              >
+                <View style={[styles.selectorIconWrap, { backgroundColor: colors.primary + '18' }]}>
+                  <Icon source={selectedAccount1?.icon ?? 'wallet'} size={20} color={colors.primary} />
+                </View>
+                <View style={styles.selectorTextCol}>
+                  <Text style={styles.selectorLabel}>Account</Text>
+                  <Text style={styles.selectorValue} numberOfLines={1}>
+                    {selectedAccount1?.name ?? 'Select account'}
+                  </Text>
+                </View>
+                <Icon source="chevron-right" size={20} color={colors.textTertiary} />
+              </TouchableOpacity>
+
+              <View style={styles.selectorDivider} />
+
+              <TouchableOpacity
+                style={styles.selectorRow}
+                onPress={() => setCategoryPickerVisible(true)}
+                activeOpacity={0.6}
+              >
+                <View
+                  style={[
+                    styles.selectorIconWrap,
+                    { backgroundColor: (selectedCategory?.color ?? colors.textSecondary) + '18' },
+                  ]}
+                >
+                  <Icon
+                    source={(selectedCategory?.icon ?? 'shape') as any}
+                    size={20}
+                    color={selectedCategory?.color ?? colors.textSecondary}
+                  />
+                </View>
+                <View style={styles.selectorTextCol}>
+                  <Text style={styles.selectorLabel}>Category</Text>
+                  <Text style={styles.selectorValue} numberOfLines={1}>
+                    {selectedCategory?.name ?? 'Select category'}
+                  </Text>
+                </View>
+                <Icon source="chevron-right" size={20} color={colors.textTertiary} />
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* ── Note ── */}
           <View style={styles.noteCard}>
@@ -612,7 +696,9 @@ export default function AddTransactionScreen({
             </View>
           )}
 
-          {/* ── Split Payment ── */}
+          {/* ── Split Payment (hidden for transfers) ── */}
+          {!isTransfer(type) && (
+          <>
           <Text style={styles.sectionLabel}>PAYMENT</Text>
           <View style={styles.splitToggleCard}>
             <View style={styles.splitToggleLeft}>
@@ -715,6 +801,8 @@ export default function AddTransactionScreen({
                 </View>
               )}
             </View>
+          )}
+          </>
           )}
 
           {isEditing && (
@@ -845,6 +933,7 @@ export default function AddTransactionScreen({
         onSelect={(acc) => setAccount2Id(acc.id)}
         accounts={accounts.filter((a) => a.id !== account1Id)}
         selectedId={account2Id}
+        title={isTransfer(type) ? 'To Account' : undefined}
       />
       <Snackbar visible={!!snackbar} onDismiss={() => setSnackbar('')} duration={3000}>
         {snackbar}
@@ -1042,6 +1131,10 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
     backgroundColor: colors.border,
     marginLeft: 40 + spacing.lg + spacing.md,
+  },
+  transferArrowRow: {
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
   },
 
   /* ── Note ── */

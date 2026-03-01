@@ -1,9 +1,11 @@
+export type TransactionType = 'income' | 'expense' | 'transfer';
+
 export interface Transaction {
   id: string;
-  type: 'income' | 'expense';
+  type: TransactionType;
   totalAmountCents: number;
   currency: string;
-  categoryId: string;
+  categoryId: string | null;
   note: string | null;
   date: string;
   linkedTransactionId: string | null;
@@ -58,7 +60,7 @@ export interface AppSettings {
 export interface TransactionFilter {
   dateFrom: string | null;
   dateTo: string | null;
-  type: 'income' | 'expense' | null;
+  type: TransactionType | null;
   accountId: string | null;
   categoryId: string | null;
 }
@@ -114,10 +116,10 @@ export interface SplitInput {
 }
 
 export interface CreateTransactionInput {
-  type: 'income' | 'expense';
+  type: TransactionType;
   totalAmountCents: number;
   currency: string;
-  categoryId: string;
+  categoryId: string | null;
   note?: string | null;
   date: string;
   splits: SplitInput[];

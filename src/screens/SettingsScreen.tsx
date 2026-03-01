@@ -3,8 +3,11 @@ import { View, ScrollView, StyleSheet, Alert, KeyboardAvoidingView, Platform, To
 import { Text, Snackbar, TextInput, Button, Icon } from 'react-native-paper';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { seedDemoTransactions } from '../db/seed';
-import { getDatabase } from '../db/database';
+import { getDatabase, resetDatabase } from '../db/database';
 import { useTransactionStore } from '../stores/useTransactionStore';
+import { useCategoryStore } from '../stores/useCategoryStore';
+import { useAccountStore } from '../stores/useAccountStore';
+import { useBudgetStore } from '../stores/useBudgetStore';
 import { colors, spacing, radius } from '../theme';
 import type { RootStackScreenProps } from '../navigation/types';
 
@@ -43,6 +46,9 @@ function CardRow({
 export default function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>) {
   const { settings, loadSettings, updateSetting } = useSettingsStore();
   const { loadTransactions } = useTransactionStore();
+  const { loadCategories } = useCategoryStore();
+  const { loadAccounts } = useAccountStore();
+  const { loadBudgets } = useBudgetStore();
   const [snackbar, setSnackbar] = useState('');
   const [currencyInput, setCurrencyInput] = useState(settings.baseCurrency);
   const [symbolInput, setSymbolInput] = useState(settings.currencySymbol);
@@ -73,6 +79,44 @@ export default function SettingsScreen({ navigation }: RootStackScreenProps<'Set
         },
       },
     ]);
+  };
+
+  const handleResetAll = () => {
+    Alert.alert(
+      'Reset All Data',
+      'This will permanently delete ALL your transactions, accounts, categories, budgets, and settings. This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete Everything',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Are you sure?',
+              'All data will be lost forever.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Yes, Reset',
+                  style: 'destructive',
+                  onPress: async () => {
+                    await resetDatabase();
+                    await Promise.all([
+                      loadTransactions(true),
+                      loadCategories(),
+                      loadAccounts(),
+                      loadBudgets(),
+                      loadSettings(),
+                    ]);
+                    setSnackbar('All data has been reset');
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -123,6 +167,12 @@ export default function SettingsScreen({ navigation }: RootStackScreenProps<'Set
             icon="database-plus"
             title="Load Demo Data"
             onPress={handleSeedDemo}
+          />
+          <CardRow
+            icon="delete-forever"
+            title="Reset All Data"
+            onPress={handleResetAll}
+            right={<Text style={[styles.cardRowValue, { color: colors.error }]}>Erase</Text>}
             isLast
           />
         </GroupedCard>

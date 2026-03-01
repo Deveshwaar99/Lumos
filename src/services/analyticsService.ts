@@ -85,13 +85,25 @@ export const analyticsService = {
     const db = await getDatabase();
     const rows = await db.getAllAsync<any>(
       `SELECT a.id as accountId, a.name as accountName, a.type,
-        a.opening_balance_cents +
-        COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
-          JOIN transactions t ON s.transaction_id = t.id
-          WHERE s.account_id = a.id AND t.type = 'income'), 0) -
-        COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
-          JOIN transactions t ON s.transaction_id = t.id
-          WHERE s.account_id = a.id AND t.type = 'expense'), 0)
+        a.opening_balance_cents
+        + COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
+            JOIN transactions t ON s.transaction_id = t.id
+            WHERE s.account_id = a.id AND t.type = 'income'), 0)
+        - COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
+            JOIN transactions t ON s.transaction_id = t.id
+            WHERE s.account_id = a.id AND t.type = 'expense'), 0)
+        + COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
+            JOIN transactions t ON s.transaction_id = t.id
+            WHERE s.account_id = a.id AND t.type = 'transfer'
+              AND s.id != (SELECT s2.id FROM transaction_splits s2
+                           WHERE s2.transaction_id = t.id
+                           ORDER BY s2.rowid ASC LIMIT 1)), 0)
+        - COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
+            JOIN transactions t ON s.transaction_id = t.id
+            WHERE s.account_id = a.id AND t.type = 'transfer'
+              AND s.id = (SELECT s2.id FROM transaction_splits s2
+                          WHERE s2.transaction_id = t.id
+                          ORDER BY s2.rowid ASC LIMIT 1)), 0)
         as balance
       FROM accounts a ORDER BY a.name`
     );

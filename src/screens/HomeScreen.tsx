@@ -120,7 +120,7 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
             {index > 0 && <Divider style={styles.itemDivider} />}
             <TransactionItem
               transaction={item}
-              category={categoryMap[item.categoryId]}
+              category={item.categoryId ? categoryMap[item.categoryId] : undefined}
               accountMap={accountMap}
               onPress={() => navigation.navigate('TransactionDetail', { transactionId: item.id })}
             />

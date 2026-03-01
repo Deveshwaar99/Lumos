@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
+import type { TransactionType } from '../models/types';
 
 export type TabParamList = {
   Home: undefined;
@@ -12,7 +13,7 @@ export type TabParamList = {
 
 export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabParamList>;
-  AddTransaction: { type?: 'income' | 'expense'; transactionId?: string } | undefined;
+  AddTransaction: { type?: TransactionType; transactionId?: string } | undefined;
   TransactionDetail: { transactionId: string };
   CategoryForm: { categoryId?: string; categoryType?: 'income' | 'expense' } | undefined;
   AccountForm: { accountId?: string } | undefined;

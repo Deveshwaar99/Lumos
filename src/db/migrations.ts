@@ -96,6 +96,38 @@ const MIGRATIONS: Array<{ version: number; run: (db: SQLiteDatabase) => Promise<
       `);
     },
   },
+  {
+    version: 3,
+    run: async (db) => {
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS transactions_new (
+          id TEXT PRIMARY KEY,
+          type TEXT NOT NULL CHECK(type IN ('income','expense','transfer')),
+          total_amount_cents INTEGER NOT NULL,
+          currency TEXT NOT NULL,
+          category_id TEXT,
+          account_id TEXT,
+          note TEXT,
+          date TEXT NOT NULL,
+          linked_transaction_id TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+
+        INSERT INTO transactions_new
+          SELECT id, type, total_amount_cents, currency, category_id, account_id,
+                 note, date, linked_transaction_id, created_at, updated_at
+          FROM transactions;
+
+        DROP TABLE transactions;
+        ALTER TABLE transactions_new RENAME TO transactions;
+
+        CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
+        CREATE INDEX IF NOT EXISTS idx_transactions_category_id ON transactions(category_id);
+        CREATE INDEX IF NOT EXISTS idx_transactions_type ON transactions(type);
+      `);
+    },
+  },
 ];
 
 export async function runMigrations(db: SQLiteDatabase): Promise<void> {

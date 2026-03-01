@@ -6,15 +6,34 @@ export const splitInputSchema = z.object({
 });
 
 export const transactionSchema = z.object({
-  type: z.enum(['income', 'expense']),
+  type: z.enum(['income', 'expense', 'transfer']),
   totalAmountCents: z.number().int().positive(),
   currency: z.string().min(1),
-  categoryId: z.string().min(1),
+  categoryId: z.string().nullable(),
   note: z.string().optional(),
   date: z.string(),
   splits: z.array(splitInputSchema).min(1).max(2),
 }).refine(
   (data) => {
+    if (data.type === 'transfer') {
+      return data.splits.length === 2;
+    }
+    return true;
+  },
+  { message: 'Transfers must have exactly two accounts (from and to)', path: ['splits'] }
+).refine(
+  (data) => {
+    if (data.type !== 'transfer') {
+      return data.categoryId != null && data.categoryId.length > 0;
+    }
+    return true;
+  },
+  { message: 'Category is required for income/expense', path: ['categoryId'] }
+).refine(
+  (data) => {
+    if (data.type === 'transfer') {
+      return data.splits.every((sp) => sp.amountCents === data.totalAmountCents);
+    }
     const splitSum = data.splits.reduce((s, sp) => s + sp.amountCents, 0);
     return splitSum === data.totalAmountCents;
   },

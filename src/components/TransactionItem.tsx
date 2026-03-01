@@ -33,39 +33,52 @@ function TransactionItemComponent({
   onPress,
 }: TransactionItemProps) {
   const isIncome = transaction.type === 'income';
-  const amountColor = isIncome ? colors.income : colors.expense;
-  const prefix = isIncome ? '+' : '-';
+  const isTransfer = transaction.type === 'transfer';
+  const amountColor = isTransfer ? colors.transfer : isIncome ? colors.income : colors.expense;
+  const prefix = isTransfer ? '' : isIncome ? '+' : '-';
+
+  const iconSource = isTransfer ? 'swap-horizontal' : (category?.icon ?? 'help-circle');
+  const iconColor = isTransfer ? colors.transfer : (category?.color ?? colors.textSecondary);
+  const iconBg = isTransfer ? colors.transfer + '18' : (category?.color ?? colors.textSecondary) + '18';
+
+  const titleText = isTransfer
+    ? 'Transfer'
+    : (category?.name ?? 'Unknown');
+
+  const fromAcc = isTransfer && transaction.splits[0] ? accountMap[transaction.splits[0].accountId] : null;
+  const toAcc = isTransfer && transaction.splits[1] ? accountMap[transaction.splits[1].accountId] : null;
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
-      <View
-        style={[
-          styles.iconCircle,
-          { backgroundColor: (category?.color ?? colors.textSecondary) + '18' },
-        ]}
-      >
-        <Icon
-          source={(category?.icon ?? 'help-circle') as any}
-          size={20}
-          color={category?.color ?? colors.textSecondary}
-        />
+      <View style={[styles.iconCircle, { backgroundColor: iconBg }]}>
+        <Icon source={iconSource as any} size={20} color={iconColor} />
       </View>
       <View style={styles.details}>
         <Text variant="bodyLarge" numberOfLines={1} style={styles.title}>
-          {category?.name ?? 'Unknown'}
+          {titleText}
         </Text>
-        <View style={styles.badgeRow}>
-          {transaction.splits.map((s) => {
-            const acc = accountMap[s.accountId];
-            const name = acc?.name ?? '?';
-            const badgeColor = hashColor(name);
-            return (
-              <View key={s.id} style={[styles.badge, { backgroundColor: badgeColor + '22' }]}>
-                <Text style={[styles.badgeText, { color: badgeColor }]}>{name}</Text>
-              </View>
-            );
-          })}
-        </View>
+        {isTransfer ? (
+          <View style={styles.badgeRow}>
+            <View style={[styles.badge, { backgroundColor: colors.transfer + '22' }]}>
+              <Text style={[styles.badgeText, { color: colors.transfer }]}>
+                {fromAcc?.name ?? '?'} → {toAcc?.name ?? '?'}
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.badgeRow}>
+            {transaction.splits.map((s) => {
+              const acc = accountMap[s.accountId];
+              const name = acc?.name ?? '?';
+              const badgeColor = hashColor(name);
+              return (
+                <View key={s.id} style={[styles.badge, { backgroundColor: badgeColor + '22' }]}>
+                  <Text style={[styles.badgeText, { color: badgeColor }]}>{name}</Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
         {transaction.note ? (
           <Text variant="bodySmall" style={styles.note} numberOfLines={1}>
             {transaction.note}

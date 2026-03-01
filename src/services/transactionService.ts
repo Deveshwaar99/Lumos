@@ -75,7 +75,7 @@ export const transactionService = {
     await db.runAsync(
       `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, note, date, linked_transaction_id, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      id, data.type, data.totalAmountCents, data.currency, data.categoryId,
+      id, data.type, data.totalAmountCents, data.currency, data.categoryId ?? null,
       data.splits[0].accountId,
       data.note ?? null, data.date, null, now, now
     );
@@ -92,7 +92,7 @@ export const transactionService = {
 
     return {
       id, type: data.type, totalAmountCents: data.totalAmountCents,
-      currency: data.currency, categoryId: data.categoryId,
+      currency: data.currency, categoryId: data.categoryId ?? null,
       note: data.note ?? null, date: data.date,
       linkedTransactionId: null, createdAt: now, updatedAt: now,
       splits,
@@ -106,7 +106,7 @@ export const transactionService = {
     if (data.type !== undefined) { fields.push('type = ?'); values.push(data.type); }
     if (data.totalAmountCents !== undefined) { fields.push('total_amount_cents = ?'); values.push(data.totalAmountCents); }
     if (data.currency !== undefined) { fields.push('currency = ?'); values.push(data.currency); }
-    if (data.categoryId !== undefined) { fields.push('category_id = ?'); values.push(data.categoryId); }
+    if (data.categoryId !== undefined) { fields.push('category_id = ?'); values.push(data.categoryId ?? null); }
     if (data.note !== undefined) { fields.push('note = ?'); values.push(data.note); }
     if (data.date !== undefined) { fields.push('date = ?'); values.push(data.date); }
     if (data.splits !== undefined && data.splits.length > 0) {
@@ -186,43 +186,6 @@ export const transactionService = {
         updatedAt: r.updated_at,
       },
     }));
-  },
-
-  async transfer(
-    fromAccountId: string,
-    toAccountId: string,
-    amountCents: number,
-    currency: string,
-    note: string,
-    date: string,
-    categoryId: string
-  ): Promise<void> {
-    const db = await getDatabase();
-    const now = new Date().toISOString();
-    const expenseId = generateId();
-    const incomeId = generateId();
-
-    await db.runAsync(
-      `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, note, date, linked_transaction_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      expenseId, 'expense', amountCents, currency, categoryId, fromAccountId,
-      note, date, incomeId, now, now
-    );
-    await db.runAsync(
-      'INSERT INTO transaction_splits (id, transaction_id, account_id, amount_cents) VALUES (?, ?, ?, ?)',
-      generateId(), expenseId, fromAccountId, amountCents
-    );
-
-    await db.runAsync(
-      `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, note, date, linked_transaction_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      incomeId, 'income', amountCents, currency, categoryId, toAccountId,
-      note, date, expenseId, now, now
-    );
-    await db.runAsync(
-      'INSERT INTO transaction_splits (id, transaction_id, account_id, amount_cents) VALUES (?, ?, ?, ?)',
-      generateId(), incomeId, toAccountId, amountCents
-    );
   },
 
   async _attachSplits(txns: Transaction[]): Promise<TransactionWithSplits[]> {
