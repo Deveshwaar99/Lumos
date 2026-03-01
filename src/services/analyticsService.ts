@@ -4,6 +4,7 @@ import {
   CategoryBreakdown,
   DailyCashFlow,
   AccountBalance,
+  AccountPeriodBalance,
 } from '../models/types';
 import { getMonthRange, getDaysInMonth } from '../utils/dates';
 
@@ -121,5 +122,83 @@ export const analyticsService = {
     return breakdown
       .sort((a, b) => b.total - a.total)
       .slice(0, limit);
+  },
+
+  async getDailyIncomeFlow(month: string): Promise<DailyCashFlow[]> {
+    const db = await getDatabase();
+    const { start, end } = getMonthRange(month);
+
+    const rows = await db.getAllAsync<any>(
+      `SELECT substr(t.date, 1, 10) as date,
+        COALESCE(SUM(t.total_amount_cents), 0) as income
+      FROM transactions t
+      WHERE t.type = 'income' AND t.date >= ? AND t.date < ?
+      GROUP BY substr(t.date, 1, 10)`,
+      start, end
+    );
+
+    const byDate = new Map<string, number>();
+    rows.forEach((r: any) => byDate.set(r.date, r.income ?? 0));
+
+    const days = getDaysInMonth(month);
+    return days.map((dateStr) => ({
+      date: dateStr,
+      income: byDate.get(dateStr) ?? 0,
+      expense: 0,
+      net: byDate.get(dateStr) ?? 0,
+    }));
+  },
+
+  async getDailyExpenseFlow(month: string): Promise<DailyCashFlow[]> {
+    const db = await getDatabase();
+    const { start, end } = getMonthRange(month);
+
+    const rows = await db.getAllAsync<any>(
+      `SELECT substr(t.date, 1, 10) as date,
+        COALESCE(SUM(t.total_amount_cents), 0) as expense
+      FROM transactions t
+      WHERE t.type = 'expense' AND t.date >= ? AND t.date < ?
+      GROUP BY substr(t.date, 1, 10)`,
+      start, end
+    );
+
+    const byDate = new Map<string, number>();
+    rows.forEach((r: any) => byDate.set(r.date, r.expense ?? 0));
+
+    const days = getDaysInMonth(month);
+    return days.map((dateStr) => ({
+      date: dateStr,
+      income: 0,
+      expense: byDate.get(dateStr) ?? 0,
+      net: -(byDate.get(dateStr) ?? 0),
+    }));
+  },
+
+  async getAccountPeriodBalances(month: string): Promise<AccountPeriodBalance[]> {
+    const db = await getDatabase();
+    const { start, end } = getMonthRange(month);
+
+    const rows = await db.getAllAsync<any>(
+      `SELECT a.id as accountId, a.name as accountName, a.type, a.icon,
+        COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
+            JOIN transactions t ON s.transaction_id = t.id
+            WHERE s.account_id = a.id AND t.type = 'income'
+              AND t.date >= ? AND t.date < ?), 0) as periodIncome,
+        COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
+            JOIN transactions t ON s.transaction_id = t.id
+            WHERE s.account_id = a.id AND t.type = 'expense'
+              AND t.date >= ? AND t.date < ?), 0) as periodExpense
+      FROM accounts a ORDER BY a.name`,
+      start, end, start, end
+    );
+
+    return rows.map((r: any) => ({
+      accountId: r.accountId,
+      accountName: r.accountName,
+      type: r.type,
+      icon: r.icon ?? 'wallet',
+      periodIncome: r.periodIncome ?? 0,
+      periodExpense: r.periodExpense ?? 0,
+    }));
   },
 };

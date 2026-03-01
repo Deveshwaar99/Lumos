@@ -93,6 +93,15 @@ export interface AccountBalance {
   balance: number;
 }
 
+export interface AccountPeriodBalance {
+  accountId: string;
+  accountName: string;
+  type: Account['type'];
+  icon: string;
+  periodIncome: number;
+  periodExpense: number;
+}
+
 export interface BudgetWithSpent extends Budget {
   spent: number;
   remaining: number;
