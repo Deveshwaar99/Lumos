@@ -5,6 +5,7 @@ import {
   DailyCashFlow,
   AccountBalance,
   AccountPeriodBalance,
+  NetWorthPoint,
 } from '../models/types';
 import { getMonthRange, getDaysInMonth } from '../utils/dates';
 
@@ -172,6 +173,45 @@ export const analyticsService = {
       expense: byDate.get(dateStr) ?? 0,
       net: -(byDate.get(dateStr) ?? 0),
     }));
+  },
+
+  async getNetWorthHistory(currentMonth: string, monthsBack: number = 12): Promise<NetWorthPoint[]> {
+    const db = await getDatabase();
+
+    const openingBalanceResult = await db.getFirstAsync<{ total: number }>(
+      'SELECT COALESCE(SUM(opening_balance_cents), 0) as total FROM accounts'
+    );
+    const openingBalance = openingBalanceResult?.total ?? 0;
+
+    const firstTxnResult = await db.getFirstAsync<{ min_date: string }>(
+      'SELECT MIN(date) as min_date FROM transactions'
+    );
+
+    const [yearStr, monthStr] = currentMonth.split('-').map(Number);
+    const points: NetWorthPoint[] = [];
+
+    for (let i = monthsBack; i >= 0; i--) {
+      let m = monthStr - i;
+      let y = yearStr;
+      while (m <= 0) { m += 12; y--; }
+      while (m > 12) { m -= 12; y++; }
+      const monthKey = `${y}-${String(m).padStart(2, '0')}`;
+      const { end } = getMonthRange(monthKey);
+
+      const incomeResult = await db.getFirstAsync<{ total: number }>(
+        "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'income' AND date < ?",
+        end,
+      );
+      const expenseResult = await db.getFirstAsync<{ total: number }>(
+        "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'expense' AND date < ?",
+        end,
+      );
+
+      const netWorth = openingBalance + (incomeResult?.total ?? 0) - (expenseResult?.total ?? 0);
+      points.push({ month: monthKey, netWorth });
+    }
+
+    return points;
   },
 
   async getAccountPeriodBalances(month: string): Promise<AccountPeriodBalance[]> {

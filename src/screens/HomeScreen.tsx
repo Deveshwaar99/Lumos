@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { View, SectionList, StyleSheet, RefreshControl } from 'react-native';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { View, SectionList, StyleSheet, RefreshControl, Animated, TextInput as RNTextInput } from 'react-native';
 import { Text, FAB, Icon, Divider } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -15,7 +15,7 @@ import TransactionItem from '../components/TransactionItem';
 import MonthNavigator from '../components/MonthNavigator';
 import SummaryBar from '../components/SummaryBar';
 import DateHeader from '../components/DateHeader';
-import { colors, spacing } from '../theme';
+import { colors, spacing, radius } from '../theme';
 import { getCurrentMonth, getMonthLabel, addMonths, getMonthRange } from '../utils/dates';
 import { transactionService } from '../services/transactionService';
 import type { TabScreenProps } from '../navigation/types';
@@ -37,6 +37,44 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
   const [transactions, setTransactions] = useState<TransactionWithSplits[]>([]);
   const [summary, setSummary] = useState<MonthSummary>({ totalIncome: 0, totalExpense: 0, net: 0 });
   const [refreshing, setRefreshing] = useState(false);
+
+  const [searchActive, setSearchActive] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<TransactionWithSplits[]>([]);
+  const searchInputRef = useRef<RNTextInput>(null);
+  const searchAnim = useRef(new Animated.Value(0)).current;
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const openSearch = useCallback(() => {
+    setSearchActive(true);
+    Animated.timing(searchAnim, { toValue: 1, duration: 250, useNativeDriver: false }).start(() => {
+      searchInputRef.current?.focus();
+    });
+  }, [searchAnim]);
+
+  const closeSearch = useCallback(() => {
+    setSearchQuery('');
+    setSearchResults([]);
+    Animated.timing(searchAnim, { toValue: 0, duration: 200, useNativeDriver: false }).start(() => {
+      setSearchActive(false);
+    });
+  }, [searchAnim]);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(async () => {
+      const results = await transactionService.getAll(
+        { dateFrom: null, dateTo: null, type: null, accountId: null, categoryId: null, searchQuery: searchQuery.trim() },
+        50,
+      );
+      setSearchResults(results);
+    }, 300);
+    return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
+  }, [searchQuery]);
 
   const loadData = useCallback(async () => {
     await Promise.all([loadCategories(), loadAccounts(), loadBudgets(), loadSettings()]);
@@ -84,38 +122,77 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
       .map(([dateKey, data]) => ({ title: dateKey, data }));
   }, [transactions]);
 
+  const searchSections: TransactionSection[] = useMemo(() => {
+    const grouped = new Map<string, TransactionWithSplits[]>();
+    for (const txn of searchResults) {
+      const dateKey = txn.date.includes('T') ? txn.date.substring(0, 10) : txn.date;
+      if (!grouped.has(dateKey)) grouped.set(dateKey, []);
+      grouped.get(dateKey)!.push(txn);
+    }
+    return Array.from(grouped.entries())
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([dateKey, data]) => ({ title: dateKey, data }));
+  }, [searchResults]);
+
+  const displaySections = searchActive && searchQuery.trim() ? searchSections : sections;
+
   return (
     <View style={styles.container}>
       <View style={styles.headerSection}>
-        <View style={[styles.topBar, { paddingTop: insets.top + spacing.xs }]}>
-          <TouchableOpacity hitSlop={12} onPress={() => navigation.navigate('Settings' as any)}>
-            <Icon source="menu" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text variant="titleLarge" style={styles.appTitle}>
-            {'L'}
-            <Text style={styles.appTitleRest}>umos</Text>
-          </Text>
-          <TouchableOpacity hitSlop={12}>
-            <Icon source="magnify" size={24} color={colors.text} />
-          </TouchableOpacity>
-        </View>
+        {searchActive ? (
+          <View style={[styles.searchBar, { paddingTop: insets.top + spacing.xs }]}>
+            <TouchableOpacity hitSlop={12} onPress={closeSearch}>
+              <Icon source="arrow-left" size={24} color={colors.text} />
+            </TouchableOpacity>
+            <RNTextInput
+              ref={searchInputRef}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search transactions..."
+              placeholderTextColor={colors.textTertiary}
+              style={styles.searchInput}
+              autoFocus
+              returnKeyType="search"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity hitSlop={12} onPress={() => setSearchQuery('')}>
+                <Icon source="close-circle" size={20} color={colors.textTertiary} />
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : (
+          <>
+            <View style={[styles.topBar, { paddingTop: insets.top + spacing.xs }]}>
+              <TouchableOpacity hitSlop={12} onPress={() => navigation.navigate('Settings' as any)}>
+                <Icon source="menu" size={24} color={colors.text} />
+              </TouchableOpacity>
+              <Text variant="titleLarge" style={styles.appTitle}>
+                {'L'}
+                <Text style={styles.appTitleRest}>umos</Text>
+              </Text>
+              <TouchableOpacity hitSlop={12} onPress={openSearch}>
+                <Icon source="magnify" size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
 
-        <MonthNavigator
-          label={getMonthLabel(month)}
-          onPrev={handlePrevMonth}
-          onNext={handleNextMonth}
-        />
+            <MonthNavigator
+              label={getMonthLabel(month)}
+              onPrev={handlePrevMonth}
+              onNext={handleNextMonth}
+            />
 
-        <SummaryBar
-          income={summary.totalIncome}
-          expense={summary.totalExpense}
-          balance={summary.net}
-          currency={settings.baseCurrency}
-        />
+            <SummaryBar
+              income={summary.totalIncome}
+              expense={summary.totalExpense}
+              balance={summary.net}
+              currency={settings.baseCurrency}
+            />
+          </>
+        )}
       </View>
 
       <SectionList
-        sections={sections}
+        sections={displaySections}
         keyExtractor={(item) => item.id}
         renderSectionHeader={({ section }) => <DateHeader dateStr={section.title} />}
         renderItem={({ item, index }) => (
@@ -131,26 +208,34 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Icon source="receipt" size={48} color={colors.textTertiary} />
+            <Icon source={searchActive ? 'magnify' : 'receipt'} size={48} color={colors.textTertiary} />
             <Text variant="bodyLarge" style={styles.emptyText}>
-              No transactions this month
+              {searchActive && searchQuery.trim()
+                ? 'No matching transactions'
+                : searchActive
+                  ? 'Type to search across all transactions'
+                  : 'No transactions this month'}
             </Text>
           </View>
         }
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />
+          searchActive ? undefined : (
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />
+          )
         }
         stickySectionHeadersEnabled={false}
         style={styles.list}
       />
 
-      <FAB
-        icon="plus"
-        style={[styles.fab, { bottom: insets.bottom + 10}]}
-        onPress={() => navigation.navigate('AddTransaction')}
-        color="#fff"
-      />
+      {!searchActive && (
+        <FAB
+          icon="plus"
+          style={[styles.fab, { bottom: insets.bottom + 10}]}
+          onPress={() => navigation.navigate('AddTransaction')}
+          color="#fff"
+        />
+      )}
     </View>
   );
 }
@@ -192,4 +277,20 @@ const styles = StyleSheet.create({
   },
   emptyText: { color: colors.textSecondary, marginTop: spacing.lg },
   fab: { position: 'absolute', right: spacing.lg, backgroundColor: colors.primary },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+    gap: spacing.md,
+  },
+  searchInput: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 16,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: radius.lg,
+  },
 });

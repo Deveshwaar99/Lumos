@@ -182,6 +182,23 @@ export default function TransactionDetailScreen({
               </View>
             </View>
           )}
+
+          {transaction.tags && transaction.tags.length > 0 && (
+            <View>
+              <Divider style={{ marginTop: spacing.sm }} />
+              <View style={styles.detailRow}>
+                <Text variant="bodyMedium" style={styles.detailLabel}>Tags</Text>
+                <View style={styles.tagChipRow}>
+                  {transaction.tags.map((tag) => (
+                    <View key={tag.id} style={[styles.tagChip, { backgroundColor: tag.color + '22' }]}>
+                      <View style={[styles.tagDot, { backgroundColor: tag.color }]} />
+                      <Text style={[styles.tagChipText, { color: tag.color }]}>{tag.name}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+          )}
         </Card.Content>
       </Card>
 
@@ -265,6 +282,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.sm,
     paddingLeft: spacing.xs,
+  },
+  tagChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    justifyContent: 'flex-end',
+    flex: 1,
+    marginLeft: spacing.md,
+  },
+  tagChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.capsule,
+  },
+  tagDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  tagChipText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   actions: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.sm },
   editButton: { flex: 1, backgroundColor: colors.primary, borderRadius: radius.capsule },

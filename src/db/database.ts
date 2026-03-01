@@ -23,6 +23,8 @@ export async function closeDatabase(): Promise<void> {
 
 export async function resetDatabase(): Promise<void> {
   const database = await getDatabase();
+  await database.execAsync('DELETE FROM transaction_tags');
+  await database.execAsync('DELETE FROM tags');
   await database.execAsync('DELETE FROM transaction_splits');
   await database.execAsync('DELETE FROM transactions');
   await database.execAsync('DELETE FROM fixed_deposits');

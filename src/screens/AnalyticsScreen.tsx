@@ -16,6 +16,7 @@ import CategoryDonutChart from '../components/charts/CategoryDonutChart';
 import FlowLineChart from '../components/charts/FlowLineChart';
 import CalendarGrid from '../components/charts/CalendarGrid';
 import AccountAnalysisChart from '../components/charts/AccountAnalysisChart';
+import NetWorthChart from '../components/charts/NetWorthChart';
 import { colors, spacing, radius } from '../theme';
 import { formatMoney } from '../utils/money';
 import { getCurrentMonth, getMonthLabel, addMonths } from '../utils/dates';
@@ -25,6 +26,7 @@ import type {
   CategoryBreakdown,
   DailyCashFlow,
   AccountPeriodBalance,
+  NetWorthPoint,
 } from '../models/types';
 
 type AnalysisView =
@@ -32,7 +34,8 @@ type AnalysisView =
   | 'income_overview'
   | 'expense_flow'
   | 'income_flow'
-  | 'account_analysis';
+  | 'account_analysis'
+  | 'net_worth';
 
 const VIEW_LABELS: Record<AnalysisView, string> = {
   expense_overview: 'EXPENSE OVERVIEW',
@@ -40,6 +43,7 @@ const VIEW_LABELS: Record<AnalysisView, string> = {
   expense_flow: 'EXPENSE FLOW',
   income_flow: 'INCOME FLOW',
   account_analysis: 'ACCOUNT ANALYSIS',
+  net_worth: 'NET WORTH TREND',
 };
 
 const VIEW_OPTIONS: { key: AnalysisView; label: string }[] = [
@@ -48,6 +52,7 @@ const VIEW_OPTIONS: { key: AnalysisView; label: string }[] = [
   { key: 'expense_flow', label: 'Expense flow' },
   { key: 'income_flow', label: 'Income flow' },
   { key: 'account_analysis', label: 'Account analysis' },
+  { key: 'net_worth', label: 'Net worth trend' },
 ];
 
 export default function AnalyticsScreen({ navigation }: TabScreenProps<'Analytics'>) {
@@ -64,19 +69,21 @@ export default function AnalyticsScreen({ navigation }: TabScreenProps<'Analytic
   const [expenseFlow, setExpenseFlow] = useState<DailyCashFlow[]>([]);
   const [incomeFlow, setIncomeFlow] = useState<DailyCashFlow[]>([]);
   const [accountPeriod, setAccountPeriod] = useState<AccountPeriodBalance[]>([]);
+  const [netWorthHistory, setNetWorthHistory] = useState<NetWorthPoint[]>([]);
 
   const currency = settings.baseCurrency;
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [s, eb, ib, ef, inf, ap] = await Promise.all([
+      const [s, eb, ib, ef, inf, ap, nw] = await Promise.all([
         analyticsService.getMonthSummary(month),
         analyticsService.getCategoryBreakdown(month, 'expense'),
         analyticsService.getCategoryBreakdown(month, 'income'),
         analyticsService.getDailyExpenseFlow(month),
         analyticsService.getDailyIncomeFlow(month),
         analyticsService.getAccountPeriodBalances(month),
+        analyticsService.getNetWorthHistory(month, 12),
       ]);
       setSummary(s);
       setExpenseBreakdown(eb.sort((a, b) => b.total - a.total));
@@ -84,6 +91,7 @@ export default function AnalyticsScreen({ navigation }: TabScreenProps<'Analytic
       setExpenseFlow(ef);
       setIncomeFlow(inf);
       setAccountPeriod(ap);
+      setNetWorthHistory(nw);
     } catch (e) {
       console.error('Analytics load error:', e);
     } finally {
@@ -202,6 +210,11 @@ export default function AnalyticsScreen({ navigation }: TabScreenProps<'Analytic
       case 'account_analysis':
         return (
           <AccountAnalysisChart data={accountPeriod} currency={currency} />
+        );
+
+      case 'net_worth':
+        return (
+          <NetWorthChart data={netWorthHistory} currency={currency} />
         );
     }
   };

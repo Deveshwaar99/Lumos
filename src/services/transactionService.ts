@@ -7,6 +7,7 @@ import {
   CreateTransactionInput,
 } from '../models/types';
 import { generateId } from '../utils/uuid';
+import { tagService } from './tagService';
 
 function mapRow(row: any): Transaction {
   return {
@@ -43,6 +44,20 @@ function buildWhereClause(filter: TransactionFilter): { sql: string; params: any
     conditions.push('t.id IN (SELECT transaction_id FROM transaction_splits WHERE account_id = ?)');
     params.push(filter.accountId);
   }
+  if (filter.searchQuery) {
+    const q = `%${filter.searchQuery}%`;
+    conditions.push(
+      `(t.note LIKE ? OR t.total_amount_cents LIKE ? OR t.category_id IN (SELECT id FROM categories WHERE name LIKE ?))`
+    );
+    params.push(q, q, q);
+  }
+  if (filter.tagIds && filter.tagIds.length > 0) {
+    const placeholders = filter.tagIds.map(() => '?').join(',');
+    conditions.push(
+      `t.id IN (SELECT transaction_id FROM transaction_tags WHERE tag_id IN (${placeholders}))`
+    );
+    params.push(...filter.tagIds);
+  }
   const sql = conditions.length > 0 ? ' WHERE ' + conditions.join(' AND ') : '';
   return { sql, params };
 }
@@ -65,7 +80,8 @@ export const transactionService = {
     const splits = await db.getAllAsync<any>(
       'SELECT * FROM transaction_splits WHERE transaction_id = ?', id
     );
-    return { ...txn, splits: splits.map(mapSplitRow) };
+    const tags = await tagService.getTagsForTransaction(id);
+    return { ...txn, splits: splits.map(mapSplitRow), tags };
   },
 
   async create(data: CreateTransactionInput): Promise<TransactionWithSplits> {
@@ -90,12 +106,18 @@ export const transactionService = {
       splits.push({ id: splitId, transactionId: id, accountId: sp.accountId, amountCents: sp.amountCents });
     }
 
+    if (data.tagIds && data.tagIds.length > 0) {
+      await tagService.setTransactionTags(id, data.tagIds);
+    }
+
+    const tags = data.tagIds ? await tagService.getTagsForTransaction(id) : [];
+
     return {
       id, type: data.type, totalAmountCents: data.totalAmountCents,
       currency: data.currency, categoryId: data.categoryId ?? null,
       note: data.note ?? null, date: data.date,
       linkedTransactionId: null, createdAt: now, updatedAt: now,
-      splits,
+      splits, tags,
     };
   },
 
@@ -125,6 +147,10 @@ export const transactionService = {
           splitId, id, sp.accountId, sp.amountCents
         );
       }
+    }
+
+    if (data.tagIds !== undefined) {
+      await tagService.setTransactionTags(id, data.tagIds ?? []);
     }
   },
 
@@ -283,6 +309,7 @@ export const transactionService = {
       existing.push(split);
       splitMap.set(split.transactionId, existing);
     }
-    return txns.map(t => ({ ...t, splits: splitMap.get(t.id) ?? [] }));
+    const tagMap = await tagService.getTagsForTransactions(ids);
+    return txns.map(t => ({ ...t, splits: splitMap.get(t.id) ?? [], tags: tagMap.get(t.id) ?? [] }));
   },
 };

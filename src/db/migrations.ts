@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 async function createSchema(db: SQLiteDatabase): Promise<void> {
   await db.execAsync(`
@@ -87,6 +87,24 @@ async function createSchema(db: SQLiteDatabase): Promise<void> {
   `);
 }
 
+async function migrateV2(db: SQLiteDatabase): Promise<void> {
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS tags (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE,
+      color TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS transaction_tags (
+      transaction_id TEXT NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
+      tag_id TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+      PRIMARY KEY (transaction_id, tag_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_transaction_tags_tag ON transaction_tags(tag_id);
+  `);
+}
+
 export async function runMigrations(db: SQLiteDatabase): Promise<void> {
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS schema_version (
@@ -99,8 +117,13 @@ export async function runMigrations(db: SQLiteDatabase): Promise<void> {
   );
   const currentVersion = versionResult[0]?.version ?? 0;
 
-  if (currentVersion < SCHEMA_VERSION) {
+  if (currentVersion < 1) {
     await createSchema(db);
+  }
+  if (currentVersion < 2) {
+    await migrateV2(db);
+  }
+  if (currentVersion < SCHEMA_VERSION) {
     await db.runAsync(
       'INSERT OR REPLACE INTO schema_version (version) VALUES (?)',
       SCHEMA_VERSION

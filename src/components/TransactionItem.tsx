@@ -79,6 +79,15 @@ function TransactionItemComponent({
             })}
           </View>
         )}
+        {transaction.tags && transaction.tags.length > 0 && (
+          <View style={styles.badgeRow}>
+            {transaction.tags.map((tag) => (
+              <View key={tag.id} style={[styles.badge, { backgroundColor: tag.color + '22' }]}>
+                <Text style={[styles.badgeText, { color: tag.color }]}>{tag.name}</Text>
+              </View>
+            ))}
+          </View>
+        )}
         {transaction.note ? (
           <Text variant="bodySmall" style={styles.note} numberOfLines={1}>
             {transaction.note}
