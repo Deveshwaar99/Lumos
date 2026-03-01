@@ -4,7 +4,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { getDatabase } from '../db/database';
 import type { BackupData } from '../models/types';
 
-const BACKUP_VERSION = 2;
+const BACKUP_VERSION = 3;
 
 export const backupService = {
   async createBackup(): Promise<string> {
@@ -14,6 +14,12 @@ export const backupService = {
     const transactions = await db.getAllAsync('SELECT * FROM transactions');
     const transactionSplits = await db.getAllAsync('SELECT * FROM transaction_splits');
     const budgets = await db.getAllAsync('SELECT * FROM budgets');
+    let fixedDeposits: any[] = [];
+    try {
+      fixedDeposits = await db.getAllAsync('SELECT * FROM fixed_deposits');
+    } catch {
+      // table may not exist on older schemas
+    }
     const settingsRows = await db.getAllAsync<{ key: string; value: string }>(
       'SELECT * FROM settings'
     );
@@ -30,6 +36,7 @@ export const backupService = {
       transactions: transactions as any,
       transactionSplits: transactionSplits as any,
       budgets: budgets as any,
+      fixedDeposits: fixedDeposits as any,
       settings,
     };
 
@@ -90,6 +97,7 @@ export const backupService = {
   async restoreFromData(backup: BackupData): Promise<void> {
     const db = await getDatabase();
 
+    try { await db.execAsync('DELETE FROM fixed_deposits'); } catch { /* may not exist */ }
     await db.execAsync('DELETE FROM transaction_splits');
     await db.execAsync('DELETE FROM transactions');
     await db.execAsync('DELETE FROM budgets');
@@ -165,6 +173,34 @@ export const backupService = {
         b.alert_threshold_pct ?? b.alertThresholdPct ?? 80,
         b.enabled !== undefined ? (b.enabled ? 1 : 0) : 1
       );
+    }
+
+    const fds = backup.fixedDeposits ?? [];
+    for (const fd of fds) {
+      const f = fd as any;
+      try {
+        await db.runAsync(
+          `INSERT INTO fixed_deposits (id, fd_account_id, source_account_id, credit_account_id, interest_category_id, principal_cents, annual_interest_rate, start_date, maturity_date, tax_rate, currency, note, status, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          f.id,
+          f.fd_account_id ?? f.fdAccountId,
+          f.source_account_id ?? f.sourceAccountId,
+          f.credit_account_id ?? f.creditAccountId,
+          f.interest_category_id ?? f.interestCategoryId ?? null,
+          f.principal_cents ?? f.principalCents,
+          f.annual_interest_rate ?? f.annualInterestRate,
+          f.start_date ?? f.startDate,
+          f.maturity_date ?? f.maturityDate,
+          f.tax_rate ?? f.taxRate ?? 0,
+          f.currency ?? 'USD',
+          f.note ?? null,
+          f.status ?? 'active',
+          f.created_at ?? f.createdAt,
+          f.updated_at ?? f.updatedAt
+        );
+      } catch {
+        // skip if table doesn't exist
+      }
     }
 
     for (const [key, value] of Object.entries(backup.settings)) {

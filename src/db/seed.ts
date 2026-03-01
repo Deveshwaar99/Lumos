@@ -27,6 +27,7 @@ const INCOME_CATEGORIES = [
   { id: 'seed-inc-3', name: 'Investments', icon: 'chart-line', color: '#FF9800' },
   { id: 'seed-inc-4', name: 'Gifts', icon: 'gift', color: '#E91E63' },
   { id: 'seed-inc-5', name: 'Other Income', icon: 'cash-multiple', color: '#607D8B' },
+  { id: 'seed-inc-6', name: 'Interest Income', icon: 'percent-outline', color: '#26A69A' },
 ];
 
 const DEFAULT_ACCOUNTS = [

@@ -1,5 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 import { runMigrations } from './migrations';
+import { seedDatabase } from './seed';
 
 let db: SQLite.SQLiteDatabase | null = null;
 
@@ -24,8 +25,10 @@ export async function resetDatabase(): Promise<void> {
   const database = await getDatabase();
   await database.execAsync('DELETE FROM transaction_splits');
   await database.execAsync('DELETE FROM transactions');
+  await database.execAsync('DELETE FROM fixed_deposits');
   await database.execAsync('DELETE FROM budgets');
   await database.execAsync('DELETE FROM categories');
   await database.execAsync('DELETE FROM accounts');
   await database.execAsync('DELETE FROM settings');
+  await seedDatabase(database);
 }

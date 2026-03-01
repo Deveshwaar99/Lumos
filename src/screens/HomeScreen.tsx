@@ -91,7 +91,10 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
           <TouchableOpacity hitSlop={12} onPress={() => navigation.navigate('Settings' as any)}>
             <Icon source="menu" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text variant="titleLarge" style={styles.appTitle}>Lumos</Text>
+          <Text variant="titleLarge" style={styles.appTitle}>
+            {'L'}
+            <Text style={styles.appTitleRest}>umos</Text>
+          </Text>
           <TouchableOpacity hitSlop={12}>
             <Icon source="magnify" size={24} color={colors.text} />
           </TouchableOpacity>
@@ -167,7 +170,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.sm,
   },
-  appTitle: { color: colors.primary, fontWeight: '700', fontSize: 26 },
+  appTitle: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 28,
+    color: colors.primaryLight,
+    letterSpacing: 1.5,
+  },
+  appTitleRest: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 28,
+    color: colors.primary,
+    letterSpacing: 1.5,
+  },
   list: { flex: 1, marginTop: spacing.xs },
   listContent: { paddingBottom: 100 },
   itemDivider: { backgroundColor: colors.border, marginLeft: 76 },

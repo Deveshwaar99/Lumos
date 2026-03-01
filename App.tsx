@@ -5,17 +5,20 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { View, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useFonts, PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-display';
 import * as QuickActions from 'expo-quick-actions';
 import { colors, paperTheme } from './src/theme';
 import { getDatabase } from './src/db/database';
 import { seedDatabase } from './src/db/seed';
 import { useSettingsStore } from './src/stores/useSettingsStore';
+import { useFDStore } from './src/stores/useFDStore';
 import RootNavigator from './src/navigation/RootNavigator';
 import type { RootStackParamList } from './src/navigation/types';
 
 export default function App() {
   const [ready, setReady] = React.useState(false);
   const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
+  const [fontsLoaded] = useFonts({ PlayfairDisplay_700Bold });
 
   useEffect(() => {
     (async () => {
@@ -24,6 +27,9 @@ export default function App() {
 
       const { loadSettings } = useSettingsStore.getState();
       await loadSettings();
+
+      const { processMaturedDeposits } = useFDStore.getState();
+      await processMaturedDeposits();
 
       try {
         QuickActions.setItems([
@@ -67,7 +73,7 @@ export default function App() {
     return () => sub.remove();
   }, [ready]);
 
-  if (!ready) {
+  if (!ready || !fontsLoaded) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={colors.primary} />

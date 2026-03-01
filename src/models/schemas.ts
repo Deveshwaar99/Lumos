@@ -62,3 +62,20 @@ export const budgetSchema = z.object({
   alertThresholdPct: z.number().int().min(1).max(100),
   enabled: z.boolean(),
 });
+
+export const fdSchema = z.object({
+  label: z.string().min(1).max(100),
+  sourceAccountId: z.string().min(1),
+  creditAccountId: z.string().min(1),
+  interestCategoryId: z.string().min(1),
+  principalCents: z.number().int().positive(),
+  annualInterestRate: z.number().positive().max(100),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  maturityDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  taxRate: z.number().min(0).max(100),
+  currency: z.string().min(1),
+  note: z.string().optional().nullable(),
+}).refine(
+  (data) => data.maturityDate > data.startDate,
+  { message: 'Maturity date must be after start date', path: ['maturityDate'] }
+);

@@ -107,6 +107,7 @@ export interface BackupData {
   transactions: Transaction[];
   transactionSplits: TransactionSplit[];
   budgets: Budget[];
+  fixedDeposits?: FixedDeposit[];
   settings: Record<string, string>;
 }
 
@@ -123,4 +124,38 @@ export interface CreateTransactionInput {
   note?: string | null;
   date: string;
   splits: SplitInput[];
+}
+
+export type FDStatus = 'active' | 'matured' | 'closed';
+
+export interface FixedDeposit {
+  id: string;
+  fdAccountId: string;
+  sourceAccountId: string;
+  creditAccountId: string;
+  interestCategoryId: string;
+  principalCents: number;
+  annualInterestRate: number;
+  startDate: string;
+  maturityDate: string;
+  taxRate: number;
+  currency: string;
+  note: string | null;
+  status: FDStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateFDInput {
+  label: string;
+  sourceAccountId: string;
+  creditAccountId: string;
+  interestCategoryId: string;
+  principalCents: number;
+  annualInterestRate: number;
+  startDate: string;
+  maturityDate: string;
+  taxRate: number;
+  currency: string;
+  note?: string | null;
 }

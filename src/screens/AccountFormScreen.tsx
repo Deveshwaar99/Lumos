@@ -18,8 +18,21 @@ const ACCOUNT_TYPES = [
 ] as const;
 
 const ACCOUNT_ICONS = [
-  'wallet', 'bank', 'credit-card', 'piggy-bank', 'cash-register',
-  'safe', 'briefcase', 'store', 'bitcoin', 'currency-usd',
+  // Cards
+  'credit-card', 'credit-card-chip', 'credit-card-wireless', 'credit-card-multiple',
+  'contactless-payment', 'credit-card-fast',
+  // Banking & savings
+  'bank', 'bank-transfer', 'piggy-bank', 'safe',
+  // Cash & wallet
+  'wallet', 'cash', 'cash-multiple', 'hand-coin', 'cash-register',
+  // Currencies & crypto
+  'currency-usd', 'currency-eur', 'currency-gbp', 'currency-inr',
+  'currency-btc', 'bitcoin', 'ethereum',
+  // Investments & charts
+  'chart-line', 'chart-donut', 'gold', 'briefcase',
+  // Lifestyle & spending
+  'store', 'storefront', 'shopping', 'food', 'car',
+  'home', 'cellphone', 'medical-bag', 'school', 'airplane',
 ];
 
 type FormData = {

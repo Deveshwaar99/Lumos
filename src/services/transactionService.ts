@@ -188,6 +188,85 @@ export const transactionService = {
     }));
   },
 
+  async transfer(
+    fromAccountId: string,
+    toAccountId: string,
+    amountCents: number,
+    currency: string,
+    note: string,
+    date: string,
+    fdId?: string,
+  ): Promise<{ expenseId: string; incomeId: string }> {
+    const db = await getDatabase();
+    const now = new Date().toISOString();
+    const expenseId = generateId();
+    const incomeId = generateId();
+
+    await db.runAsync(
+      `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, note, date, linked_transaction_id, fd_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      expenseId, 'expense', amountCents, currency, null, fromAccountId,
+      note, date, incomeId, fdId ?? null, now, now
+    );
+    await db.runAsync(
+      'INSERT INTO transaction_splits (id, transaction_id, account_id, amount_cents) VALUES (?, ?, ?, ?)',
+      generateId(), expenseId, fromAccountId, amountCents
+    );
+
+    await db.runAsync(
+      `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, note, date, linked_transaction_id, fd_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      incomeId, 'income', amountCents, currency, null, toAccountId,
+      note, date, expenseId, fdId ?? null, now, now
+    );
+    await db.runAsync(
+      'INSERT INTO transaction_splits (id, transaction_id, account_id, amount_cents) VALUES (?, ?, ?, ?)',
+      generateId(), incomeId, toAccountId, amountCents
+    );
+
+    return { expenseId, incomeId };
+  },
+
+  async createWithFdId(data: CreateTransactionInput, fdId: string): Promise<TransactionWithSplits> {
+    const db = await getDatabase();
+    const id = generateId();
+    const now = new Date().toISOString();
+    await db.runAsync(
+      `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, note, date, linked_transaction_id, fd_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, data.type, data.totalAmountCents, data.currency, data.categoryId ?? null,
+      data.splits[0].accountId,
+      data.note ?? null, data.date, null, fdId, now, now
+    );
+
+    const splits: TransactionSplit[] = [];
+    for (const sp of data.splits) {
+      const splitId = generateId();
+      await db.runAsync(
+        'INSERT INTO transaction_splits (id, transaction_id, account_id, amount_cents) VALUES (?, ?, ?, ?)',
+        splitId, id, sp.accountId, sp.amountCents
+      );
+      splits.push({ id: splitId, transactionId: id, accountId: sp.accountId, amountCents: sp.amountCents });
+    }
+
+    return {
+      id, type: data.type, totalAmountCents: data.totalAmountCents,
+      currency: data.currency, categoryId: data.categoryId ?? null,
+      note: data.note ?? null, date: data.date,
+      linkedTransactionId: null, createdAt: now, updatedAt: now,
+      splits,
+    };
+  },
+
+  async getByFdId(fdId: string): Promise<Transaction[]> {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<any>(
+      'SELECT * FROM transactions WHERE fd_id = ? ORDER BY date ASC',
+      fdId
+    );
+    return rows.map(mapRow);
+  },
+
   async _attachSplits(txns: Transaction[]): Promise<TransactionWithSplits[]> {
     if (txns.length === 0) return [];
     const db = await getDatabase();
