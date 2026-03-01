@@ -116,7 +116,7 @@ export default function CategoriesScreen({ navigation }: TabScreenProps<'Categor
       )}
       <FAB
         icon="plus"
-        style={[styles.fab, { bottom: insets.bottom + 76 }]}
+        style={[styles.fab, { bottom: insets.bottom + 10 }]}
         onPress={() => navigation.navigate('CategoryForm', { categoryType: selectedType })}
         color="#fff"
       />

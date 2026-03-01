@@ -42,13 +42,16 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
     await Promise.all([loadCategories(), loadAccounts(), loadBudgets(), loadSettings()]);
     const range = getMonthRange(month);
     const [monthTxns, monthSummary] = await Promise.all([
-      transactionService.getAll({
-        dateFrom: range.start,
-        dateTo: range.end,
-        type: null,
-        accountId: null,
-        categoryId: null,
-      }),
+      transactionService.getAll(
+        {
+          dateFrom: range.start,
+          dateTo: range.end,
+          type: null,
+          accountId: null,
+          categoryId: null,
+        },
+        500,
+      ),
       analyticsService.getMonthSummary(month),
     ]);
     setTransactions(monthTxns);
@@ -157,7 +160,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
   },
   appTitle: { color: colors.primary, fontWeight: '700', fontSize: 26 },
-  list: { flex: 1, marginTop: spacing.lg },
+  list: { flex: 1, marginTop: spacing.xs },
   listContent: { paddingBottom: 100 },
   itemDivider: { backgroundColor: colors.border, marginLeft: 76 },
   emptyContainer: {

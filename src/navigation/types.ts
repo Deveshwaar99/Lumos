@@ -16,6 +16,7 @@ export type RootStackParamList = {
   TransactionDetail: { transactionId: string };
   CategoryForm: { categoryId?: string; categoryType?: 'income' | 'expense' } | undefined;
   AccountForm: { accountId?: string } | undefined;
+  AccountTransactions: { accountId: string };
   BudgetForm: { budgetId?: string; month?: string } | undefined;
   BackupRestore: undefined;
   Settings: undefined;

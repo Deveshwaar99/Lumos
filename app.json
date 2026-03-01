@@ -24,7 +24,8 @@
       },
       "navigationBarColor": "#242220",
       "navigationBarStyle": "light-content",
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
       "favicon": "./assets/favicon.png"

@@ -23,7 +23,7 @@ export const exportService = {
       params.push(filter.dateFrom);
     }
     if (filter?.dateTo) {
-      conditions.push('t.date <= ?');
+      conditions.push('t.date < ?');
       params.push(filter.dateTo);
     }
     if (filter?.type) {

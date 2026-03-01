@@ -81,8 +81,8 @@ export default function AccountFormScreen({ navigation, route }: RootStackScreen
 
   return (
     <View style={styles.container}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 80}>
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Controller
           control={control}
           name="name"
@@ -152,7 +152,7 @@ export default function AccountFormScreen({ navigation, route }: RootStackScreen
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  scroll: { padding: 16 },
+  scroll: { padding: 16, paddingBottom: 100 },
   input: { marginBottom: 12 },
   sectionTitle: { marginTop: 16, marginBottom: 8, color: colors.text },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

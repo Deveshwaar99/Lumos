@@ -8,6 +8,7 @@ import AddTransactionScreen from '../screens/AddTransactionScreen';
 import TransactionDetailScreen from '../screens/TransactionDetailScreen';
 import CategoryFormScreen from '../screens/CategoryFormScreen';
 import AccountFormScreen from '../screens/AccountFormScreen';
+import AccountTransactionsScreen from '../screens/AccountTransactionsScreen';
 import BudgetFormScreen from '../screens/BudgetFormScreen';
 import BackupRestoreScreen from '../screens/BackupRestoreScreen';
 import SettingsScreen from '../screens/SettingsScreen';
@@ -31,6 +32,7 @@ export default function RootNavigator() {
       <Stack.Screen name="TransactionDetail" component={TransactionDetailScreen} options={{ title: 'Transaction Details' }} />
       <Stack.Screen name="CategoryForm" component={CategoryFormScreen} options={{ title: 'Category' }} />
       <Stack.Screen name="AccountForm" component={AccountFormScreen} options={{ title: 'Account' }} />
+      <Stack.Screen name="AccountTransactions" component={AccountTransactionsScreen} options={{ title: 'Account Transactions' }} />
       <Stack.Screen name="BudgetForm" component={BudgetFormScreen} options={{ title: 'Budget' }} />
       <Stack.Screen name="BackupRestore" component={BackupRestoreScreen} options={{ title: 'Backup & Restore' }} />
       <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />

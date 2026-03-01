@@ -36,7 +36,7 @@ function buildWhereClause(filter: TransactionFilter): { sql: string; params: any
   const conditions: string[] = [];
   const params: any[] = [];
   if (filter.dateFrom) { conditions.push('t.date >= ?'); params.push(filter.dateFrom); }
-  if (filter.dateTo) { conditions.push('t.date <= ?'); params.push(filter.dateTo); }
+  if (filter.dateTo) { conditions.push('t.date < ?'); params.push(filter.dateTo); }
   if (filter.type) { conditions.push('t.type = ?'); params.push(filter.type); }
   if (filter.categoryId) { conditions.push('t.category_id = ?'); params.push(filter.categoryId); }
   if (filter.accountId) {

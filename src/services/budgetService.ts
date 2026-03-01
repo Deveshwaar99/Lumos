@@ -1,4 +1,3 @@
-import { format, parseISO } from 'date-fns';
 import { getDatabase } from '../db/database';
 import { Budget, BudgetWithSpent } from '../models/types';
 import { generateId } from '../utils/uuid';
@@ -19,16 +18,14 @@ export const budgetService = {
   async getByMonth(month: string): Promise<BudgetWithSpent[]> {
     const db = await getDatabase();
     const { start, end } = getMonthRange(month);
-    const dateFrom = format(parseISO(start), 'yyyy-MM-dd');
-    const dateTo = format(parseISO(end), 'yyyy-MM-dd');
 
     const rows = await db.getAllAsync<any>(
       `SELECT b.*, 
         COALESCE((SELECT SUM(t.total_amount_cents) FROM transactions t
           WHERE t.category_id = b.category_id AND t.type = 'expense'
-          AND t.date >= ? AND t.date <= ?), 0) as spent
+          AND t.date >= ? AND t.date < ?), 0) as spent
       FROM budgets b WHERE b.month = ? AND b.enabled = 1`,
-      dateFrom, dateTo, month
+      start, end, month
     );
 
     return rows.map((row) => {

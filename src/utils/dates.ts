@@ -10,6 +10,7 @@ import {
   endOfYear,
   eachDayOfInterval,
   addMonths as addMonthsFn,
+  addDays,
   startOfDay,
   endOfDay,
 } from 'date-fns';
@@ -22,20 +23,20 @@ export function getCurrentMonth(): string {
 }
 
 /**
- * Returns ISO date strings for first and last day of the given month (YYYY-MM).
+ * Returns yyyy-MM-dd date strings for first and last day of the given month (YYYY-MM).
  */
 export function getMonthRange(month: string): { start: string; end: string } {
   const date = parse(month + '-01', 'yyyy-MM-dd', new Date());
   const start = startOfMonth(date);
-  const end = endOfMonth(date);
+  const nextMonthStart = startOfMonth(addMonthsFn(date, 1));
   return {
-    start: startOfDay(start).toISOString(),
-    end: endOfDay(end).toISOString(),
+    start: format(start, 'yyyy-MM-dd'),
+    end: format(nextMonthStart, 'yyyy-MM-dd'),
   };
 }
 
 /**
- * Returns ISO date strings for the given preset range.
+ * Returns yyyy-MM-dd date strings for the given preset range.
  */
 export function getDateRangePreset(
   preset: 'today' | 'week' | 'month' | 'year'
@@ -64,8 +65,8 @@ export function getDateRangePreset(
   }
 
   return {
-    start: startOfDay(startDate).toISOString(),
-    end: endOfDay(endDate).toISOString(),
+    start: format(startOfDay(startDate), 'yyyy-MM-dd'),
+    end: format(addDays(endOfDay(endDate), 1), 'yyyy-MM-dd'),
   };
 }
 
@@ -104,14 +105,34 @@ export function getMonthLabel(month: string): string {
 }
 
 /**
- * Returns array of ISO date strings for each day in the given month (YYYY-MM).
+ * Returns array of yyyy-MM-dd date strings for each day in the given month (YYYY-MM).
  */
 export function getDaysInMonth(month: string): string[] {
   const date = parse(month + '-01', 'yyyy-MM-dd', new Date());
   const start = startOfMonth(date);
   const end = endOfMonth(date);
   const days = eachDayOfInterval({ start, end });
-  return days.map((d) => d.toISOString());
+  return days.map((d) => format(d, 'yyyy-MM-dd'));
+}
+
+/**
+ * Formats ISO date string to 'MMM dd, h:mm a' e.g. "Mar 01, 2:30 PM".
+ * Falls back to date-only format if no time component.
+ */
+export function formatDateTimeShort(dateStr: string): string {
+  const date = parseDate(dateStr);
+  if (dateStr.includes('T')) {
+    return format(date, 'MMM dd, h:mm a');
+  }
+  return format(date, 'MMM dd');
+}
+
+/**
+ * Extracts time portion as 'h:mm a' e.g. "2:30 PM".
+ */
+export function formatTimeShort(dateStr: string): string {
+  const date = parseDate(dateStr);
+  return format(date, 'h:mm a');
 }
 
 /**

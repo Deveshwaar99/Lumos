@@ -111,8 +111,8 @@ export default function BudgetFormScreen({ navigation, route }: RootStackScreenP
 
   return (
     <View style={styles.container}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 80}>
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Text variant="titleSmall" style={styles.label}>
           Category
         </Text>
@@ -176,7 +176,7 @@ export default function BudgetFormScreen({ navigation, route }: RootStackScreenP
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  scroll: { padding: 16 },
+  scroll: { padding: 16, paddingBottom: 100 },
   label: { marginTop: 16, marginBottom: 8, color: colors.text },
   pickerButton: { borderColor: colors.border },
   input: { marginBottom: 4 },

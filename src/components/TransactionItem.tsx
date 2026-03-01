@@ -3,7 +3,7 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, Icon } from 'react-native-paper';
 import { colors, spacing, radius } from '../theme';
 import { formatMoney } from '../utils/money';
-import { formatDateShort } from '../utils/dates';
+import { formatDateTimeShort } from '../utils/dates';
 import type { TransactionWithSplits, Category, Account } from '../models/types';
 
 const BADGE_COLORS = [
@@ -46,7 +46,7 @@ function TransactionItemComponent({
       >
         <Icon
           source={(category?.icon ?? 'help-circle') as any}
-          size={22}
+          size={20}
           color={category?.color ?? colors.textSecondary}
         />
       </View>
@@ -77,7 +77,7 @@ function TransactionItemComponent({
           {prefix}{formatMoney(transaction.totalAmountCents, transaction.currency)}
         </Text>
         <Text variant="bodySmall" style={styles.date}>
-          {formatDateShort(transaction.date)}
+          {formatDateTimeShort(transaction.date)}
         </Text>
       </View>
     </TouchableOpacity>
@@ -90,14 +90,14 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
+    paddingVertical: 8,
     paddingHorizontal: spacing.lg,
     backgroundColor: colors.background,
   },
   iconCircle: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -107,18 +107,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
-    marginTop: 4,
+    marginTop: 2,
   },
   badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
     borderRadius: radius.capsule,
   },
   badgeText: {
     fontSize: 11,
     fontWeight: '600',
   },
-  note: { color: colors.textSecondary, marginTop: 3 },
+  note: { color: colors.textSecondary, marginTop: 2 },
   right: { alignItems: 'flex-end', marginLeft: 8 },
-  date: { color: colors.textTertiary, marginTop: 3 },
+  date: { color: colors.textTertiary, marginTop: 2 },
 });

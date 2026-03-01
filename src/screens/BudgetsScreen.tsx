@@ -214,7 +214,7 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
 
       <FAB
         icon="plus"
-        style={[styles.fab, { bottom: insets.bottom + 76 }]}
+        style={[styles.fab, { bottom: insets.bottom + 10 }]}
         onPress={() => navigation.navigate('BudgetForm', { month })}
         color="#fff"
       />

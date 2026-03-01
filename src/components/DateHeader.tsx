@@ -23,7 +23,7 @@ export default function DateHeader({ dateStr }: DateHeaderProps) {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
   },
   label: {
