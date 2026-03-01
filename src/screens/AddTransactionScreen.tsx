@@ -1,15 +1,23 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Animated,
+  Keyboard,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   TextInput,
-  Button,
   SegmentedButtons,
   Text,
   Icon,
   Snackbar,
   Switch,
-  Divider,
 } from 'react-native-paper';
 import { format } from 'date-fns';
 import { useTransactionStore } from '../stores/useTransactionStore';
@@ -19,11 +27,13 @@ import { useSettingsStore } from '../stores/useSettingsStore';
 import { transactionService } from '../services/transactionService';
 import CategoryPicker from '../components/CategoryPicker';
 import AccountPicker from '../components/AccountPicker';
-import AmountDisplay from '../components/AmountDisplay';
 import CalculatorPad from '../components/CalculatorPad';
+import InlineCalendar from '../components/InlineCalendar';
 import { colors, spacing, radius } from '../theme';
 import { dollarsToCents } from '../utils/money';
 import type { RootStackScreenProps } from '../navigation/types';
+
+type PanelType = 'none' | 'calculator' | 'calendar';
 
 function evalExpression(expr: string): number {
   try {
@@ -70,6 +80,9 @@ export default function AddTransactionScreen({
   const [account1PickerVisible, setAccount1PickerVisible] = useState(false);
   const [account2PickerVisible, setAccount2PickerVisible] = useState(false);
   const [snackbar, setSnackbar] = useState('');
+
+  const [activePanel, setActivePanel] = useState<PanelType>('none');
+  const panelAnim = useRef(new Animated.Value(0)).current;
 
   const filteredCategories = categories.filter((c) => c.type === type);
   const selectedCategory = categories.find((c) => c.id === categoryId);
@@ -118,6 +131,29 @@ export default function AddTransactionScreen({
     }
   }, [type]);
 
+  const togglePanel = useCallback((panel: PanelType) => {
+    Keyboard.dismiss();
+    setActivePanel((prev) => {
+      const next = prev === panel ? 'none' : panel;
+      Animated.timing(panelAnim, {
+        toValue: next === 'none' ? 0 : 1,
+        duration: 250,
+        useNativeDriver: false,
+      }).start();
+      return next;
+    });
+  }, [panelAnim]);
+
+  const closePanel = useCallback(() => {
+    setActivePanel('none');
+    Animated.timing(panelAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  }, [panelAnim]);
+
+  // Calculator handlers -- feed into the main expression
   const handleDigit = useCallback((d: string) => setExpression((e) => e + d), []);
   const handleOperator = useCallback((op: string) => {
     setExpression((e) => {
@@ -221,168 +257,253 @@ export default function AddTransactionScreen({
 
   if (!loaded) return null;
 
+  const amountColor = type === 'income' ? colors.income : colors.expense;
+  const dateLabel = format(new Date(dateStr + 'T00:00:00'), 'MMM d, yyyy');
+
   return (
     <View style={styles.container}>
+      {/* ---- Top Bar ---- */}
       <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text variant="titleMedium" style={styles.cancelText}>Cancel</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
+          <Icon source="close" size={24} color={colors.text} />
         </TouchableOpacity>
-        <View style={styles.segmentWrapper}>
-          <SegmentedButtons
-            value={type}
-            onValueChange={(v) => setType(v as 'income' | 'expense')}
-            buttons={[
-              { value: 'income', label: 'Income' },
-              { value: 'expense', label: 'Expense' },
-            ]}
-            density="small"
-          />
-        </View>
-        <TouchableOpacity onPress={onSubmit}>
-          <Text variant="titleMedium" style={styles.saveText}>Save</Text>
+        <Text style={styles.topBarTitle}>
+          {isEditing ? 'Edit transaction' : 'Add transaction'}
+        </Text>
+        <TouchableOpacity onPress={onSubmit} hitSlop={12}>
+          <Text style={styles.saveText}>Save</Text>
         </TouchableOpacity>
+      </View>
+
+      {/* ---- Type Switcher ---- */}
+      <View style={styles.typeSwitcherRow}>
+        <SegmentedButtons
+          value={type}
+          onValueChange={(v) => setType(v as 'income' | 'expense')}
+          buttons={[
+            { value: 'income', label: 'Income' },
+            { value: 'expense', label: 'Expense' },
+          ]}
+          density="small"
+        />
       </View>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.selectorRow}>
-          <TouchableOpacity
-            style={styles.selectorCard}
-            onPress={() => setAccount1PickerVisible(true)}
-          >
-            <Icon source={selectedAccount1?.icon ?? 'wallet'} size={24} color={colors.primary} />
-            <Text variant="bodySmall" style={styles.selectorLabel}>Account</Text>
-            <Text variant="bodyMedium" style={styles.selectorValue} numberOfLines={1}>
-              {selectedAccount1?.name ?? 'Select'}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.selectorCard}
-            onPress={() => setCategoryPickerVisible(true)}
-          >
-            <Icon
-              source={(selectedCategory?.icon ?? 'shape') as any}
-              size={24}
-              color={selectedCategory?.color ?? colors.textSecondary}
-            />
-            <Text variant="bodySmall" style={styles.selectorLabel}>Category</Text>
-            <Text variant="bodyMedium" style={styles.selectorValue} numberOfLines={1}>
-              {selectedCategory?.name ?? 'Select'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.noteCard}>
-          <TextInput
-            value={note}
-            onChangeText={setNote}
-            placeholder="Add a note..."
-            placeholderTextColor={colors.textTertiary}
-            mode="flat"
-            style={styles.noteInput}
-            underlineColor="transparent"
-            activeUnderlineColor={colors.primary}
-            textColor={colors.text}
-          />
-        </View>
-
-        <View style={styles.splitToggle}>
-          <View style={{ flex: 1 }}>
-            <Text variant="titleSmall" style={{ color: colors.text }}>Split Payment</Text>
-            <Text variant="bodySmall" style={{ color: colors.textSecondary }}>
-              Pay from two accounts
-            </Text>
-          </View>
-          <Switch value={splitEnabled} onValueChange={setSplitEnabled} color={colors.primary} />
-        </View>
-
-        {splitEnabled && (
-          <View style={styles.splitSection}>
-            <View style={styles.splitRow}>
-              <TouchableOpacity
-                style={styles.splitAccountBtn}
-                onPress={() => setAccount1PickerVisible(true)}
-              >
-                <Text variant="bodySmall" style={styles.splitAccountLabel}>
-                  {selectedAccount1?.name ?? 'Account 1'}
+        <ScrollView
+          style={styles.scrollArea}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* ---- Account + Category Row ---- */}
+          <View style={styles.selectorRow}>
+            <TouchableOpacity
+              style={styles.selectorCard}
+              onPress={() => setAccount1PickerVisible(true)}
+            >
+              <View style={[styles.selectorIcon, { backgroundColor: colors.primary + '18' }]}>
+                <Icon source={selectedAccount1?.icon ?? 'wallet'} size={20} color={colors.primary} />
+              </View>
+              <View style={styles.selectorTextCol}>
+                <Text style={styles.selectorLabel}>Account</Text>
+                <Text style={styles.selectorValue} numberOfLines={1}>
+                  {selectedAccount1?.name ?? 'Select'}
                 </Text>
-              </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+
+            <View style={styles.selectorDivider} />
+
+            <TouchableOpacity
+              style={styles.selectorCard}
+              onPress={() => setCategoryPickerVisible(true)}
+            >
+              <View style={[styles.selectorIcon, { backgroundColor: (selectedCategory?.color ?? colors.textSecondary) + '18' }]}>
+                <Icon
+                  source={(selectedCategory?.icon ?? 'shape') as any}
+                  size={20}
+                  color={selectedCategory?.color ?? colors.textSecondary}
+                />
+              </View>
+              <View style={styles.selectorTextCol}>
+                <Text style={styles.selectorLabel}>Category</Text>
+                <Text style={styles.selectorValue} numberOfLines={1}>
+                  {selectedCategory?.name ?? 'Select'}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {/* ---- Note + Amount Row ---- */}
+          <View style={styles.noteAmountCard}>
+            <View style={styles.noteRow}>
+              <Icon source={(selectedCategory?.icon ?? 'pencil') as any} size={28} color={colors.textTertiary} />
               <TextInput
-                value={split1Expression}
-                onChangeText={setSplit1Expression}
-                keyboardType="decimal-pad"
-                mode="outlined"
-                style={styles.splitAmountInput}
-                dense
+                value={note}
+                onChangeText={setNote}
+                placeholder="Description"
+                placeholderTextColor={colors.textTertiary}
+                mode="flat"
+                style={styles.noteInput}
+                underlineColor={colors.border}
+                activeUnderlineColor={colors.textSecondary}
                 textColor={colors.text}
               />
             </View>
-            <View style={styles.splitRow}>
-              <TouchableOpacity
-                style={styles.splitAccountBtn}
-                onPress={() => setAccount2PickerVisible(true)}
-              >
-                <Text variant="bodySmall" style={styles.splitAccountLabel}>
-                  {selectedAccount2?.name ?? 'Account 2'}
-                </Text>
-              </TouchableOpacity>
+            <View style={styles.amountRow}>
+              <View style={styles.currencyBadge}>
+                <Text style={styles.currencyText}>{settings.currencySymbol}</Text>
+              </View>
               <TextInput
-                value={split2Expression}
-                onChangeText={setSplit2Expression}
+                value={expression}
+                onChangeText={setExpression}
+                placeholder="0"
+                placeholderTextColor={colors.textTertiary}
+                mode="flat"
+                style={styles.amountInput}
+                underlineColor={amountColor}
+                activeUnderlineColor={amountColor}
+                textColor={amountColor}
                 keyboardType="decimal-pad"
-                mode="outlined"
-                style={styles.splitAmountInput}
-                dense
-                textColor={colors.text}
               />
             </View>
           </View>
-        )}
 
-        <View style={styles.dateRow}>
-          <Icon source="calendar" size={20} color={colors.textSecondary} />
-          <TextInput
-            value={dateStr}
-            onChangeText={setDateStr}
-            mode="flat"
-            style={styles.dateInput}
-            underlineColor="transparent"
-            activeUnderlineColor={colors.primary}
-            textColor={colors.text}
-            placeholder="YYYY-MM-DD"
-          />
-        </View>
+          {/* ---- Split Payment Toggle ---- */}
+          <View style={styles.splitToggle}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.splitTitle}>Split Payment</Text>
+              <Text style={styles.splitSubtitle}>Pay from two accounts</Text>
+            </View>
+            <Switch value={splitEnabled} onValueChange={setSplitEnabled} color={colors.primary} />
+          </View>
 
-        {isEditing && (
-          <Button
-            mode="outlined"
-            onPress={handleDelete}
-            textColor={colors.error}
-            style={styles.deleteButton}
+          {/* ---- Split Rows ---- */}
+          {splitEnabled && (
+            <View style={styles.splitSection}>
+              <View style={styles.splitCard}>
+                <TouchableOpacity
+                  style={styles.splitAccountChip}
+                  onPress={() => setAccount1PickerVisible(true)}
+                >
+                  <Text style={styles.splitAccountText} numberOfLines={1}>
+                    {selectedAccount1?.name ?? 'Account 1'}
+                  </Text>
+                  <Icon source="chevron-down" size={16} color={colors.textSecondary} />
+                </TouchableOpacity>
+                <TextInput
+                  value={split1Expression}
+                  onChangeText={setSplit1Expression}
+                  placeholder="0"
+                  placeholderTextColor={colors.textTertiary}
+                  keyboardType="decimal-pad"
+                  mode="flat"
+                  style={styles.splitAmountInput}
+                  underlineColor={colors.border}
+                  activeUnderlineColor={colors.primary}
+                  textColor={colors.text}
+                  dense
+                />
+              </View>
+              <View style={styles.splitCard}>
+                <TouchableOpacity
+                  style={styles.splitAccountChip}
+                  onPress={() => setAccount2PickerVisible(true)}
+                >
+                  <Text style={styles.splitAccountText} numberOfLines={1}>
+                    {selectedAccount2?.name ?? 'Account 2'}
+                  </Text>
+                  <Icon source="chevron-down" size={16} color={colors.textSecondary} />
+                </TouchableOpacity>
+                <TextInput
+                  value={split2Expression}
+                  onChangeText={setSplit2Expression}
+                  placeholder="0"
+                  placeholderTextColor={colors.textTertiary}
+                  keyboardType="decimal-pad"
+                  mode="flat"
+                  style={styles.splitAmountInput}
+                  underlineColor={colors.border}
+                  activeUnderlineColor={colors.primary}
+                  textColor={colors.text}
+                  dense
+                />
+              </View>
+            </View>
+          )}
+
+          {/* ---- Date display ---- */}
+          <TouchableOpacity
+            style={styles.dateChip}
+            onPress={() => togglePanel('calendar')}
           >
-            Delete Transaction
-          </Button>
-        )}
-      </ScrollView>
+            <Icon source="calendar" size={18} color={colors.primary} />
+            <Text style={styles.dateChipText}>{dateLabel}</Text>
+          </TouchableOpacity>
+
+          {/* ---- Delete (edit mode only) ---- */}
+          {isEditing && (
+            <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+              <Icon source="trash-can-outline" size={20} color={colors.error} />
+              <Text style={styles.deleteText}>Delete Transaction</Text>
+            </TouchableOpacity>
+          )}
+        </ScrollView>
       </KeyboardAvoidingView>
 
-      <View style={[styles.bottomSection, { paddingBottom: insets.bottom + spacing.sm }]}>
-        <AmountDisplay
-          expression={expression}
-          currencySymbol={settings.currencySymbol}
-          type={type}
-        />
-        <CalculatorPad
-          onDigit={handleDigit}
-          onOperator={handleOperator}
-          onDecimal={handleDecimal}
-          onBackspace={handleBackspace}
-          onEquals={handleEquals}
-          onClear={handleClear}
-        />
+      {/* ---- Overlay Panel ---- */}
+      {activePanel !== 'none' && (
+        <Animated.View style={[styles.panelOverlay]}>
+          {activePanel === 'calculator' && (
+            <View style={styles.calcPanel}>
+              <View style={styles.calcAmountRow}>
+                <Text style={[styles.calcAmountText, { color: amountColor }]}>
+                  {settings.currencySymbol} {expression || '0'}
+                </Text>
+              </View>
+              <CalculatorPad
+                onDigit={handleDigit}
+                onOperator={handleOperator}
+                onDecimal={handleDecimal}
+                onBackspace={handleBackspace}
+                onEquals={handleEquals}
+                onClear={handleClear}
+              />
+            </View>
+          )}
+          {activePanel === 'calendar' && (
+            <InlineCalendar
+              selectedDate={dateStr}
+              onDateSelect={(d) => setDateStr(d)}
+              onDone={closePanel}
+            />
+          )}
+        </Animated.View>
+      )}
+
+      {/* ---- Bottom Toolbar ---- */}
+      <View style={[styles.bottomToolbar, { paddingBottom: insets.bottom + spacing.sm }]}>
+        <TouchableOpacity
+          style={[styles.toolbarBtn, activePanel === 'calendar' && styles.toolbarBtnActive]}
+          onPress={() => togglePanel('calendar')}
+        >
+          <Icon source="calendar-month" size={24} color={activePanel === 'calendar' ? colors.primary : colors.textSecondary} />
+          <Text style={[styles.toolbarLabel, activePanel === 'calendar' && { color: colors.primary }]}>
+            Today
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.toolbarBtn, activePanel === 'calculator' && styles.toolbarBtnActive]}
+          onPress={() => togglePanel('calculator')}
+        >
+          <Icon source="calculator" size={24} color={activePanel === 'calculator' ? colors.primary : colors.textSecondary} />
+          <Text style={[styles.toolbarLabel, activePanel === 'calculator' && { color: colors.primary }]}>
+            Calculator
+          </Text>
+        </TouchableOpacity>
       </View>
 
+      {/* ---- Pickers ---- */}
       <CategoryPicker
         visible={categoryPickerVisible}
         onDismiss={() => setCategoryPickerVisible(false)}
@@ -413,95 +534,246 @@ export default function AddTransactionScreen({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingBottom: spacing.md,
     backgroundColor: colors.background,
   },
-  cancelText: { color: colors.textSecondary, fontSize: 16 },
-  saveText: { color: colors.primary, fontWeight: '700', fontSize: 16 },
-  segmentWrapper: { flex: 1, marginHorizontal: spacing.md },
+  topBarTitle: {
+    color: colors.text,
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  saveText: {
+    color: colors.primary,
+    fontWeight: '700',
+    fontSize: 16,
+  },
+
+  typeSwitcherRow: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+  },
+
   scrollArea: { flex: 1 },
-  scrollContent: { padding: spacing.lg, paddingBottom: spacing.md },
+  scrollContent: {
+    padding: spacing.lg,
+    paddingBottom: spacing.md,
+  },
+
   selectorRow: {
     flexDirection: 'row',
-    gap: spacing.md,
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
     marginBottom: spacing.lg,
   },
   selectorCard: {
     flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: spacing.lg,
-    alignItems: 'center',
-    gap: 6,
-  },
-  selectorLabel: { color: colors.textSecondary, fontSize: 11 },
-  selectorValue: { color: colors.text, fontWeight: '600' },
-  noteCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    marginBottom: spacing.md,
-    overflow: 'hidden',
-  },
-  noteInput: {
-    backgroundColor: 'transparent',
-    fontSize: 15,
-  },
-  splitToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-  },
-  splitSection: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-    gap: spacing.md,
-  },
-  splitRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
   },
-  splitAccountBtn: {
+  selectorIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  selectorTextCol: {
     flex: 1,
-    backgroundColor: colors.surfaceVariant,
-    borderRadius: radius.sm,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
   },
-  splitAccountLabel: { color: colors.text },
-  splitAmountInput: {
-    width: 100,
-    backgroundColor: 'transparent',
-    height: 40,
+  selectorLabel: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
-  dateRow: {
+  selectorValue: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 1,
+  },
+  selectorDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: colors.border,
+    marginHorizontal: spacing.sm,
+  },
+
+  noteAmountCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    gap: spacing.md,
+  },
+  noteRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.md,
+    gap: spacing.md,
   },
-  dateInput: {
+  noteInput: {
     flex: 1,
     backgroundColor: 'transparent',
+    fontSize: 18,
+    height: 44,
+  },
+  amountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  currencyBadge: {
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: radius.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  currencyText: {
+    color: colors.textSecondary,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  amountInput: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    fontSize: 28,
+    fontWeight: '700',
+    height: 52,
+  },
+
+  splitToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  splitTitle: {
+    color: colors.text,
     fontSize: 15,
+    fontWeight: '600',
   },
+  splitSubtitle: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    marginTop: 2,
+  },
+
+  splitSection: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    gap: spacing.md,
+  },
+  splitCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  splitAccountChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: radius.capsule,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    gap: 4,
+    maxWidth: 140,
+  },
+  splitAccountText: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  splitAmountInput: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    fontSize: 16,
+    height: 40,
+  },
+
+  dateChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: colors.surface,
+    borderRadius: radius.capsule,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  dateChipText: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: '500',
+  },
+
   deleteButton: {
-    marginTop: spacing.lg,
-    borderColor: colors.error,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    marginTop: spacing.sm,
   },
-  bottomSection: {
+  deleteText: {
+    color: colors.error,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+
+  panelOverlay: {
     backgroundColor: colors.surface,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    overflow: 'hidden',
+  },
+  calcPanel: {
     paddingTop: spacing.sm,
+  },
+  calcAmountRow: {
+    alignItems: 'flex-end',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  calcAmountText: {
+    fontSize: 36,
+    fontWeight: '700',
+  },
+
+  bottomToolbar: {
+    flexDirection: 'row',
+    backgroundColor: colors.surface,
+    borderTopWidth: 0.5,
+    borderTopColor: colors.border,
+    paddingTop: spacing.sm,
+    paddingHorizontal: spacing.xl,
+  },
+  toolbarBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  toolbarBtnActive: {
+    backgroundColor: colors.primary + '15',
+    borderRadius: radius.capsule,
+  },
+  toolbarLabel: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

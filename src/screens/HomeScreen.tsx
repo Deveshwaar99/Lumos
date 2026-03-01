@@ -139,7 +139,7 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
 
       <FAB
         icon="plus"
-        style={[styles.fab, { bottom: insets.bottom + 76 }]}
+        style={[styles.fab, { bottom: insets.bottom + 10}]}
         onPress={() => navigation.navigate('AddTransaction')}
         color="#fff"
       />
