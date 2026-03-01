@@ -13,14 +13,19 @@ export default function MonthNavigator({ label, onPrev, onNext }: MonthNavigator
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={onPrev} hitSlop={12}>
-        <Icon source="chevron-left" size={28} color={colors.text} />
+        <Icon source="chevron-left" size={28} color={colors.primary} />
       </TouchableOpacity>
       <Text variant="titleMedium" style={styles.label}>
         {label}
       </Text>
-      <TouchableOpacity onPress={onNext} hitSlop={12}>
-        <Icon source="chevron-right" size={28} color={colors.text} />
-      </TouchableOpacity>
+      <View style={styles.rightGroup}>
+        <TouchableOpacity onPress={onNext} hitSlop={12}>
+          <Icon source="chevron-right" size={28} color={colors.primary} />
+        </TouchableOpacity>
+        <TouchableOpacity hitSlop={12} style={styles.filterBtn}>
+          <Icon source="filter-variant" size={22} color={colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -34,8 +39,16 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   label: {
-    color: colors.primary,
+    color: colors.text,
     fontWeight: '700',
     fontSize: 17,
+  },
+  rightGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  filterBtn: {
+    marginLeft: 4,
   },
 });

@@ -14,11 +14,8 @@ export default function DateHeader({ dateStr }: DateHeaderProps) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.pill}>
-        <Text variant="labelMedium" style={styles.label}>
-          {label}
-        </Text>
-      </View>
+      <Text style={styles.label}>{label}</Text>
+      <View style={styles.line} />
     </View>
   );
 }
@@ -29,16 +26,14 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
     paddingBottom: spacing.sm,
   },
-  pill: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.surfaceVariant,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-  },
   label: {
-    color: colors.textSecondary,
+    color: colors.text,
     fontWeight: '600',
-    letterSpacing: 0.3,
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  line: {
+    height: 1,
+    backgroundColor: colors.border,
   },
 });

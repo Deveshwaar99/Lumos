@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { View, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useCallback, useMemo } from 'react';
+import { View, SectionList, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, FAB, Card, Icon, Snackbar, Banner } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,12 +7,18 @@ import { useBudgetStore } from '../stores/useBudgetStore';
 import { useCategoryStore } from '../stores/useCategoryStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import BudgetProgressBar from '../components/BudgetProgressBar';
-import EmptyState from '../components/EmptyState';
 import { colors, spacing, radius } from '../theme';
 import { formatMoney } from '../utils/money';
 import { getMonthLabel, addMonths } from '../utils/dates';
 import type { TabScreenProps } from '../navigation/types';
-import type { BudgetWithSpent } from '../models/types';
+import type { BudgetWithSpent, Category } from '../models/types';
+
+type SectionItem = BudgetWithSpent | Category;
+interface BudgetSection {
+  title: string;
+  data: SectionItem[];
+  type: 'budgeted' | 'not_budgeted';
+}
 
 export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>) {
   const { budgets, month, alerts, loading, loadBudgets, setMonth } = useBudgetStore();
@@ -29,22 +35,43 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
 
   const totalBudgeted = budgets.reduce((sum, b) => sum + b.limitCents, 0);
   const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0);
-  const categoryMap = Object.fromEntries(categories.map((c) => [c.id, c]));
+  const categoryMap = useMemo(
+    () => Object.fromEntries(categories.map((c) => [c.id, c])),
+    [categories],
+  );
+
+  const budgetedCategoryIds = useMemo(
+    () => new Set(budgets.map((b) => b.categoryId)),
+    [budgets],
+  );
+
+  const unbudgetedExpenseCategories = useMemo(
+    () => categories.filter((c) => c.type === 'expense' && !budgetedCategoryIds.has(c.id)),
+    [categories, budgetedCategoryIds],
+  );
+
+  const sections: BudgetSection[] = useMemo(() => {
+    const result: BudgetSection[] = [];
+    if (budgets.length > 0) {
+      result.push({ title: 'BUDGETED', data: budgets, type: 'budgeted' });
+    }
+    if (unbudgetedExpenseCategories.length > 0) {
+      result.push({ title: 'NOT BUDGETED', data: unbudgetedExpenseCategories, type: 'not_budgeted' });
+    }
+    return result;
+  }, [budgets, unbudgetedExpenseCategories]);
 
   const handlePrevMonth = () => setMonth(addMonths(month, -1));
   const handleNextMonth = () => setMonth(addMonths(month, 1));
 
-  const handleAddBudget = () => {
-    navigation.navigate('BudgetForm', { month });
-  };
-
-  const renderItem = ({ item }: { item: BudgetWithSpent }) => {
+  const renderBudgetedItem = (item: BudgetWithSpent) => {
     const cat = categoryMap[item.categoryId];
     const barColor = cat?.color ?? colors.primary;
     return (
       <TouchableOpacity
         style={styles.budgetItem}
         onPress={() => navigation.navigate('BudgetForm', { budgetId: item.id, month: item.month })}
+        activeOpacity={0.7}
       >
         <View style={[styles.colorBar, { backgroundColor: barColor }]} />
         <View style={styles.budgetContent}>
@@ -74,6 +101,33 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
     );
   };
 
+  const renderUnbudgetedItem = (cat: Category) => {
+    return (
+      <View style={styles.unbudgetedItem}>
+        <View style={styles.budgetLeft}>
+          <View style={[styles.iconCircle, { backgroundColor: cat.color + '20' }]}>
+            <Icon source={cat.icon as any} size={20} color={cat.color} />
+          </View>
+          <Text variant="bodyLarge" style={{ color: colors.text, fontWeight: '600' }}>{cat.name}</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.setBudgetBtn}
+          onPress={() => navigation.navigate('BudgetForm', { month })}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.setBudgetText}>SET BUDGET</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const renderItem = ({ item, section }: { item: SectionItem; section: BudgetSection }) => {
+    if (section.type === 'budgeted') {
+      return renderBudgetedItem(item as BudgetWithSpent);
+    }
+    return renderUnbudgetedItem(item as Category);
+  };
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {alerts.length > 0 && (
@@ -91,7 +145,7 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
         <TouchableOpacity onPress={handlePrevMonth}>
           <Icon source="chevron-left" size={28} color={colors.text} />
         </TouchableOpacity>
-        <Text variant="titleMedium" style={{ color: colors.primary, fontWeight: '700' }}>
+        <Text variant="titleMedium" style={{ fontWeight: '700' }}>
           {getMonthLabel(month)}
         </Text>
         <TouchableOpacity onPress={handleNextMonth}>
@@ -103,43 +157,65 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
         <Card style={styles.summaryCard}>
           <Card.Content style={styles.summaryContent}>
             <View style={styles.summaryItem}>
-              <Text variant="bodySmall" style={styles.summaryLabel}>
-                Budgeted
+              <Text variant="labelSmall" style={styles.summaryLabel}>BUDGETED</Text>
+              <Text variant="titleSmall" style={{ color: colors.text, fontWeight: '700' }}>
+                {formatMoney(totalBudgeted, currency)}
               </Text>
-              <Text variant="titleMedium" style={{ color: colors.text }}>{formatMoney(totalBudgeted, currency)}</Text>
             </View>
             <View style={styles.summaryItem}>
-              <Text variant="bodySmall" style={styles.summaryLabel}>
-                Spent
-              </Text>
+              <Text variant="labelSmall" style={styles.summaryLabel}>SPENT</Text>
               <Text
-                variant="titleMedium"
-                style={{ color: totalSpent > totalBudgeted ? colors.expense : colors.text }}
+                variant="titleSmall"
+                style={{ color: totalSpent > totalBudgeted ? colors.expense : colors.text, fontWeight: '700' }}
               >
                 {formatMoney(totalSpent, currency)}
+              </Text>
+            </View>
+            <View style={styles.summaryItem}>
+              <Text variant="labelSmall" style={styles.summaryLabel}>REMAINING</Text>
+              <Text
+                variant="titleSmall"
+                style={{
+                  color: totalBudgeted - totalSpent >= 0 ? colors.income : colors.expense,
+                  fontWeight: '700',
+                }}
+              >
+                {formatMoney(totalBudgeted - totalSpent, currency)}
               </Text>
             </View>
           </Card.Content>
         </Card>
       )}
 
-      {budgets.length === 0 ? (
-        <EmptyState icon="calculator" title="No Budgets" subtitle="Set budgets to track your spending" />
-      ) : (
-        <FlatList
-          data={budgets}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={{ paddingBottom: 100, paddingHorizontal: spacing.lg }}
-          refreshing={loading}
-          onRefresh={() => loadBudgets()}
-        />
-      )}
+      <SectionList
+        sections={sections}
+        keyExtractor={(item) => (item as { id: string }).id}
+        renderSectionHeader={({ section }) => (
+          <View style={styles.sectionHeader}>
+            <Text variant="labelMedium" style={styles.sectionHeaderText}>
+              {section.title}
+            </Text>
+          </View>
+        )}
+        renderItem={renderItem}
+        contentContainerStyle={{ paddingBottom: 100, paddingHorizontal: spacing.lg }}
+        refreshing={loading}
+        onRefresh={() => loadBudgets()}
+        stickySectionHeadersEnabled={false}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Icon source="calculator" size={48} color={colors.textTertiary} />
+            <Text variant="bodyLarge" style={styles.emptyText}>
+              No budgets set. Start tracking!
+            </Text>
+          </View>
+        }
+      />
 
       <FAB
         icon="plus"
         style={[styles.fab, { bottom: insets.bottom + 76 }]}
-        onPress={handleAddBudget}
+        onPress={() => navigation.navigate('BudgetForm', { month })}
         color="#fff"
       />
       <Snackbar visible={!!snackbar} onDismiss={() => setSnackbar('')} duration={3000}>
@@ -165,9 +241,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
   },
-  summaryContent: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: spacing.sm },
-  summaryItem: { alignItems: 'center' },
-  summaryLabel: { color: colors.textSecondary, marginBottom: 4 },
+  summaryContent: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: spacing.sm },
+  summaryItem: { alignItems: 'flex-start', flex: 1 },
+  summaryLabel: { color: colors.textSecondary, marginBottom: 4, letterSpacing: 0.5 },
+  sectionHeader: {
+    paddingVertical: spacing.md,
+    paddingTop: spacing.lg,
+  },
+  sectionHeaderText: {
+    color: colors.textSecondary,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
   budgetItem: {
     flexDirection: 'row',
     backgroundColor: colors.surface,
@@ -180,11 +265,13 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radius.lg,
     borderBottomLeftRadius: radius.lg,
   },
-  budgetContent: {
-    flex: 1,
-    padding: spacing.lg,
+  budgetContent: { flex: 1, padding: spacing.lg },
+  budgetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
   },
-  budgetHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
   budgetLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   iconCircle: {
     width: 36,
@@ -194,5 +281,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   remaining: { color: colors.textSecondary },
+  unbudgetedItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  setBudgetBtn: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.capsule,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  setBudgetText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 12,
+    letterSpacing: 0.5,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 80,
+  },
+  emptyText: { color: colors.textSecondary, marginTop: spacing.lg },
   fab: { position: 'absolute', right: spacing.lg, backgroundColor: colors.primary },
 });

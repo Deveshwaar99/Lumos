@@ -6,6 +6,19 @@ import { formatMoney } from '../utils/money';
 import { formatDateShort } from '../utils/dates';
 import type { TransactionWithSplits, Category, Account } from '../models/types';
 
+const BADGE_COLORS = [
+  '#FC4C02', '#5C6BC0', '#26A69A', '#AB47BC', '#42A5F5',
+  '#FF7043', '#78909C', '#8D6E63', '#EC407A', '#9CCC65',
+];
+
+function hashColor(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return BADGE_COLORS[Math.abs(hash) % BADGE_COLORS.length];
+}
+
 interface TransactionItemProps {
   transaction: TransactionWithSplits;
   category?: Category;
@@ -22,13 +35,6 @@ function TransactionItemComponent({
   const isIncome = transaction.type === 'income';
   const amountColor = isIncome ? colors.income : colors.expense;
   const prefix = isIncome ? '+' : '-';
-
-  const splitLabel = transaction.splits
-    .map((s) => {
-      const acc = accountMap[s.accountId];
-      return `${acc?.name ?? '?'} ${formatMoney(s.amountCents, transaction.currency)}`;
-    })
-    .join(', ');
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
@@ -48,10 +54,23 @@ function TransactionItemComponent({
         <Text variant="bodyLarge" numberOfLines={1} style={styles.title}>
           {category?.name ?? 'Unknown'}
         </Text>
-        <Text variant="bodySmall" style={styles.subtitle} numberOfLines={1}>
-          {splitLabel}
-          {transaction.note ? ` · ${transaction.note}` : ''}
-        </Text>
+        <View style={styles.badgeRow}>
+          {transaction.splits.map((s) => {
+            const acc = accountMap[s.accountId];
+            const name = acc?.name ?? '?';
+            const badgeColor = hashColor(name);
+            return (
+              <View key={s.id} style={[styles.badge, { backgroundColor: badgeColor + '22' }]}>
+                <Text style={[styles.badgeText, { color: badgeColor }]}>{name}</Text>
+              </View>
+            );
+          })}
+        </View>
+        {transaction.note ? (
+          <Text variant="bodySmall" style={styles.note} numberOfLines={1}>
+            {transaction.note}
+          </Text>
+        ) : null}
       </View>
       <View style={styles.right}>
         <Text variant="titleSmall" style={{ color: amountColor, fontWeight: '600' }}>
@@ -84,7 +103,22 @@ const styles = StyleSheet.create({
   },
   details: { flex: 1, marginLeft: spacing.md },
   title: { color: colors.text, fontWeight: '600', fontSize: 15 },
-  subtitle: { color: colors.textSecondary, marginTop: 3 },
-  right: { alignItems: 'flex-end' },
+  badgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 4,
+  },
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: radius.capsule,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  note: { color: colors.textSecondary, marginTop: 3 },
+  right: { alignItems: 'flex-end', marginLeft: 8 },
   date: { color: colors.textTertiary, marginTop: 3 },
 });

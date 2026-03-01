@@ -1,8 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, FlatList, StyleSheet, Alert } from 'react-native';
-import { FAB, SegmentedButtons, Snackbar, Icon } from 'react-native-paper';
-import { Swipeable } from 'react-native-gesture-handler';
-import { TouchableOpacity, Text } from 'react-native';
+import { View, FlatList, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { FAB, SegmentedButtons, Snackbar, Icon, Text, Menu } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCategoryStore } from '../stores/useCategoryStore';
 import { colors, spacing, radius } from '../theme';
@@ -14,6 +12,7 @@ export default function CategoriesScreen({ navigation }: TabScreenProps<'Categor
   const { categories, loadCategories, removeCategory } = useCategoryStore();
   const [selectedType, setSelectedType] = useState<'expense' | 'income'>('expense');
   const [snackbar, setSnackbar] = useState('');
+  const [menuVisible, setMenuVisible] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
@@ -24,6 +23,7 @@ export default function CategoriesScreen({ navigation }: TabScreenProps<'Categor
 
   const handleDelete = useCallback(
     (cat: Category) => {
+      setMenuVisible(null);
       Alert.alert('Delete Category', `Delete "${cat.name}"?`, [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -38,45 +38,44 @@ export default function CategoriesScreen({ navigation }: TabScreenProps<'Categor
         },
       ]);
     },
-    [removeCategory]
+    [removeCategory],
   );
 
-  const renderRightActions = useCallback(
-    (_progress: unknown, _dragX: unknown, _swipeable: unknown, item: Category) => (
+  const handleEdit = useCallback(
+    (cat: Category) => {
+      setMenuVisible(null);
+      navigation.navigate('CategoryForm', { categoryId: cat.id });
+    },
+    [navigation],
+  );
+
+  const renderItem = ({ item }: { item: Category }) => (
+    <View style={styles.row}>
       <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={() => handleDelete(item)}
-        activeOpacity={0.8}
+        style={styles.rowContent}
+        onPress={() => navigation.navigate('CategoryForm', { categoryId: item.id })}
+        activeOpacity={0.7}
       >
-        <Text style={styles.deleteText}>Delete</Text>
+        <View style={[styles.iconContainer, { backgroundColor: item.color + '20' }]}>
+          <Icon source={item.icon as any} size={22} color={item.color} />
+        </View>
+        <Text style={styles.rowTitle}>{item.name}</Text>
       </TouchableOpacity>
-    ),
-    [handleDelete]
-  );
-
-  const renderItem = ({ item, index }: { item: Category; index: number }) => {
-    const isLast = index === filtered.length - 1;
-    return (
-      <Swipeable
-        renderRightActions={(progress, dragX, swipeable) =>
-          renderRightActions(progress, dragX, swipeable, item)
+      <Menu
+        visible={menuVisible === item.id}
+        onDismiss={() => setMenuVisible(null)}
+        anchor={
+          <TouchableOpacity onPress={() => setMenuVisible(item.id)} hitSlop={12}>
+            <Icon source="dots-vertical" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
         }
+        contentStyle={styles.menuContent}
       >
-        <TouchableOpacity
-          style={styles.row}
-          onPress={() => navigation.navigate('CategoryForm', { categoryId: item.id })}
-          activeOpacity={0.6}
-        >
-          <View style={[styles.iconContainer, { backgroundColor: item.color + '20' }]}>
-            <Icon source={item.icon as any} size={22} color={item.color} />
-          </View>
-          <Text style={styles.rowTitle}>{item.name}</Text>
-          <Icon source="chevron-right" size={20} color={colors.textTertiary} />
-        </TouchableOpacity>
-        {!isLast && <View style={styles.divider} />}
-      </Swipeable>
-    );
-  };
+        <Menu.Item onPress={() => handleEdit(item)} title="Edit" leadingIcon="pencil" />
+        <Menu.Item onPress={() => handleDelete(item)} title="Delete" leadingIcon="delete-outline" />
+      </Menu>
+    </View>
+  );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -90,6 +89,16 @@ export default function CategoriesScreen({ navigation }: TabScreenProps<'Categor
           ]}
         />
       </View>
+
+      <View style={styles.sectionHeader}>
+        <Text variant="labelMedium" style={styles.sectionHeaderText}>
+          {selectedType === 'expense' ? 'EXPENSE CATEGORIES' : 'INCOME CATEGORIES'}
+        </Text>
+        <Text variant="labelMedium" style={styles.countText}>
+          {filtered.length}
+        </Text>
+      </View>
+
       {filtered.length === 0 ? (
         <EmptyState
           icon="shape-outline"
@@ -102,6 +111,7 @@ export default function CategoriesScreen({ navigation }: TabScreenProps<'Categor
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
+          ItemSeparatorComponent={() => <View style={styles.divider} />}
         />
       )}
       <FAB
@@ -120,13 +130,40 @@ export default function CategoriesScreen({ navigation }: TabScreenProps<'Categor
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   segmentContainer: { padding: spacing.lg },
-  listContent: { paddingHorizontal: spacing.lg, paddingBottom: 100 },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+  },
+  sectionHeaderText: {
+    color: colors.textSecondary,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  countText: {
+    color: colors.textTertiary,
+    fontWeight: '600',
+  },
+  listContent: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: 100,
+    backgroundColor: colors.surface,
+    marginHorizontal: spacing.lg,
+    borderRadius: radius.lg,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 15,
-    paddingHorizontal: spacing.cardInset,
-    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    gap: 12,
+  },
+  rowContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
   },
   iconContainer: {
@@ -137,21 +174,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rowTitle: { flex: 1, color: colors.text, fontWeight: '600', fontSize: 15 },
-  divider: { height: 1, backgroundColor: colors.border, marginLeft: spacing.cardInset + 54 },
+  divider: { height: 1, backgroundColor: colors.border, marginLeft: 54 + spacing.md },
+  menuContent: { backgroundColor: colors.surfaceVariant },
   fab: {
     position: 'absolute',
     right: spacing.lg,
     backgroundColor: colors.primary,
-  },
-  deleteButton: {
-    backgroundColor: colors.error,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 80,
-  },
-  deleteText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
   },
 });

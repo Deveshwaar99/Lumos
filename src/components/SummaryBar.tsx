@@ -15,33 +15,16 @@ export default function SummaryBar({ income, expense, balance, currency = 'USD' 
   return (
     <View style={styles.container}>
       <View style={styles.item}>
-        <Text variant="labelSmall" style={styles.expenseLabel}>
-          EXPENSE
-        </Text>
-        <Text variant="titleMedium" style={styles.expenseAmount}>
-          {formatMoney(expense, currency)}
-        </Text>
+        <Text style={styles.label}>EXPENSE</Text>
+        <Text style={[styles.amount, { color: colors.expense }]}>{formatMoney(expense, currency)}</Text>
       </View>
-      <View style={styles.divider} />
       <View style={styles.item}>
-        <Text variant="labelSmall" style={styles.incomeLabel}>
-          INCOME
-        </Text>
-        <Text variant="titleMedium" style={styles.incomeAmount}>
-          {formatMoney(income, currency)}
-        </Text>
+        <Text style={styles.label}>INCOME</Text>
+        <Text style={styles.amount}>{formatMoney(income, currency)}</Text>
       </View>
-      <View style={styles.divider} />
       <View style={styles.item}>
-        <Text variant="labelSmall" style={styles.balanceLabel}>
-          BALANCE
-        </Text>
-        <Text
-          variant="titleMedium"
-          style={[styles.balanceAmount, { color: balance >= 0 ? colors.income : colors.expense }]}
-        >
-          {formatMoney(balance, currency)}
-        </Text>
+        <Text style={styles.label}>BALANCE</Text>
+        <Text style={styles.amount}>{formatMoney(balance, currency)}</Text>
       </View>
     </View>
   );
@@ -50,25 +33,24 @@ export default function SummaryBar({ income, expense, balance, currency = 'USD' 
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: colors.surface,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.sm,
-    marginHorizontal: spacing.lg,
-    borderRadius: 16,
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
   },
   item: {
     flex: 1,
     alignItems: 'center',
   },
-  divider: {
-    width: 1,
-    backgroundColor: colors.border,
-    alignSelf: 'stretch',
+  label: {
+    color: colors.textSecondary,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginBottom: 4,
   },
-  expenseLabel: { color: colors.expense, letterSpacing: 1.2, marginBottom: 6, fontSize: 10 },
-  expenseAmount: { color: colors.expense, fontWeight: '700', fontSize: 17 },
-  incomeLabel: { color: colors.income, letterSpacing: 1.2, marginBottom: 6, fontSize: 10 },
-  incomeAmount: { color: colors.income, fontWeight: '700', fontSize: 17 },
-  balanceLabel: { color: colors.textSecondary, letterSpacing: 1.2, marginBottom: 6, fontSize: 10 },
-  balanceAmount: { fontWeight: '700', fontSize: 17 },
+  amount: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '700',
+  },
 });
