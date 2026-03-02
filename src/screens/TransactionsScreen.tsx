@@ -14,7 +14,9 @@ import type { TransactionWithSplits } from '../models/types';
 
 export default function TransactionsScreen({
   navigation,
-}: { navigation: any }) {
+}: {
+  navigation: any;
+}) {
   const {
     transactions,
     filter,
@@ -40,14 +42,18 @@ export default function TransactionsScreen({
     (txn: TransactionWithSplits) => {
       navigation.navigate('TransactionDetail', { transactionId: txn.id });
     },
-    [navigation]
+    [navigation],
   );
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text variant="headlineSmall" style={styles.title}>Transactions</Text>
-        <Text variant="bodySmall" style={styles.count}>{totalCount} total</Text>
+        <Text variant="headlineSmall" style={styles.title}>
+          Transactions
+        </Text>
+        <Text variant="bodySmall" style={styles.count}>
+          {totalCount} total
+        </Text>
       </View>
       <FilterBar
         filter={filter}
@@ -88,5 +94,9 @@ const styles = StyleSheet.create({
   },
   title: { color: colors.text },
   count: { color: colors.textSecondary },
-  fab: { position: 'absolute', right: spacing.lg, backgroundColor: colors.primary },
+  fab: {
+    position: 'absolute',
+    right: spacing.lg,
+    backgroundColor: colors.primary,
+  },
 });

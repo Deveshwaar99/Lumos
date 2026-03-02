@@ -23,7 +23,11 @@ interface FlowLineChartProps {
   lineColor: string;
 }
 
-function formatCompactY(val: number, currency: string, currencySymbol?: string): string {
+function formatCompactY(
+  val: number,
+  currency: string,
+  currencySymbol?: string,
+): string {
   const abs = Math.abs(val) / 100;
   const sign = val < 0 ? '-' : '';
   const sym = currencySymbol || '';
@@ -33,11 +37,19 @@ function formatCompactY(val: number, currency: string, currencySymbol?: string):
   return `${sign}${sym}${abs.toFixed(0)}`;
 }
 
-export default function FlowLineChart({ data, currency, currencySymbol, valueKey, lineColor }: FlowLineChartProps) {
+export default function FlowLineChart({
+  data,
+  currency,
+  currencySymbol,
+  valueKey,
+  lineColor,
+}: FlowLineChartProps) {
   if (data.length === 0) {
     return (
       <View style={styles.container}>
-        <Text variant="bodyMedium" style={styles.empty}>No data for this month</Text>
+        <Text variant="bodyMedium" style={styles.empty}>
+          No data for this month
+        </Text>
       </View>
     );
   }
@@ -89,8 +101,8 @@ export default function FlowLineChart({ data, currency, currencySymbol, valueKey
   const xLabelIndices = [
     ...new Set(
       Array.from({ length: xLabelCount }, (_, i) =>
-        Math.round((i / Math.max(xLabelCount - 1, 1)) * (data.length - 1))
-      )
+        Math.round((i / Math.max(xLabelCount - 1, 1)) * (data.length - 1)),
+      ),
     ),
   ];
 
@@ -103,7 +115,11 @@ export default function FlowLineChart({ data, currency, currencySymbol, valueKey
           </Text>
         ))}
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollWrap}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.scrollWrap}
+      >
         <View>
           <Svg width={chartWidth} height={chartHeight}>
             <Defs>
@@ -136,19 +152,16 @@ export default function FlowLineChart({ data, currency, currencySymbol, valueKey
               strokeLinejoin="round"
             />
 
-            {points.filter((p) => p.val !== 0).map((p, i) => (
-              <SvgCircle
-                key={i}
-                cx={p.x}
-                cy={p.y}
-                r={2.5}
-                fill={lineColor}
-              />
-            ))}
+            {points
+              .filter((p) => p.val !== 0)
+              .map((p, i) => (
+                <SvgCircle key={i} cx={p.x} cy={p.y} r={2.5} fill={lineColor} />
+              ))}
 
             {xLabelIndices.map((idx) => {
               if (idx >= data.length) return null;
-              const x = paddingLeft + (idx / Math.max(data.length - 1, 1)) * plotWidth;
+              const x =
+                paddingLeft + (idx / Math.max(data.length - 1, 1)) * plotWidth;
               const dayNum = parseInt(data[idx].date.split('-')[2], 10);
               return (
                 <SvgText
@@ -174,7 +187,12 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
   },
-  empty: { color: colors.textSecondary, textAlign: 'center', padding: 40, flex: 1 },
+  empty: {
+    color: colors.textSecondary,
+    textAlign: 'center',
+    padding: 40,
+    flex: 1,
+  },
   yAxisLabels: {
     justifyContent: 'space-between',
     paddingTop: 16,

@@ -29,9 +29,21 @@ import type { RootStackScreenProps } from '../navigation/types';
 import type { FixedDeposit, Transaction } from '../models/types';
 
 const STATUS_CONFIG = {
-  active: { label: 'Active', color: colors.income, icon: 'clock-outline' as const },
-  matured: { label: 'Matured', color: colors.primary, icon: 'check-circle-outline' as const },
-  closed: { label: 'Closed', color: colors.textSecondary, icon: 'close-circle-outline' as const },
+  active: {
+    label: 'Active',
+    color: colors.income,
+    icon: 'clock-outline' as const,
+  },
+  matured: {
+    label: 'Matured',
+    color: colors.primary,
+    icon: 'check-circle-outline' as const,
+  },
+  closed: {
+    label: 'Closed',
+    color: colors.textSecondary,
+    icon: 'close-circle-outline' as const,
+  },
 };
 
 export default function FDDetailScreen({
@@ -62,20 +74,20 @@ export default function FDDetailScreen({
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, [loadData])
+    }, [loadData]),
   );
 
   const sourceAccount = useMemo(
     () => accounts.find((a) => a.id === fd?.sourceAccountId),
-    [accounts, fd]
+    [accounts, fd],
   );
   const creditAccount = useMemo(
     () => accounts.find((a) => a.id === fd?.creditAccountId),
-    [accounts, fd]
+    [accounts, fd],
   );
   const interestCategory = useMemo(
     () => categories.find((c) => c.id === fd?.interestCategoryId),
-    [categories, fd]
+    [categories, fd],
   );
 
   const breakdown = useMemo(() => {
@@ -84,7 +96,7 @@ export default function FDDetailScreen({
       fd.principalCents,
       fd.annualInterestRate,
       fd.startDate,
-      fd.maturityDate
+      fd.maturityDate,
     );
     const tds = calculateTDS(gross, fd.taxRate);
     const net = calculateNetInterest(gross, fd.taxRate);
@@ -92,7 +104,15 @@ export default function FDDetailScreen({
     const totalDays = daysBetween(fd.startDate, fd.maturityDate);
     const elapsed = totalDays - daysLeft;
     const progress = totalDays > 0 ? Math.min(1, elapsed / totalDays) : 1;
-    return { gross, tds, net, maturityValue: fd.principalCents + net, daysLeft, totalDays, progress };
+    return {
+      gross,
+      tds,
+      net,
+      maturityValue: fd.principalCents + net,
+      daysLeft,
+      totalDays,
+      progress,
+    };
   }, [fd]);
 
   const handleClose = useCallback(() => {
@@ -115,7 +135,7 @@ export default function FDDetailScreen({
             }
           },
         },
-      ]
+      ],
     );
   }, [fd, closeDeposit, loadDeposits, navigation]);
 
@@ -135,7 +155,7 @@ export default function FDDetailScreen({
             navigation.goBack();
           },
         },
-      ]
+      ],
     );
   }, [fd, removeDeposit, loadDeposits, navigation]);
 
@@ -148,14 +168,25 @@ export default function FDDetailScreen({
   }
 
   const statusCfg = STATUS_CONFIG[fd.status];
-  const startLabel = format(new Date(fd.startDate + 'T00:00:00'), 'MMM d, yyyy');
-  const maturityLabel = format(new Date(fd.maturityDate + 'T00:00:00'), 'MMM d, yyyy');
+  const startLabel = format(
+    new Date(fd.startDate + 'T00:00:00'),
+    'MMM d, yyyy',
+  );
+  const maturityLabel = format(
+    new Date(fd.maturityDate + 'T00:00:00'),
+    'MMM d, yyyy',
+  );
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* Status Badge */}
-        <View style={[styles.statusBadge, { backgroundColor: statusCfg.color + '18' }]}>
+        <View
+          style={[
+            styles.statusBadge,
+            { backgroundColor: statusCfg.color + '18' },
+          ]}
+        >
           <Icon source={statusCfg.icon} size={16} color={statusCfg.color} />
           <Text style={[styles.statusText, { color: statusCfg.color }]}>
             {statusCfg.label}
@@ -166,16 +197,17 @@ export default function FDDetailScreen({
         <View style={styles.heroCard}>
           <Text style={styles.heroLabel}>Principal</Text>
           <Text style={styles.heroAmount}>
-            {formatMoney(fd.principalCents, currency, 2, settings.currencySymbol)}
+            {formatMoney(
+              fd.principalCents,
+              currency,
+              2,
+              settings.currencySymbol,
+            )}
           </Text>
           <View style={styles.heroMeta}>
-            <Text style={styles.heroRate}>
-              {fd.annualInterestRate}% p.a.
-            </Text>
+            <Text style={styles.heroRate}>{fd.annualInterestRate}% p.a.</Text>
             <Text style={styles.heroDot}> · </Text>
-            <Text style={styles.heroRate}>
-              TDS {fd.taxRate}%
-            </Text>
+            <Text style={styles.heroRate}>TDS {fd.taxRate}%</Text>
           </View>
         </View>
 
@@ -237,8 +269,17 @@ export default function FDDetailScreen({
         {/* Accounts */}
         <View style={styles.card}>
           <View style={styles.infoRow}>
-            <View style={[styles.infoIconWrap, { backgroundColor: colors.expense + '18' }]}>
-              <Icon source={sourceAccount?.icon ?? 'wallet'} size={18} color={colors.expense} />
+            <View
+              style={[
+                styles.infoIconWrap,
+                { backgroundColor: colors.expense + '18' },
+              ]}
+            >
+              <Icon
+                source={sourceAccount?.icon ?? 'wallet'}
+                size={18}
+                color={colors.expense}
+              />
             </View>
             <View style={styles.infoTextCol}>
               <Text style={styles.infoLabel}>Source Account</Text>
@@ -247,8 +288,17 @@ export default function FDDetailScreen({
           </View>
           <View style={styles.infoDivider} />
           <View style={styles.infoRow}>
-            <View style={[styles.infoIconWrap, { backgroundColor: colors.income + '18' }]}>
-              <Icon source={creditAccount?.icon ?? 'wallet'} size={18} color={colors.income} />
+            <View
+              style={[
+                styles.infoIconWrap,
+                { backgroundColor: colors.income + '18' },
+              ]}
+            >
+              <Icon
+                source={creditAccount?.icon ?? 'wallet'}
+                size={18}
+                color={colors.income}
+              />
             </View>
             <View style={styles.infoTextCol}>
               <Text style={styles.infoLabel}>Credit Account (on maturity)</Text>
@@ -260,7 +310,10 @@ export default function FDDetailScreen({
             <View
               style={[
                 styles.infoIconWrap,
-                { backgroundColor: (interestCategory?.color ?? colors.primary) + '18' },
+                {
+                  backgroundColor:
+                    (interestCategory?.color ?? colors.primary) + '18',
+                },
               ]}
             >
               <Icon
@@ -271,7 +324,9 @@ export default function FDDetailScreen({
             </View>
             <View style={styles.infoTextCol}>
               <Text style={styles.infoLabel}>Interest Category</Text>
-              <Text style={styles.infoValue}>{interestCategory?.name ?? '—'}</Text>
+              <Text style={styles.infoValue}>
+                {interestCategory?.name ?? '—'}
+              </Text>
             </View>
           </View>
         </View>
@@ -282,13 +337,19 @@ export default function FDDetailScreen({
           <View style={styles.breakdownRow}>
             <Text style={styles.breakdownLabel}>Gross Interest</Text>
             <Text style={styles.breakdownValue}>
-              {formatMoney(breakdown.gross, currency, 2, settings.currencySymbol)}
+              {formatMoney(
+                breakdown.gross,
+                currency,
+                2,
+                settings.currencySymbol,
+              )}
             </Text>
           </View>
           <View style={styles.breakdownRow}>
             <Text style={styles.breakdownLabel}>TDS ({fd.taxRate}%)</Text>
             <Text style={[styles.breakdownValue, { color: colors.expense }]}>
-              -{formatMoney(breakdown.tds, currency, 2, settings.currencySymbol)}
+              -
+              {formatMoney(breakdown.tds, currency, 2, settings.currencySymbol)}
             </Text>
           </View>
           <View style={styles.breakdownDivider} />
@@ -315,7 +376,12 @@ export default function FDDetailScreen({
                 { color: colors.primary, fontWeight: '800' },
               ]}
             >
-              {formatMoney(breakdown.maturityValue, currency, 2, settings.currencySymbol)}
+              {formatMoney(
+                breakdown.maturityValue,
+                currency,
+                2,
+                settings.currencySymbol,
+              )}
             </Text>
           </View>
         </View>
@@ -340,7 +406,10 @@ export default function FDDetailScreen({
                     {txn.note || txn.type}
                   </Text>
                   <Text style={styles.txnDate}>
-                    {format(new Date(txn.date.substring(0, 10) + 'T00:00:00'), 'MMM d, yyyy')}
+                    {format(
+                      new Date(txn.date.substring(0, 10) + 'T00:00:00'),
+                      'MMM d, yyyy',
+                    )}
                   </Text>
                 </View>
                 <Text
@@ -353,7 +422,12 @@ export default function FDDetailScreen({
                   ]}
                 >
                   {txn.type === 'income' ? '+' : '-'}
-                  {formatMoney(txn.totalAmountCents, currency, 2, settings.currencySymbol)}
+                  {formatMoney(
+                    txn.totalAmountCents,
+                    currency,
+                    2,
+                    settings.currencySymbol,
+                  )}
                 </Text>
               </View>
             ))}
@@ -364,7 +438,11 @@ export default function FDDetailScreen({
         {fd.status === 'active' && (
           <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
             <View style={styles.closeIconWrap}>
-              <Icon source="lock-open-outline" size={18} color={colors.warning} />
+              <Icon
+                source="lock-open-outline"
+                size={18}
+                color={colors.warning}
+              />
             </View>
             <Text style={styles.closeText}>Close FD Early</Text>
           </TouchableOpacity>
@@ -394,7 +472,11 @@ export default function FDDetailScreen({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   scroll: { padding: spacing.lg, paddingBottom: 100 },
-  emptyText: { color: colors.textSecondary, textAlign: 'center', marginTop: 40 },
+  emptyText: {
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 40,
+  },
 
   statusBadge: {
     flexDirection: 'row',
@@ -447,7 +529,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: spacing.sm,
   },
-  progressLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '600' },
+  progressLabel: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '600',
+  },
   progressPct: { color: colors.primary, fontSize: 13, fontWeight: '700' },
   progressBarBg: {
     height: 6,

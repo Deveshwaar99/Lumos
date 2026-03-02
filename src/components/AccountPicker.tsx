@@ -23,7 +23,11 @@ export default function AccountPicker({
 }: AccountPickerProps) {
   return (
     <Portal>
-      <Modal visible={visible} onDismiss={onDismiss} contentContainerStyle={styles.modal}>
+      <Modal
+        visible={visible}
+        onDismiss={onDismiss}
+        contentContainerStyle={styles.modal}
+      >
         <Text variant="titleMedium" style={styles.title}>
           {title ?? 'Select Account'}
         </Text>
@@ -40,12 +44,18 @@ export default function AccountPicker({
               }}
             >
               <View style={styles.iconCircle}>
-                <Icon source={item.icon as any} size={20} color={colors.primary} />
+                <Icon
+                  source={item.icon as any}
+                  size={20}
+                  color={colors.primary}
+                />
               </View>
               <Text variant="bodyLarge" style={styles.itemText}>
                 {item.name}
               </Text>
-              {selectedId === item.id && <Icon source="check" size={20} color={colors.primary} />}
+              {selectedId === item.id && (
+                <Icon source="check" size={20} color={colors.primary} />
+              )}
             </TouchableOpacity>
           )}
         />

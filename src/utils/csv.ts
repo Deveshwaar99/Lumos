@@ -13,8 +13,7 @@ export function escapeCSVField(field: string): string {
  * Builds a CSV string from headers and rows with proper escaping.
  */
 export function generateCSV(headers: string[], rows: string[][]): string {
-  const escapeRow = (row: string[]) =>
-    row.map(escapeCSVField).join(',');
+  const escapeRow = (row: string[]) => row.map(escapeCSVField).join(',');
   const headerLine = escapeRow(headers);
   const dataLines = rows.map(escapeRow);
   return [headerLine, ...dataLines].join('\n');

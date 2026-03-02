@@ -21,21 +21,32 @@ interface BudgetSection {
   type: 'budgeted' | 'not_budgeted';
 }
 
-export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>) {
-  const { budgets, month, alerts, loading, loadBudgets, setMonth } = useBudgetStore();
+export default function BudgetsScreen({
+  navigation,
+}: TabScreenProps<'Budgets'>) {
+  const { budgets, month, alerts, loading, loadBudgets, setMonth } =
+    useBudgetStore();
   const { categories, loadCategories } = useCategoryStore();
   const { settings } = useSettingsStore();
   const [snackbar, setSnackbar] = React.useState('');
   const insets = useSafeAreaInsets();
   const currency = settings.baseCurrency;
 
-  useFocusEffect(useCallback(() => {
-    loadCategories();
-    loadBudgets();
-  }, []));
+  useFocusEffect(
+    useCallback(() => {
+      loadCategories();
+      loadBudgets();
+    }, []),
+  );
 
-  const totalBudgeted = useMemo(() => budgets.reduce((sum, b) => sum + b.limitCents, 0), [budgets]);
-  const totalSpent = useMemo(() => budgets.reduce((sum, b) => sum + b.spent, 0), [budgets]);
+  const totalBudgeted = useMemo(
+    () => budgets.reduce((sum, b) => sum + b.limitCents, 0),
+    [budgets],
+  );
+  const totalSpent = useMemo(
+    () => budgets.reduce((sum, b) => sum + b.spent, 0),
+    [budgets],
+  );
   const totalRemaining = totalBudgeted - totalSpent;
 
   const categoryMap = useMemo(
@@ -49,7 +60,10 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
   );
 
   const unbudgetedExpenseCategories = useMemo(
-    () => categories.filter((c) => c.type === 'expense' && !budgetedCategoryIds.has(c.id)),
+    () =>
+      categories.filter(
+        (c) => c.type === 'expense' && !budgetedCategoryIds.has(c.id),
+      ),
     [categories, budgetedCategoryIds],
   );
 
@@ -59,7 +73,11 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
       result.push({ title: 'BUDGETED', data: budgets, type: 'budgeted' });
     }
     if (unbudgetedExpenseCategories.length > 0) {
-      result.push({ title: 'NOT BUDGETED', data: unbudgetedExpenseCategories, type: 'not_budgeted' });
+      result.push({
+        title: 'NOT BUDGETED',
+        data: unbudgetedExpenseCategories,
+        type: 'not_budgeted',
+      });
     }
     return result;
   }, [budgets, unbudgetedExpenseCategories]);
@@ -67,7 +85,8 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
   const handlePrevMonth = () => setMonth(addMonths(month, -1));
   const handleNextMonth = () => setMonth(addMonths(month, 1));
 
-  const overallPct = totalBudgeted > 0 ? Math.round((totalSpent / totalBudgeted) * 100) : 0;
+  const overallPct =
+    totalBudgeted > 0 ? Math.round((totalSpent / totalBudgeted) * 100) : 0;
 
   const renderSummaryCard = () => (
     <LinearGradient
@@ -78,7 +97,11 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
     >
       <View style={styles.summaryHeader}>
         <View style={styles.summaryIconWrap}>
-          <Icon source="calculator-variant" size={20} color={colors.primaryLight} />
+          <Icon
+            source="calculator-variant"
+            size={20}
+            color={colors.primaryLight}
+          />
         </View>
         <Text style={styles.summaryTitle}>Budget Overview</Text>
       </View>
@@ -88,18 +111,36 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
           <View style={styles.heroRow}>
             <View style={{ flex: 1 }}>
               <Text style={styles.heroCaption}>Remaining</Text>
-              <Text style={[
-                styles.heroAmount,
-                { color: totalRemaining >= 0 ? colors.income : colors.expense },
-              ]}>
-                {formatMoney(totalRemaining, currency, 2, settings.currencySymbol)}
+              <Text
+                style={[
+                  styles.heroAmount,
+                  {
+                    color: totalRemaining >= 0 ? colors.income : colors.expense,
+                  },
+                ]}
+              >
+                {formatMoney(
+                  totalRemaining,
+                  currency,
+                  2,
+                  settings.currencySymbol,
+                )}
               </Text>
             </View>
             <View style={styles.heroPctWrap}>
-              <Text style={[
-                styles.heroPct,
-                { color: overallPct >= 100 ? colors.expense : overallPct >= 80 ? colors.warning : colors.income },
-              ]}>
+              <Text
+                style={[
+                  styles.heroPct,
+                  {
+                    color:
+                      overallPct >= 100
+                        ? colors.expense
+                        : overallPct >= 80
+                          ? colors.warning
+                          : colors.income,
+                  },
+                ]}
+              >
                 {overallPct}%
               </Text>
               <Text style={styles.heroPctLabel}>used</Text>
@@ -113,7 +154,12 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
                 <Text style={styles.statLabel}>Budgeted</Text>
               </View>
               <Text style={styles.statValue}>
-                {formatMoney(totalBudgeted, currency, 2, settings.currencySymbol)}
+                {formatMoney(
+                  totalBudgeted,
+                  currency,
+                  2,
+                  settings.currencySymbol,
+                )}
               </Text>
             </View>
 
@@ -124,7 +170,12 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
                 <Icon source="cash-minus" size={14} color={colors.expense} />
                 <Text style={styles.statLabel}>Spent</Text>
               </View>
-              <Text style={[styles.statValue, totalSpent > totalBudgeted && { color: colors.expense }]}>
+              <Text
+                style={[
+                  styles.statValue,
+                  totalSpent > totalBudgeted && { color: colors.expense },
+                ]}
+              >
                 {formatMoney(totalSpent, currency, 2, settings.currencySymbol)}
               </Text>
             </View>
@@ -132,7 +183,11 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
         </>
       ) : (
         <View style={styles.emptyHero}>
-          <Icon source="chart-line-variant" size={32} color={colors.textTertiary} />
+          <Icon
+            source="chart-line-variant"
+            size={32}
+            color={colors.textTertiary}
+          />
           <Text style={styles.emptyHeroText}>No budgets set this month</Text>
         </View>
       )}
@@ -141,14 +196,22 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
 
   const renderMonthSelector = () => (
     <View style={styles.monthSelector}>
-      <TouchableOpacity onPress={handlePrevMonth} style={styles.monthArrow} activeOpacity={0.7}>
+      <TouchableOpacity
+        onPress={handlePrevMonth}
+        style={styles.monthArrow}
+        activeOpacity={0.7}
+      >
         <Icon source="chevron-left" size={24} color={colors.text} />
       </TouchableOpacity>
       <View style={styles.monthLabelWrap}>
         <Icon source="calendar-month" size={18} color={colors.primaryLight} />
         <Text style={styles.monthLabel}>{getMonthLabel(month)}</Text>
       </View>
-      <TouchableOpacity onPress={handleNextMonth} style={styles.monthArrow} activeOpacity={0.7}>
+      <TouchableOpacity
+        onPress={handleNextMonth}
+        style={styles.monthArrow}
+        activeOpacity={0.7}
+      >
         <Icon source="chevron-right" size={24} color={colors.text} />
       </TouchableOpacity>
     </View>
@@ -162,7 +225,8 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
         <View style={styles.alertContent}>
           <Icon source="alert-circle" size={20} color={colors.warning} />
           <Text style={styles.alertText}>
-            {alerts.length} budget{alerts.length > 1 ? 's' : ''} at or over limit!
+            {alerts.length} budget{alerts.length > 1 ? 's' : ''} at or over
+            limit!
           </Text>
         </View>
       </View>
@@ -176,7 +240,12 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
     return (
       <TouchableOpacity
         style={styles.budgetCard}
-        onPress={() => navigation.navigate('BudgetForm', { budgetId: item.id, month: item.month })}
+        onPress={() =>
+          navigation.navigate('BudgetForm', {
+            budgetId: item.id,
+            month: item.month,
+          })
+        }
         activeOpacity={0.7}
       >
         <View style={[styles.budgetAccent, { backgroundColor: barColor }]} />
@@ -184,25 +253,56 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
           <View style={styles.budgetHeader}>
             <View style={styles.budgetLeft}>
               {cat && (
-                <View style={[styles.budgetIcon, { backgroundColor: cat.color + '1A' }]}>
+                <View
+                  style={[
+                    styles.budgetIcon,
+                    { backgroundColor: cat.color + '1A' },
+                  ]}
+                >
                   <Icon source={cat.icon as any} size={20} color={cat.color} />
                 </View>
               )}
               <View>
                 <Text style={styles.budgetName}>{cat?.name ?? 'Unknown'}</Text>
                 <Text style={styles.budgetMeta}>
-                  {formatMoney(item.spent, currency, 2, settings.currencySymbol)} of{' '}
-                  {formatMoney(item.limitCents, currency, 2, settings.currencySymbol)}
+                  {formatMoney(
+                    item.spent,
+                    currency,
+                    2,
+                    settings.currencySymbol,
+                  )}{' '}
+                  of{' '}
+                  {formatMoney(
+                    item.limitCents,
+                    currency,
+                    2,
+                    settings.currencySymbol,
+                  )}
                 </Text>
               </View>
             </View>
             <View style={styles.budgetRight}>
-              <Text style={[styles.remainingAmount, { color: isOver ? colors.expense : colors.income }]}>
+              <Text
+                style={[
+                  styles.remainingAmount,
+                  { color: isOver ? colors.expense : colors.income },
+                ]}
+              >
                 {isOver
                   ? `−${formatMoney(Math.abs(item.remaining), currency, 2, settings.currencySymbol)}`
-                  : formatMoney(item.remaining, currency, 2, settings.currencySymbol)}
+                  : formatMoney(
+                      item.remaining,
+                      currency,
+                      2,
+                      settings.currencySymbol,
+                    )}
               </Text>
-              <Text style={[styles.remainingLabel, { color: isOver ? colors.expense : colors.textTertiary }]}>
+              <Text
+                style={[
+                  styles.remainingLabel,
+                  { color: isOver ? colors.expense : colors.textTertiary },
+                ]}
+              >
                 {isOver ? 'over' : 'left'}
               </Text>
             </View>
@@ -222,10 +322,17 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
 
   const renderUnbudgetedItem = (cat: Category) => (
     <View style={styles.unbudgetedCard}>
-      <View style={[styles.unbudgetedAccent, { backgroundColor: colors.textTertiary }]} />
+      <View
+        style={[
+          styles.unbudgetedAccent,
+          { backgroundColor: colors.textTertiary },
+        ]}
+      />
       <View style={styles.unbudgetedInner}>
         <View style={styles.budgetLeft}>
-          <View style={[styles.budgetIcon, { backgroundColor: cat.color + '1A' }]}>
+          <View
+            style={[styles.budgetIcon, { backgroundColor: cat.color + '1A' }]}
+          >
             <Icon source={cat.icon as any} size={20} color={cat.color} />
           </View>
           <Text style={styles.unbudgetedName}>{cat.name}</Text>
@@ -242,7 +349,13 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
     </View>
   );
 
-  const renderItem = ({ item, section }: { item: SectionItem; section: BudgetSection }) => {
+  const renderItem = ({
+    item,
+    section,
+  }: {
+    item: SectionItem;
+    section: BudgetSection;
+  }) => {
     if (section.type === 'budgeted') {
       return renderBudgetedItem(item as BudgetWithSpent);
     }
@@ -265,10 +378,17 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
         renderSectionHeader={({ section }) => (
           <View style={styles.sectionHeader}>
             <View style={styles.sectionHeaderLeft}>
-              <View style={[
-                styles.sectionDot,
-                { backgroundColor: section.type === 'budgeted' ? colors.primary : colors.textTertiary },
-              ]} />
+              <View
+                style={[
+                  styles.sectionDot,
+                  {
+                    backgroundColor:
+                      section.type === 'budgeted'
+                        ? colors.primary
+                        : colors.textTertiary,
+                  },
+                ]}
+              />
               <Text style={styles.sectionHeaderText}>{section.title}</Text>
             </View>
             <View style={styles.sectionBadge}>
@@ -288,7 +408,9 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
               <Icon source="calculator" size={48} color={colors.primaryLight} />
             </View>
             <Text style={styles.emptyTitle}>No budgets yet</Text>
-            <Text style={styles.emptySubtext}>Tap + to start tracking your spending</Text>
+            <Text style={styles.emptySubtext}>
+              Tap + to start tracking your spending
+            </Text>
           </View>
         }
       />
@@ -299,7 +421,11 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
         onPress={() => navigation.navigate('BudgetForm', { month })}
         color="#fff"
       />
-      <Snackbar visible={!!snackbar} onDismiss={() => setSnackbar('')} duration={3000}>
+      <Snackbar
+        visible={!!snackbar}
+        onDismiss={() => setSnackbar('')}
+        duration={3000}
+      >
         {snackbar}
       </Snackbar>
     </View>
@@ -308,7 +434,11 @@ export default function BudgetsScreen({ navigation }: TabScreenProps<'Budgets'>)
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  listContent: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: 100 },
+  listContent: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: 100,
+  },
 
   /* ── Alert Banner ── */
   alertBanner: {
@@ -651,5 +781,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  fab: { position: 'absolute', right: spacing.lg, backgroundColor: colors.primary, ...elevation.lg },
+  fab: {
+    position: 'absolute',
+    right: spacing.lg,
+    backgroundColor: colors.primary,
+    ...elevation.lg,
+  },
 });

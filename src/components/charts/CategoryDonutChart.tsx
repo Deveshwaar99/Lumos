@@ -10,13 +10,18 @@ interface CategoryDonutChartProps {
   centerLabel: string;
 }
 
-export default function CategoryDonutChart({ data, centerLabel }: CategoryDonutChartProps) {
+export default function CategoryDonutChart({
+  data,
+  centerLabel,
+}: CategoryDonutChartProps) {
   const { width: screenWidth } = useWindowDimensions();
 
   if (data.length === 0) {
     return (
       <View style={styles.container}>
-        <Text variant="bodyMedium" style={styles.empty}>No data for this month</Text>
+        <Text variant="bodyMedium" style={styles.empty}>
+          No data for this month
+        </Text>
       </View>
     );
   }
@@ -64,8 +69,12 @@ export default function CategoryDonutChart({ data, centerLabel }: CategoryDonutC
           </G>
         </Svg>
         <View style={styles.centerLabel}>
-          <Text variant="labelSmall" style={styles.centerText}>{centerLabel}</Text>
-          <Text variant="bodySmall" style={styles.centerCount}>{data.length} categories</Text>
+          <Text variant="labelSmall" style={styles.centerText}>
+            {centerLabel}
+          </Text>
+          <Text variant="bodySmall" style={styles.centerCount}>
+            {data.length} categories
+          </Text>
         </View>
       </View>
 
@@ -75,10 +84,16 @@ export default function CategoryDonutChart({ data, centerLabel }: CategoryDonutC
           return (
             <View key={cat.categoryId} style={styles.legendItem}>
               <View style={[styles.dot, { backgroundColor: cat.color }]} />
-              <Text variant="bodySmall" style={styles.legendText} numberOfLines={1}>
+              <Text
+                variant="bodySmall"
+                style={styles.legendText}
+                numberOfLines={1}
+              >
                 {cat.categoryName}
               </Text>
-              <Text variant="labelSmall" style={styles.legendPct}>{pct}%</Text>
+              <Text variant="labelSmall" style={styles.legendPct}>
+                {pct}%
+              </Text>
             </View>
           );
         })}

@@ -1,5 +1,11 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, FlatList, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+} from 'react-native';
 import { FAB, Snackbar, Icon, Text, Menu } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,7 +16,11 @@ import { useFDStore } from '../stores/useFDStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { colors, spacing, radius, elevation } from '../theme';
 import { formatMoney } from '../utils/money';
-import { getDaysRemaining, calculateFDInterest, calculateNetInterest } from '../utils/fdCalculator';
+import {
+  getDaysRemaining,
+  calculateFDInterest,
+  calculateNetInterest,
+} from '../utils/fdCalculator';
 import EmptyState from '../components/EmptyState';
 import type { TabScreenProps } from '../navigation/types';
 import type { Account, FixedDeposit } from '../models/types';
@@ -39,7 +49,9 @@ const STATUS_COLORS: Record<string, string> = {
   closed: colors.textSecondary,
 };
 
-export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'>) {
+export default function AccountsScreen({
+  navigation,
+}: TabScreenProps<'Accounts'>) {
   const { accounts, balances, loadAccounts, removeAccount } = useAccountStore();
   const { deposits, fdAccountIds, loadDeposits } = useFDStore();
   const { settings } = useSettingsStore();
@@ -49,14 +61,16 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
   const insets = useSafeAreaInsets();
   const currency = settings.baseCurrency;
 
-  useFocusEffect(useCallback(() => {
-    loadAccounts();
-    loadDeposits();
-  }, []));
+  useFocusEffect(
+    useCallback(() => {
+      loadAccounts();
+      loadDeposits();
+    }, []),
+  );
 
   const userAccounts = useMemo(
     () => accounts.filter((a) => !fdAccountIds.has(a.id)),
-    [accounts, fdAccountIds]
+    [accounts, fdAccountIds],
   );
 
   const portfolioData = useMemo(() => {
@@ -82,26 +96,33 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
     return { totalAssets, totalLiabilities, netBalance };
   }, [userAccounts, balances, deposits]);
 
-  const handleDelete = useCallback(async (acc: Account) => {
-    setMenuVisible(null);
-    Alert.alert('Delete Account', `Delete "${acc.name}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete', style: 'destructive',
-        onPress: async () => {
-          const result = await removeAccount(acc.id);
-          if (!result.success) {
-            setSnackbar(result.message || 'Cannot delete account');
-          }
+  const handleDelete = useCallback(
+    async (acc: Account) => {
+      setMenuVisible(null);
+      Alert.alert('Delete Account', `Delete "${acc.name}"?`, [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const result = await removeAccount(acc.id);
+            if (!result.success) {
+              setSnackbar(result.message || 'Cannot delete account');
+            }
+          },
         },
-      },
-    ]);
-  }, [removeAccount]);
+      ]);
+    },
+    [removeAccount],
+  );
 
-  const handleEdit = useCallback((acc: Account) => {
-    setMenuVisible(null);
-    navigation.navigate('AccountForm', { accountId: acc.id });
-  }, [navigation]);
+  const handleEdit = useCallback(
+    (acc: Account) => {
+      setMenuVisible(null);
+      navigation.navigate('AccountForm', { accountId: acc.id });
+    },
+    [navigation],
+  );
 
   const getAccountTypeIcon = (type: Account['type']) => {
     const icons: Record<string, string> = {
@@ -129,11 +150,21 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
       </View>
 
       <Text style={styles.balanceCaption}>Net Worth</Text>
-      <Text style={[
-        styles.balanceHero,
-        { color: portfolioData.netBalance >= 0 ? colors.income : colors.expense },
-      ]}>
-        {formatMoney(portfolioData.netBalance, currency, 2, settings.currencySymbol)}
+      <Text
+        style={[
+          styles.balanceHero,
+          {
+            color:
+              portfolioData.netBalance >= 0 ? colors.income : colors.expense,
+          },
+        ]}
+      >
+        {formatMoney(
+          portfolioData.netBalance,
+          currency,
+          2,
+          settings.currencySymbol,
+        )}
       </Text>
 
       <View style={styles.summaryRow}>
@@ -143,7 +174,12 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
             <Text style={styles.summaryLabel}>Assets</Text>
           </View>
           <Text style={[styles.summaryAmount, { color: colors.income }]}>
-            {formatMoney(portfolioData.totalAssets, currency, 2, settings.currencySymbol)}
+            {formatMoney(
+              portfolioData.totalAssets,
+              currency,
+              2,
+              settings.currencySymbol,
+            )}
           </Text>
         </View>
 
@@ -155,7 +191,12 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
             <Text style={styles.summaryLabel}>Liabilities</Text>
           </View>
           <Text style={[styles.summaryAmount, { color: colors.warning }]}>
-            {formatMoney(portfolioData.totalLiabilities, currency, 2, settings.currencySymbol)}
+            {formatMoney(
+              portfolioData.totalLiabilities,
+              currency,
+              2,
+              settings.currencySymbol,
+            )}
           </Text>
         </View>
       </View>
@@ -165,42 +206,84 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
   const renderSegmentedControl = () => (
     <View style={styles.segmentContainer}>
       <TouchableOpacity
-        style={[styles.segmentTab, activeTab === 'accounts' && styles.segmentTabActive]}
+        style={[
+          styles.segmentTab,
+          activeTab === 'accounts' && styles.segmentTabActive,
+        ]}
         onPress={() => setActiveTab('accounts')}
         activeOpacity={0.8}
       >
         <Icon
           source="wallet"
           size={18}
-          color={activeTab === 'accounts' ? colors.onPrimary : colors.textSecondary}
+          color={
+            activeTab === 'accounts' ? colors.onPrimary : colors.textSecondary
+          }
         />
-        <Text style={[styles.segmentText, activeTab === 'accounts' && styles.segmentTextActive]}>
+        <Text
+          style={[
+            styles.segmentText,
+            activeTab === 'accounts' && styles.segmentTextActive,
+          ]}
+        >
           Accounts
         </Text>
         {userAccounts.length > 0 && (
-          <View style={[styles.segmentBadge, activeTab === 'accounts' && styles.segmentBadgeActive]}>
-            <Text style={[styles.segmentBadgeText, activeTab === 'accounts' && styles.segmentBadgeTextActive]}>
+          <View
+            style={[
+              styles.segmentBadge,
+              activeTab === 'accounts' && styles.segmentBadgeActive,
+            ]}
+          >
+            <Text
+              style={[
+                styles.segmentBadgeText,
+                activeTab === 'accounts' && styles.segmentBadgeTextActive,
+              ]}
+            >
               {userAccounts.length}
             </Text>
           </View>
         )}
       </TouchableOpacity>
       <TouchableOpacity
-        style={[styles.segmentTab, activeTab === 'investments' && styles.segmentTabActive]}
+        style={[
+          styles.segmentTab,
+          activeTab === 'investments' && styles.segmentTabActive,
+        ]}
         onPress={() => setActiveTab('investments')}
         activeOpacity={0.8}
       >
         <Icon
           source="lock"
           size={18}
-          color={activeTab === 'investments' ? colors.onPrimary : colors.textSecondary}
+          color={
+            activeTab === 'investments'
+              ? colors.onPrimary
+              : colors.textSecondary
+          }
         />
-        <Text style={[styles.segmentText, activeTab === 'investments' && styles.segmentTextActive]}>
+        <Text
+          style={[
+            styles.segmentText,
+            activeTab === 'investments' && styles.segmentTextActive,
+          ]}
+        >
           Investments
         </Text>
         {deposits.length > 0 && (
-          <View style={[styles.segmentBadge, activeTab === 'investments' && styles.segmentBadgeActive]}>
-            <Text style={[styles.segmentBadgeText, activeTab === 'investments' && styles.segmentBadgeTextActive]}>
+          <View
+            style={[
+              styles.segmentBadge,
+              activeTab === 'investments' && styles.segmentBadgeActive,
+            ]}
+          >
+            <Text
+              style={[
+                styles.segmentBadgeText,
+                activeTab === 'investments' && styles.segmentBadgeTextActive,
+              ]}
+            >
               {deposits.length}
             </Text>
           </View>
@@ -214,35 +297,75 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
     const accentColor = ACCOUNT_TYPE_COLORS[item.type];
     return (
       <View style={styles.accountCard}>
-        <View style={[styles.accountAccent, { backgroundColor: accentColor }]} />
+        <View
+          style={[styles.accountAccent, { backgroundColor: accentColor }]}
+        />
         <TouchableOpacity
           style={styles.accountContent}
-          onPress={() => (navigation as any).navigate('AccountTransactions', { accountId: item.id })}
+          onPress={() =>
+            (navigation as any).navigate('AccountTransactions', {
+              accountId: item.id,
+            })
+          }
           activeOpacity={0.7}
         >
-          <View style={[styles.accountIcon, { backgroundColor: accentColor + '1A' }]}>
-            <Icon source={getAccountTypeIcon(item.type) as any} size={22} color={accentColor} />
+          <View
+            style={[
+              styles.accountIcon,
+              { backgroundColor: accentColor + '1A' },
+            ]}
+          >
+            <Icon
+              source={getAccountTypeIcon(item.type) as any}
+              size={22}
+              color={accentColor}
+            />
           </View>
           <View style={styles.accountDetails}>
-            <Text style={styles.accountName} numberOfLines={1}>{item.name}</Text>
-            <Text style={styles.accountType}>{ACCOUNT_TYPE_LABELS[item.type]}</Text>
+            <Text style={styles.accountName} numberOfLines={1}>
+              {item.name}
+            </Text>
+            <Text style={styles.accountType}>
+              {ACCOUNT_TYPE_LABELS[item.type]}
+            </Text>
           </View>
           <View style={styles.accountRight}>
-            <Text style={[styles.accountBalance, balance < 0 && { color: colors.expense }]}>
+            <Text
+              style={[
+                styles.accountBalance,
+                balance < 0 && { color: colors.expense },
+              ]}
+            >
               {formatMoney(balance, item.currency, 2, settings.currencySymbol)}
             </Text>
             <Menu
               visible={menuVisible === item.id}
               onDismiss={() => setMenuVisible(null)}
               anchor={
-                <TouchableOpacity onPress={() => setMenuVisible(item.id)} hitSlop={12} style={styles.menuTrigger}>
-                  <Icon source="dots-horizontal" size={20} color={colors.textTertiary} />
+                <TouchableOpacity
+                  onPress={() => setMenuVisible(item.id)}
+                  hitSlop={12}
+                  style={styles.menuTrigger}
+                >
+                  <Icon
+                    source="dots-horizontal"
+                    size={20}
+                    color={colors.textTertiary}
+                  />
                 </TouchableOpacity>
               }
               contentStyle={styles.menuContent}
             >
-              <Menu.Item onPress={() => handleEdit(item)} title="Edit" leadingIcon="pencil" />
-              <Menu.Item onPress={() => handleDelete(item)} title="Delete" leadingIcon="delete-outline" />
+              <Menu.Item
+                onPress={() => handleEdit(item)}
+                title="Edit"
+                leadingIcon="pencil"
+              />
+              <Menu.Item
+                onPress={() => handleDelete(item)}
+                title="Delete"
+                leadingIcon="delete-outline"
+              />
             </Menu>
           </View>
         </TouchableOpacity>
@@ -253,27 +376,47 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
   const renderFDItem = ({ item }: { item: FixedDeposit }) => {
     const daysLeft = getDaysRemaining(item.maturityDate);
     const statusColor = STATUS_COLORS[item.status] ?? colors.textSecondary;
-    const gross = calculateFDInterest(item.principalCents, item.annualInterestRate, item.startDate, item.maturityDate);
+    const gross = calculateFDInterest(
+      item.principalCents,
+      item.annualInterestRate,
+      item.startDate,
+      item.maturityDate,
+    );
     const net = calculateNetInterest(gross, item.taxRate);
-    const maturityLabel = format(new Date(item.maturityDate + 'T00:00:00'), 'MMM d, yyyy');
+    const maturityLabel = format(
+      new Date(item.maturityDate + 'T00:00:00'),
+      'MMM d, yyyy',
+    );
 
     return (
       <View style={styles.fdCard}>
         <View style={[styles.fdAccent, { backgroundColor: statusColor }]} />
         <TouchableOpacity
           style={styles.fdTouchable}
-          onPress={() => (navigation as any).navigate('FDDetail', { fdId: item.id })}
+          onPress={() =>
+            (navigation as any).navigate('FDDetail', { fdId: item.id })
+          }
           activeOpacity={0.7}
         >
           <View style={styles.fdHeader}>
-            <View style={[styles.fdIconWrap, { backgroundColor: statusColor + '1A' }]}>
+            <View
+              style={[
+                styles.fdIconWrap,
+                { backgroundColor: statusColor + '1A' },
+              ]}
+            >
               <Icon source="lock" size={20} color={statusColor} />
             </View>
             <View style={styles.fdHeaderText}>
               <Text style={styles.fdLabel} numberOfLines={1}>
                 {item.note || `FD — ${item.annualInterestRate}%`}
               </Text>
-              <View style={[styles.fdStatusBadge, { backgroundColor: statusColor + '20' }]}>
+              <View
+                style={[
+                  styles.fdStatusBadge,
+                  { backgroundColor: statusColor + '20' },
+                ]}
+              >
                 <Text style={[styles.fdStatusText, { color: statusColor }]}>
                   {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
                 </Text>
@@ -285,7 +428,12 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
             <View style={styles.fdStat}>
               <Text style={styles.fdStatLabel}>Principal</Text>
               <Text style={styles.fdStatValue}>
-                {formatMoney(item.principalCents, currency, 2, settings.currencySymbol)}
+                {formatMoney(
+                  item.principalCents,
+                  currency,
+                  2,
+                  settings.currencySymbol,
+                )}
               </Text>
             </View>
             <View style={styles.fdStatDivider} />
@@ -299,16 +447,30 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
 
           <View style={styles.fdFooter}>
             <View style={styles.fdFooterItem}>
-              <Icon source="percent-outline" size={14} color={colors.textTertiary} />
-              <Text style={styles.fdFooterText}>{item.annualInterestRate}% p.a.</Text>
+              <Icon
+                source="percent-outline"
+                size={14}
+                color={colors.textTertiary}
+              />
+              <Text style={styles.fdFooterText}>
+                {item.annualInterestRate}% p.a.
+              </Text>
             </View>
             <View style={styles.fdFooterItem}>
-              <Icon source="calendar-end" size={14} color={colors.textTertiary} />
+              <Icon
+                source="calendar-end"
+                size={14}
+                color={colors.textTertiary}
+              />
               <Text style={styles.fdFooterText}>{maturityLabel}</Text>
             </View>
             {item.status === 'active' && (
               <View style={styles.fdFooterItem}>
-                <Icon source="clock-outline" size={14} color={colors.textTertiary} />
+                <Icon
+                  source="clock-outline"
+                  size={14}
+                  color={colors.textTertiary}
+                />
                 <Text style={styles.fdFooterText}>{daysLeft}d left</Text>
               </View>
             )}
@@ -321,13 +483,22 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
   const renderAccountsList = () => (
     <>
       {userAccounts.length === 0 ? (
-        <EmptyState icon="wallet-outline" title="No Accounts" subtitle="Add your first account" />
+        <EmptyState
+          icon="wallet-outline"
+          title="No Accounts"
+          subtitle="Add your first account"
+        />
       ) : (
         <FlatList
           data={userAccounts}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item.id}
           renderItem={renderAccountItem}
-          ListHeaderComponent={<>{renderPortfolioCard()}{renderSegmentedControl()}</>}
+          ListHeaderComponent={
+            <>
+              {renderPortfolioCard()}
+              {renderSegmentedControl()}
+            </>
+          }
           contentContainerStyle={styles.listContent}
         />
       )}
@@ -340,14 +511,23 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
         <View style={styles.emptyInvestments}>
           {renderPortfolioCard()}
           {renderSegmentedControl()}
-          <EmptyState icon="lock" title="No Fixed Deposits" subtitle="Create your first FD" />
+          <EmptyState
+            icon="lock"
+            title="No Fixed Deposits"
+            subtitle="Create your first FD"
+          />
         </View>
       ) : (
         <FlatList
           data={deposits}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item.id}
           renderItem={renderFDItem}
-          ListHeaderComponent={<>{renderPortfolioCard()}{renderSegmentedControl()}</>}
+          ListHeaderComponent={
+            <>
+              {renderPortfolioCard()}
+              {renderSegmentedControl()}
+            </>
+          }
           contentContainerStyle={styles.listContent}
         />
       )}
@@ -356,7 +536,9 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {activeTab === 'accounts' ? renderAccountsList() : renderInvestmentsList()}
+      {activeTab === 'accounts'
+        ? renderAccountsList()
+        : renderInvestmentsList()}
       <FAB
         icon="plus"
         style={[styles.fab, { bottom: insets.bottom + 10 }]}
@@ -369,7 +551,11 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
         }}
         color="#fff"
       />
-      <Snackbar visible={!!snackbar} onDismiss={() => setSnackbar('')} duration={3000}>
+      <Snackbar
+        visible={!!snackbar}
+        onDismiss={() => setSnackbar('')}
+        duration={3000}
+      >
         {snackbar}
       </Snackbar>
     </View>
@@ -378,7 +564,11 @@ export default function AccountsScreen({ navigation }: TabScreenProps<'Accounts'
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  listContent: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: 100 },
+  listContent: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: 100,
+  },
   emptyInvestments: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
 
   /* ── Segmented Control ── */
@@ -564,7 +754,10 @@ const styles = StyleSheet.create({
   menuTrigger: {
     padding: spacing.xxs,
   },
-  menuContent: { backgroundColor: colors.surfaceVariant, borderRadius: radius.md },
+  menuContent: {
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: radius.md,
+  },
 
   /* ── FD Cards ── */
   fdCard: {
@@ -661,5 +854,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  fab: { position: 'absolute', right: spacing.lg, backgroundColor: colors.primary, ...elevation.lg },
+  fab: {
+    position: 'absolute',
+    right: spacing.lg,
+    backgroundColor: colors.primary,
+    ...elevation.lg,
+  },
 });

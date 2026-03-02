@@ -106,7 +106,7 @@ export async function runMigrations(db: SQLiteDatabase): Promise<void> {
   `);
 
   const versionResult = await db.getAllAsync<{ version: number | null }>(
-    'SELECT version FROM schema_version ORDER BY version DESC LIMIT 1'
+    'SELECT version FROM schema_version ORDER BY version DESC LIMIT 1',
   );
   const currentVersion = versionResult[0]?.version ?? 0;
 
@@ -122,7 +122,7 @@ export async function runMigrations(db: SQLiteDatabase): Promise<void> {
   if (currentVersion < SCHEMA_VERSION) {
     await db.runAsync(
       'INSERT OR REPLACE INTO schema_version (version) VALUES (?)',
-      SCHEMA_VERSION
+      SCHEMA_VERSION,
     );
   }
 }

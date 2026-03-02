@@ -58,7 +58,7 @@ export const useFDStore = create<FDState>((set) => ({
     if (success) {
       set((state) => ({
         deposits: state.deposits.map((d) =>
-          d.id === id ? { ...d, status: 'closed' as const } : d
+          d.id === id ? { ...d, status: 'closed' as const } : d,
         ),
       }));
     }

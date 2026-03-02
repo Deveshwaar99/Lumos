@@ -17,7 +17,9 @@ export default function AmountInput({
   label = 'Amount',
   currencySymbol = '$',
 }: AmountInputProps) {
-  const [text, setText] = useState(value > 0 ? centsToDollars(value).toFixed(2) : '');
+  const [text, setText] = useState(
+    value > 0 ? centsToDollars(value).toFixed(2) : '',
+  );
   const internalCents = useRef(value);
 
   useEffect(() => {
@@ -30,7 +32,8 @@ export default function AmountInput({
   const handleChange = (input: string) => {
     const cleaned = input.replace(/[^0-9.]/g, '');
     const parts = cleaned.split('.');
-    const formatted = parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : cleaned;
+    const formatted =
+      parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : cleaned;
     setText(formatted);
     const num = parseFloat(formatted);
     if (!isNaN(num)) {

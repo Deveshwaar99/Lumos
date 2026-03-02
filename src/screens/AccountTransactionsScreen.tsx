@@ -43,7 +43,11 @@ export default function AccountTransactionsScreen({
     setTransactions(txns);
   }, [accountId]);
 
-  useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData]),
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -63,7 +67,9 @@ export default function AccountTransactionsScreen({
   const sections: TransactionSection[] = useMemo(() => {
     const grouped = new Map<string, TransactionWithSplits[]>();
     for (const txn of transactions) {
-      const dateKey = txn.date.includes('T') ? txn.date.substring(0, 10) : txn.date;
+      const dateKey = txn.date.includes('T')
+        ? txn.date.substring(0, 10)
+        : txn.date;
       if (!grouped.has(dateKey)) grouped.set(dateKey, []);
       grouped.get(dateKey)!.push(txn);
     }
@@ -76,11 +82,25 @@ export default function AccountTransactionsScreen({
     <View style={styles.container}>
       <View style={styles.headerCard}>
         <View style={styles.headerIcon}>
-          <Icon source={account?.icon ?? 'wallet'} size={28} color={colors.primary} />
+          <Icon
+            source={account?.icon ?? 'wallet'}
+            size={28}
+            color={colors.primary}
+          />
         </View>
         <Text style={styles.headerName}>{account?.name ?? 'Account'}</Text>
-        <Text style={[styles.headerBalance, balance < 0 && { color: colors.expense }]}>
-          {formatMoney(balance, settings.baseCurrency, 2, settings.currencySymbol)}
+        <Text
+          style={[
+            styles.headerBalance,
+            balance < 0 && { color: colors.expense },
+          ]}
+        >
+          {formatMoney(
+            balance,
+            settings.baseCurrency,
+            2,
+            settings.currencySymbol,
+          )}
         </Text>
       </View>
 
@@ -97,10 +117,16 @@ export default function AccountTransactionsScreen({
             {index > 0 && <Divider style={styles.itemDivider} />}
             <TransactionItem
               transaction={item}
-              category={item.categoryId ? categoryMap[item.categoryId] : undefined}
+              category={
+                item.categoryId ? categoryMap[item.categoryId] : undefined
+              }
               accountMap={accountMap}
               currencySymbol={settings.currencySymbol}
-              onPress={() => navigation.navigate('AddTransaction', { transactionId: item.id })}
+              onPress={() =>
+                navigation.navigate('AddTransaction', {
+                  transactionId: item.id,
+                })
+              }
             />
           </>
         )}
@@ -114,7 +140,12 @@ export default function AccountTransactionsScreen({
         }
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
         }
         stickySectionHeadersEnabled={false}
       />
@@ -182,5 +213,9 @@ const styles = StyleSheet.create({
   },
   emptyText: { color: colors.textSecondary, marginTop: spacing.lg },
 
-  fab: { position: 'absolute', right: spacing.lg, backgroundColor: colors.primary },
+  fab: {
+    position: 'absolute',
+    right: spacing.lg,
+    backgroundColor: colors.primary,
+  },
 });

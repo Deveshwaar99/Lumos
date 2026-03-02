@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import {
   TextInput,
   Button,
@@ -24,9 +31,12 @@ export default function CategoryFormScreen({
   route,
 }: RootStackScreenProps<'CategoryForm'>) {
   const { categoryId, categoryType } = route.params ?? {};
-  const { categories, loadCategories, addCategory, updateCategory } = useCategoryStore();
+  const { categories, loadCategories, addCategory, updateCategory } =
+    useCategoryStore();
   const isEditing = !!categoryId;
-  const existing = categoryId ? categories.find((c) => c.id === categoryId) : null;
+  const existing = categoryId
+    ? categories.find((c) => c.id === categoryId)
+    : null;
   const [snackbar, setSnackbar] = useState('');
 
   const {
@@ -54,7 +64,9 @@ export default function CategoryFormScreen({
   }, [loadCategories]);
 
   useEffect(() => {
-    navigation.setOptions({ title: isEditing ? 'Edit Category' : 'New Category' });
+    navigation.setOptions({
+      title: isEditing ? 'Edit Category' : 'New Category',
+    });
   }, [isEditing, navigation]);
 
   useEffect(() => {
@@ -83,96 +95,113 @@ export default function CategoryFormScreen({
 
   return (
     <View style={styles.container}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 80}>
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <Controller
-          control={control}
-          name="name"
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              label="Category Name"
-              value={value}
-              onChangeText={onChange}
-              mode="outlined"
-              error={!!errors.name}
-              style={styles.input}
-            />
-          )}
-        />
-        {errors.name && <Text style={styles.error}>{errors.name.message}</Text>}
-
-        <Text variant="titleSmall" style={styles.sectionTitle}>
-          Type
-        </Text>
-        <Controller
-          control={control}
-          name="type"
-          render={({ field: { onChange, value } }) => (
-            <SegmentedButtons
-              value={value}
-              onValueChange={(v) => onChange(v as 'income' | 'expense')}
-              buttons={[
-                { value: 'expense', label: 'Expense' },
-                { value: 'income', label: 'Income' },
-              ]}
-            />
-          )}
-        />
-
-        <Text variant="titleSmall" style={styles.sectionTitle}>
-          Icon
-        </Text>
-        <View style={styles.pickerGrid}>
-          {CATEGORY_ICONS.map((icon) => (
-            <TouchableOpacity
-              key={icon.name}
-              style={[
-                styles.iconOption,
-                selectedIcon === icon.name && {
-                  borderColor: colors.primary,
-                  borderWidth: 2,
-                },
-              ]}
-              onPress={() => setValue('icon', icon.name)}
-            >
-              <Icon
-                source={icon.name as any}
-                size={24}
-                color={selectedIcon === icon.name ? colors.primary : colors.text}
-              />
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <Text variant="titleSmall" style={styles.sectionTitle}>
-          Color
-        </Text>
-        <View style={styles.pickerGrid}>
-          {CATEGORY_COLORS.map((color) => (
-            <TouchableOpacity
-              key={color}
-              style={[
-                styles.colorOption,
-                { backgroundColor: color },
-                selectedColor === color && styles.colorSelected,
-              ]}
-              onPress={() => setValue('color', color)}
-            >
-              {selectedColor === color && <Icon source="check" size={18} color="#fff" />}
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <Button
-          mode="contained"
-          onPress={handleSubmit(onSubmit)}
-          style={styles.saveButton}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 80}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
         >
-          {isEditing ? 'Update' : 'Create'} Category
-        </Button>
-      </ScrollView>
+          <Controller
+            control={control}
+            name="name"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                label="Category Name"
+                value={value}
+                onChangeText={onChange}
+                mode="outlined"
+                error={!!errors.name}
+                style={styles.input}
+              />
+            )}
+          />
+          {errors.name && (
+            <Text style={styles.error}>{errors.name.message}</Text>
+          )}
+
+          <Text variant="titleSmall" style={styles.sectionTitle}>
+            Type
+          </Text>
+          <Controller
+            control={control}
+            name="type"
+            render={({ field: { onChange, value } }) => (
+              <SegmentedButtons
+                value={value}
+                onValueChange={(v) => onChange(v as 'income' | 'expense')}
+                buttons={[
+                  { value: 'expense', label: 'Expense' },
+                  { value: 'income', label: 'Income' },
+                ]}
+              />
+            )}
+          />
+
+          <Text variant="titleSmall" style={styles.sectionTitle}>
+            Icon
+          </Text>
+          <View style={styles.pickerGrid}>
+            {CATEGORY_ICONS.map((icon) => (
+              <TouchableOpacity
+                key={icon.name}
+                style={[
+                  styles.iconOption,
+                  selectedIcon === icon.name && {
+                    borderColor: colors.primary,
+                    borderWidth: 2,
+                  },
+                ]}
+                onPress={() => setValue('icon', icon.name)}
+              >
+                <Icon
+                  source={icon.name as any}
+                  size={24}
+                  color={
+                    selectedIcon === icon.name ? colors.primary : colors.text
+                  }
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text variant="titleSmall" style={styles.sectionTitle}>
+            Color
+          </Text>
+          <View style={styles.pickerGrid}>
+            {CATEGORY_COLORS.map((color) => (
+              <TouchableOpacity
+                key={color}
+                style={[
+                  styles.colorOption,
+                  { backgroundColor: color },
+                  selectedColor === color && styles.colorSelected,
+                ]}
+                onPress={() => setValue('color', color)}
+              >
+                {selectedColor === color && (
+                  <Icon source="check" size={18} color="#fff" />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Button
+            mode="contained"
+            onPress={handleSubmit(onSubmit)}
+            style={styles.saveButton}
+          >
+            {isEditing ? 'Update' : 'Create'} Category
+          </Button>
+        </ScrollView>
       </KeyboardAvoidingView>
-      <Snackbar visible={!!snackbar} onDismiss={() => setSnackbar('')} duration={3000}>
+      <Snackbar
+        visible={!!snackbar}
+        onDismiss={() => setSnackbar('')}
+        duration={3000}
+      >
         {snackbar}
       </Snackbar>
     </View>
@@ -203,6 +232,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   colorSelected: { borderWidth: 3, borderColor: '#fff', elevation: 4 },
-  saveButton: { marginTop: 24, backgroundColor: colors.primary, borderRadius: radius.capsule },
+  saveButton: {
+    marginTop: 24,
+    backgroundColor: colors.primary,
+    borderRadius: radius.capsule,
+  },
   error: { color: colors.error, fontSize: 12, marginBottom: 8 },
 });

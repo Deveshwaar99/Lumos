@@ -42,12 +42,12 @@ export default function FDFormScreen({
 
   const incomeCategories = useMemo(
     () => categories.filter((c) => c.type === 'income'),
-    [categories]
+    [categories],
   );
 
   const userAccounts = useMemo(
     () => accounts.filter((a) => !fdAccountIds.has(a.id)),
-    [accounts, fdAccountIds]
+    [accounts, fdAccountIds],
   );
 
   const [label, setLabel] = useState('');
@@ -106,8 +106,7 @@ export default function FDFormScreen({
     const principal = dollarsToCents(parseFloat(amountText) || 0);
     const rate = parseFloat(rateText) || 0;
     const tax = parseFloat(taxRateText) || 0;
-    if (principal <= 0 || rate <= 0 || !startDate || !maturityDate)
-      return null;
+    if (principal <= 0 || rate <= 0 || !startDate || !maturityDate) return null;
     if (maturityDate <= startDate) return null;
 
     const gross = calculateFDInterest(principal, rate, startDate, maturityDate);
@@ -123,7 +122,9 @@ export default function FDFormScreen({
 
   const selectedSource = userAccounts.find((a) => a.id === sourceAccountId);
   const selectedCredit = userAccounts.find((a) => a.id === creditAccountId);
-  const selectedCategory = incomeCategories.find((c) => c.id === interestCategoryId);
+  const selectedCategory = incomeCategories.find(
+    (c) => c.id === interestCategoryId,
+  );
   const currency = settings.baseCurrency;
 
   const handleSubmit = useCallback(async () => {
@@ -294,7 +295,7 @@ export default function FDFormScreen({
               ]}
               onPress={() =>
                 setCalendarTarget((p) =>
-                  p === 'maturity' ? 'none' : 'maturity'
+                  p === 'maturity' ? 'none' : 'maturity',
                 )
               }
             >
@@ -324,7 +325,9 @@ export default function FDFormScreen({
           {calendarTarget !== 'none' && (
             <InlineCalendar
               selectedDate={
-                calendarTarget === 'start' ? startDate : maturityDate || startDate
+                calendarTarget === 'start'
+                  ? startDate
+                  : maturityDate || startDate
               }
               onDateSelect={(d) => {
                 if (calendarTarget === 'start') setStartDate(d);
@@ -466,7 +469,12 @@ export default function FDFormScreen({
               <View style={styles.previewRow}>
                 <Text style={styles.previewLabel}>Gross Interest</Text>
                 <Text style={styles.previewValue}>
-                  {formatMoney(preview.grossInterest, currency, 2, settings.currencySymbol)}
+                  {formatMoney(
+                    preview.grossInterest,
+                    currency,
+                    2,
+                    settings.currencySymbol,
+                  )}
                 </Text>
               </View>
               <View style={styles.previewRow}>
@@ -474,7 +482,13 @@ export default function FDFormScreen({
                   TDS ({taxRateText || '0'}%)
                 </Text>
                 <Text style={[styles.previewValue, { color: colors.expense }]}>
-                  -{formatMoney(preview.tds, currency, 2, settings.currencySymbol)}
+                  -
+                  {formatMoney(
+                    preview.tds,
+                    currency,
+                    2,
+                    settings.currencySymbol,
+                  )}
                 </Text>
               </View>
               <View style={styles.previewDivider} />
@@ -486,7 +500,12 @@ export default function FDFormScreen({
                     { color: colors.income, fontWeight: '800' },
                   ]}
                 >
-                  {formatMoney(preview.netInterest, currency, 2, settings.currencySymbol)}
+                  {formatMoney(
+                    preview.netInterest,
+                    currency,
+                    2,
+                    settings.currencySymbol,
+                  )}
                 </Text>
               </View>
               <View style={styles.previewRow}>
@@ -497,7 +516,12 @@ export default function FDFormScreen({
                     { color: colors.primary, fontWeight: '800' },
                   ]}
                 >
-                  {formatMoney(preview.maturityValue, currency, 2, settings.currencySymbol)}
+                  {formatMoney(
+                    preview.maturityValue,
+                    currency,
+                    2,
+                    settings.currencySymbol,
+                  )}
                 </Text>
               </View>
             </View>

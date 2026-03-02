@@ -15,12 +15,15 @@ console.assert(centsToDollars(1) === 0.01, 'centsToDollars(1) === 0.01');
 
 console.assert(dollarsToCents(12.5) === 1250, 'dollarsToCents(12.50) === 1250');
 console.assert(dollarsToCents(0.01) === 1, 'dollarsToCents(0.01) === 1');
-console.assert(dollarsToCents(99.99) === 9999, 'dollarsToCents(99.99) === 9999');
+console.assert(
+  dollarsToCents(99.99) === 9999,
+  'dollarsToCents(99.99) === 9999',
+);
 
 console.assert(parseMoney('12.50') === 1250, "parseMoney('12.50') === 1250");
 console.assert(
   parseMoney('$1,234.56') === 123456,
-  "parseMoney('$1,234.56') === 123456"
+  "parseMoney('$1,234.56') === 123456",
 );
 console.assert(parseMoney('0.01') === 1, "parseMoney('0.01') === 1");
 
@@ -28,7 +31,7 @@ const formatted = formatMoney(1250);
 console.assert(typeof formatted === 'string', 'formatMoney returns a string');
 console.assert(
   parseMoney(formatted) === 1250,
-  'formatMoney returns a string containing the amount'
+  'formatMoney returns a string containing the amount',
 );
 
 console.log('All money tests passed!');

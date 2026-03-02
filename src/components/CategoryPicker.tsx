@@ -21,7 +21,11 @@ export default function CategoryPicker({
 }: CategoryPickerProps) {
   return (
     <Portal>
-      <Modal visible={visible} onDismiss={onDismiss} contentContainerStyle={styles.modal}>
+      <Modal
+        visible={visible}
+        onDismiss={onDismiss}
+        contentContainerStyle={styles.modal}
+      >
         <Text variant="titleMedium" style={styles.title}>
           Select Category
         </Text>
@@ -37,13 +41,20 @@ export default function CategoryPicker({
                 onDismiss();
               }}
             >
-              <View style={[styles.iconCircle, { backgroundColor: item.color + '20' }]}>
+              <View
+                style={[
+                  styles.iconCircle,
+                  { backgroundColor: item.color + '20' },
+                ]}
+              >
                 <Icon source={item.icon as any} size={20} color={item.color} />
               </View>
               <Text variant="bodyLarge" style={styles.itemText}>
                 {item.name}
               </Text>
-              {selectedId === item.id && <Icon source="check" size={20} color={colors.primary} />}
+              {selectedId === item.id && (
+                <Icon source="check" size={20} color={colors.primary} />
+              )}
             </TouchableOpacity>
           )}
         />

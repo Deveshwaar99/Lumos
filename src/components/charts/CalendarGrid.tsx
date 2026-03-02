@@ -22,7 +22,12 @@ function formatCompact(cents: number): string {
   return `${sign}${abs.toFixed(abs < 10 ? 1 : 0)}`;
 }
 
-export default function CalendarGrid({ month, data, valueKey, valueColor }: CalendarGridProps) {
+export default function CalendarGrid({
+  month,
+  data,
+  valueKey,
+  valueColor,
+}: CalendarGridProps) {
   if (data.length === 0) return null;
 
   const firstDate = new Date(data[0].date + 'T00:00:00');
@@ -40,12 +45,16 @@ export default function CalendarGrid({ month, data, valueKey, valueColor }: Cale
 
   return (
     <View style={styles.container}>
-      <Text variant="labelMedium" style={styles.title}>Daily Breakdown</Text>
+      <Text variant="labelMedium" style={styles.title}>
+        Daily Breakdown
+      </Text>
 
       <View style={styles.headerRow}>
         {DAY_NAMES.map((d, i) => (
           <View key={i} style={styles.headerCell}>
-            <Text variant="labelSmall" style={styles.headerText}>{d}</Text>
+            <Text variant="labelSmall" style={styles.headerText}>
+              {d}
+            </Text>
           </View>
         ))}
       </View>
@@ -72,7 +81,9 @@ export default function CalendarGrid({ month, data, valueKey, valueColor }: Cale
                   hasValue && { backgroundColor: valueColor + '10' },
                 ]}
               >
-                <Text variant="labelSmall" style={styles.dayNum}>{dayNum}</Text>
+                <Text variant="labelSmall" style={styles.dayNum}>
+                  {dayNum}
+                </Text>
                 {hasValue ? (
                   <Text
                     variant="labelSmall"

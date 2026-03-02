@@ -19,7 +19,10 @@ export function calculateTDS(interestCents: number, taxRate: number): number {
   return Math.round(interestCents * (taxRate / 100));
 }
 
-export function calculateNetInterest(interestCents: number, taxRate: number): number {
+export function calculateNetInterest(
+  interestCents: number,
+  taxRate: number,
+): number {
   return interestCents - calculateTDS(interestCents, taxRate);
 }
 

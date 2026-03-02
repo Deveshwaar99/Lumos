@@ -16,11 +16,13 @@ export const analyticsService = {
 
     const incomeResult = await db.getFirstAsync<{ total: number }>(
       "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'income' AND date >= ? AND date < ?",
-      start, end
+      start,
+      end,
     );
     const expenseResult = await db.getFirstAsync<{ total: number }>(
       "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'expense' AND date >= ? AND date < ?",
-      start, end
+      start,
+      end,
     );
 
     const totalIncome = incomeResult?.total ?? 0;
@@ -32,7 +34,10 @@ export const analyticsService = {
     };
   },
 
-  async getCategoryBreakdown(month: string, type: 'income' | 'expense'): Promise<CategoryBreakdown[]> {
+  async getCategoryBreakdown(
+    month: string,
+    type: 'income' | 'expense',
+  ): Promise<CategoryBreakdown[]> {
     const db = await getDatabase();
     const { start, end } = getMonthRange(month);
 
@@ -43,7 +48,9 @@ export const analyticsService = {
       LEFT JOIN categories c ON t.category_id = c.id
       WHERE t.type = ? AND t.date >= ? AND t.date < ?
       GROUP BY t.category_id`,
-      type, start, end
+      type,
+      start,
+      end,
     );
 
     return rows.map((r: any) => ({
@@ -67,7 +74,8 @@ export const analyticsService = {
       FROM transactions t
       WHERE t.date >= ? AND t.date < ?
       GROUP BY substr(t.date, 1, 10)`,
-      start, end
+      start,
+      end,
     );
 
     const byDate = new Map<string, { income: number; expense: number }>();
@@ -107,7 +115,7 @@ export const analyticsService = {
                           WHERE s2.transaction_id = t.id
                           ORDER BY s2.rowid ASC LIMIT 1)), 0)
         as balance
-      FROM accounts a ORDER BY a.name`
+      FROM accounts a ORDER BY a.name`,
     );
 
     return rows.map((r: any) => ({
@@ -118,11 +126,12 @@ export const analyticsService = {
     }));
   },
 
-  async getTopExpenseCategories(month: string, limit: number = 5): Promise<CategoryBreakdown[]> {
+  async getTopExpenseCategories(
+    month: string,
+    limit: number = 5,
+  ): Promise<CategoryBreakdown[]> {
     const breakdown = await this.getCategoryBreakdown(month, 'expense');
-    return breakdown
-      .sort((a, b) => b.total - a.total)
-      .slice(0, limit);
+    return breakdown.sort((a, b) => b.total - a.total).slice(0, limit);
   },
 
   async getDailyIncomeFlow(month: string): Promise<DailyCashFlow[]> {
@@ -135,7 +144,8 @@ export const analyticsService = {
       FROM transactions t
       WHERE t.type = 'income' AND t.date >= ? AND t.date < ?
       GROUP BY substr(t.date, 1, 10)`,
-      start, end
+      start,
+      end,
     );
 
     const byDate = new Map<string, number>();
@@ -160,7 +170,8 @@ export const analyticsService = {
       FROM transactions t
       WHERE t.type = 'expense' AND t.date >= ? AND t.date < ?
       GROUP BY substr(t.date, 1, 10)`,
-      start, end
+      start,
+      end,
     );
 
     const byDate = new Map<string, number>();
@@ -175,16 +186,19 @@ export const analyticsService = {
     }));
   },
 
-  async getNetWorthHistory(currentMonth: string, monthsBack: number = 12): Promise<NetWorthPoint[]> {
+  async getNetWorthHistory(
+    currentMonth: string,
+    monthsBack: number = 12,
+  ): Promise<NetWorthPoint[]> {
     const db = await getDatabase();
 
     const openingBalanceResult = await db.getFirstAsync<{ total: number }>(
-      'SELECT COALESCE(SUM(opening_balance_cents), 0) as total FROM accounts'
+      'SELECT COALESCE(SUM(opening_balance_cents), 0) as total FROM accounts',
     );
     const openingBalance = openingBalanceResult?.total ?? 0;
 
     const firstTxnResult = await db.getFirstAsync<{ min_date: string }>(
-      'SELECT MIN(date) as min_date FROM transactions'
+      'SELECT MIN(date) as min_date FROM transactions',
     );
 
     const [yearStr, monthStr] = currentMonth.split('-').map(Number);
@@ -193,8 +207,14 @@ export const analyticsService = {
     for (let i = monthsBack; i >= 0; i--) {
       let m = monthStr - i;
       let y = yearStr;
-      while (m <= 0) { m += 12; y--; }
-      while (m > 12) { m -= 12; y++; }
+      while (m <= 0) {
+        m += 12;
+        y--;
+      }
+      while (m > 12) {
+        m -= 12;
+        y++;
+      }
       const monthKey = `${y}-${String(m).padStart(2, '0')}`;
       const { end } = getMonthRange(monthKey);
 
@@ -207,14 +227,19 @@ export const analyticsService = {
         end,
       );
 
-      const netWorth = openingBalance + (incomeResult?.total ?? 0) - (expenseResult?.total ?? 0);
+      const netWorth =
+        openingBalance +
+        (incomeResult?.total ?? 0) -
+        (expenseResult?.total ?? 0);
       points.push({ month: monthKey, netWorth });
     }
 
     return points;
   },
 
-  async getAccountPeriodBalances(month: string): Promise<AccountPeriodBalance[]> {
+  async getAccountPeriodBalances(
+    month: string,
+  ): Promise<AccountPeriodBalance[]> {
     const db = await getDatabase();
     const { start, end } = getMonthRange(month);
 
@@ -229,7 +254,10 @@ export const analyticsService = {
             WHERE s.account_id = a.id AND t.type = 'expense'
               AND t.date >= ? AND t.date < ?), 0) as periodExpense
       FROM accounts a ORDER BY a.name`,
-      start, end, start, end
+      start,
+      end,
+      start,
+      end,
     );
 
     return rows.map((r: any) => ({
@@ -249,11 +277,13 @@ export const analyticsService = {
 
     const incomeResult = await db.getFirstAsync<{ total: number }>(
       "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'income' AND date >= ? AND date < ?",
-      start, end
+      start,
+      end,
     );
     const expenseResult = await db.getFirstAsync<{ total: number }>(
       "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'expense' AND date >= ? AND date < ?",
-      start, end
+      start,
+      end,
     );
 
     const totalIncome = incomeResult?.total ?? 0;
@@ -275,7 +305,9 @@ export const analyticsService = {
       LEFT JOIN categories c ON t.category_id = c.id
       WHERE t.type = ? AND t.date >= ? AND t.date < ?
       GROUP BY t.category_id`,
-      type, start, end
+      type,
+      start,
+      end,
     );
 
     return rows.map((r: any) => ({
@@ -287,7 +319,10 @@ export const analyticsService = {
     }));
   },
 
-  async getDailyExpenseFlowForRange(start: string, end: string): Promise<DailyCashFlow[]> {
+  async getDailyExpenseFlowForRange(
+    start: string,
+    end: string,
+  ): Promise<DailyCashFlow[]> {
     const db = await getDatabase();
 
     const rows = await db.getAllAsync<any>(
@@ -296,7 +331,8 @@ export const analyticsService = {
       FROM transactions t
       WHERE t.type = 'expense' AND t.date >= ? AND t.date < ?
       GROUP BY substr(t.date, 1, 10)`,
-      start, end
+      start,
+      end,
     );
 
     const byDate = new Map<string, number>();
@@ -311,7 +347,10 @@ export const analyticsService = {
     }));
   },
 
-  async getDailyIncomeFlowForRange(start: string, end: string): Promise<DailyCashFlow[]> {
+  async getDailyIncomeFlowForRange(
+    start: string,
+    end: string,
+  ): Promise<DailyCashFlow[]> {
     const db = await getDatabase();
 
     const rows = await db.getAllAsync<any>(
@@ -320,7 +359,8 @@ export const analyticsService = {
       FROM transactions t
       WHERE t.type = 'income' AND t.date >= ? AND t.date < ?
       GROUP BY substr(t.date, 1, 10)`,
-      start, end
+      start,
+      end,
     );
 
     const byDate = new Map<string, number>();
@@ -335,7 +375,10 @@ export const analyticsService = {
     }));
   },
 
-  async getAccountPeriodBalancesForRange(start: string, end: string): Promise<AccountPeriodBalance[]> {
+  async getAccountPeriodBalancesForRange(
+    start: string,
+    end: string,
+  ): Promise<AccountPeriodBalance[]> {
     const db = await getDatabase();
 
     const rows = await db.getAllAsync<any>(
@@ -349,7 +392,10 @@ export const analyticsService = {
             WHERE s.account_id = a.id AND t.type = 'expense'
               AND t.date >= ? AND t.date < ?), 0) as periodExpense
       FROM accounts a ORDER BY a.name`,
-      start, end, start, end
+      start,
+      end,
+      start,
+      end,
     );
 
     return rows.map((r: any) => ({

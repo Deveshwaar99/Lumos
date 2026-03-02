@@ -34,7 +34,7 @@ export const fdService = {
   async getAll(): Promise<FixedDeposit[]> {
     const db = await getDatabase();
     const rows = await db.getAllAsync<any>(
-      'SELECT * FROM fixed_deposits ORDER BY maturity_date ASC'
+      'SELECT * FROM fixed_deposits ORDER BY maturity_date ASC',
     );
     return rows.map(mapRow);
   },
@@ -43,7 +43,7 @@ export const fdService = {
     const db = await getDatabase();
     const row = await db.getFirstAsync<any>(
       'SELECT * FROM fixed_deposits WHERE id = ?',
-      id
+      id,
     );
     return row ? mapRow(row) : null;
   },
@@ -51,7 +51,7 @@ export const fdService = {
   async getActive(): Promise<FixedDeposit[]> {
     const db = await getDatabase();
     const rows = await db.getAllAsync<any>(
-      "SELECT * FROM fixed_deposits WHERE status = 'active' ORDER BY maturity_date ASC"
+      "SELECT * FROM fixed_deposits WHERE status = 'active' ORDER BY maturity_date ASC",
     );
     return rows.map(mapRow);
   },
@@ -59,7 +59,7 @@ export const fdService = {
   async getFdAccountIds(): Promise<Set<string>> {
     const db = await getDatabase();
     const rows = await db.getAllAsync<{ fd_account_id: string }>(
-      'SELECT fd_account_id FROM fixed_deposits'
+      'SELECT fd_account_id FROM fixed_deposits',
     );
     return new Set(rows.map((r) => r.fd_account_id));
   },
@@ -94,7 +94,7 @@ export const fdService = {
       data.note ?? null,
       'active',
       now,
-      now
+      now,
     );
 
     await transactionService.transfer(
@@ -104,7 +104,7 @@ export const fdService = {
       data.currency,
       `FD opened — ${data.label}`,
       data.startDate,
-      id
+      id,
     );
 
     return {
@@ -128,7 +128,7 @@ export const fdService = {
 
   async update(
     id: string,
-    data: Partial<Omit<CreateFDInput, 'sourceAccountId'>>
+    data: Partial<Omit<CreateFDInput, 'sourceAccountId'>>,
   ): Promise<void> {
     const db = await getDatabase();
     const fields: string[] = ['updated_at = ?'];
@@ -167,7 +167,7 @@ export const fdService = {
     values.push(id);
     await db.runAsync(
       `UPDATE fixed_deposits SET ${fields.join(', ')} WHERE id = ?`,
-      ...values
+      ...values,
     );
   },
 
@@ -177,7 +177,7 @@ export const fdService = {
 
     const existing = await transactionService.getByFdId(id);
     const hasMaturityIncome = existing.some(
-      (t) => t.type === 'income' && t.note?.includes('interest')
+      (t) => t.type === 'income' && t.note?.includes('interest'),
     );
     if (hasMaturityIncome) return false;
 
@@ -185,7 +185,7 @@ export const fdService = {
       fd.principalCents,
       fd.annualInterestRate,
       fd.startDate,
-      fd.maturityDate
+      fd.maturityDate,
     );
     const netInterest = calculateNetInterest(grossInterest, fd.taxRate);
     const tds = calculateTDS(grossInterest, fd.taxRate);
@@ -197,7 +197,7 @@ export const fdService = {
       fd.currency,
       'FD matured — principal return',
       fd.maturityDate,
-      id
+      id,
     );
 
     if (netInterest > 0) {
@@ -211,11 +211,9 @@ export const fdService = {
           categoryId: fd.interestCategoryId,
           note: `FD interest — gross: ${grossFormatted}, TDS: ${tdsFormatted}`,
           date: fd.maturityDate,
-          splits: [
-            { accountId: fd.creditAccountId, amountCents: netInterest },
-          ],
+          splits: [{ accountId: fd.creditAccountId, amountCents: netInterest }],
         },
-        id
+        id,
       );
     }
 
@@ -223,7 +221,7 @@ export const fdService = {
     await db.runAsync(
       "UPDATE fixed_deposits SET status = 'matured', updated_at = ? WHERE id = ?",
       new Date().toISOString(),
-      id
+      id,
     );
 
     return true;
@@ -242,14 +240,14 @@ export const fdService = {
       fd.currency,
       'FD closed early — principal return',
       today,
-      id
+      id,
     );
 
     const db = await getDatabase();
     await db.runAsync(
       "UPDATE fixed_deposits SET status = 'closed', updated_at = ? WHERE id = ?",
       new Date().toISOString(),
-      id
+      id,
     );
 
     return true;
@@ -276,7 +274,7 @@ export const fdService = {
     const db = await getDatabase();
     const rows = await db.getAllAsync<any>(
       "SELECT * FROM fixed_deposits WHERE status = 'active' AND maturity_date <= ?",
-      today
+      today,
     );
     const activeFDs = rows.map(mapRow);
 

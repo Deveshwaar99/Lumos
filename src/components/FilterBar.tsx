@@ -20,9 +20,17 @@ export default function FilterBar({
   const [typeMenuVisible, setTypeMenuVisible] = useState(false);
   const [periodMenuVisible, setPeriodMenuVisible] = useState(false);
 
-  const typeLabel = filter.type ? (filter.type === 'income' ? 'Income' : 'Expense') : 'All Types';
-  const selectedCategory = filter.categoryId ? categories.find((c) => c.id === filter.categoryId) : null;
-  const selectedAccount = filter.accountId ? accounts.find((a) => a.id === filter.accountId) : null;
+  const typeLabel = filter.type
+    ? filter.type === 'income'
+      ? 'Income'
+      : 'Expense'
+    : 'All Types';
+  const selectedCategory = filter.categoryId
+    ? categories.find((c) => c.id === filter.categoryId)
+    : null;
+  const selectedAccount = filter.accountId
+    ? accounts.find((a) => a.id === filter.accountId)
+    : null;
 
   return (
     <ScrollView
@@ -124,13 +132,19 @@ export default function FilterBar({
       </Menu>
 
       {selectedCategory && (
-        <Chip onClose={() => onFilterChange({ categoryId: null })} style={styles.chip}>
+        <Chip
+          onClose={() => onFilterChange({ categoryId: null })}
+          style={styles.chip}
+        >
           {selectedCategory.name}
         </Chip>
       )}
 
       {selectedAccount && (
-        <Chip onClose={() => onFilterChange({ accountId: null })} style={styles.chip}>
+        <Chip
+          onClose={() => onFilterChange({ accountId: null })}
+          style={styles.chip}
+        >
           {selectedAccount.name}
         </Chip>
       )}
@@ -140,6 +154,11 @@ export default function FilterBar({
 
 const styles = StyleSheet.create({
   container: { maxHeight: 50 },
-  content: { paddingHorizontal: 12, paddingVertical: 8, gap: 8, flexDirection: 'row' },
+  content: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 8,
+    flexDirection: 'row',
+  },
   chip: { marginRight: 4 },
 });

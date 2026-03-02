@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, StyleSheet, Alert, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+} from 'react-native';
 import { Text, Snackbar, TextInput, Icon } from 'react-native-paper';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { seedDemoTransactions } from '../db/seed';
@@ -30,12 +38,24 @@ function CardRow({
 }) {
   return (
     <>
-      <TouchableOpacity style={styles.cardRow} onPress={onPress} activeOpacity={onPress ? 0.6 : 1}>
+      <TouchableOpacity
+        style={styles.cardRow}
+        onPress={onPress}
+        activeOpacity={onPress ? 0.6 : 1}
+      >
         <Icon source={icon as any} size={20} color={colors.textSecondary} />
-        <Text variant="bodyLarge" style={styles.cardRowTitle}>{title}</Text>
+        <Text variant="bodyLarge" style={styles.cardRowTitle}>
+          {title}
+        </Text>
         <View style={styles.cardRowRight}>
           {right}
-          {onPress && !right ? <Icon source="chevron-right" size={20} color={colors.textTertiary} /> : null}
+          {onPress && !right ? (
+            <Icon
+              source="chevron-right"
+              size={20}
+              color={colors.textTertiary}
+            />
+          ) : null}
         </View>
       </TouchableOpacity>
       {!isLast && <View style={styles.cardDivider} />}
@@ -43,28 +63,36 @@ function CardRow({
   );
 }
 
-export default function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>) {
+export default function SettingsScreen({
+  navigation,
+}: RootStackScreenProps<'Settings'>) {
   const { settings, loadSettings, updateSetting } = useSettingsStore();
   const { loadTransactions } = useTransactionStore();
   const { loadCategories } = useCategoryStore();
   const { loadAccounts } = useAccountStore();
   const { loadBudgets } = useBudgetStore();
   const [snackbar, setSnackbar] = useState('');
-  useEffect(() => { loadSettings(); }, []);
+  useEffect(() => {
+    loadSettings();
+  }, []);
 
   const handleSeedDemo = () => {
-    Alert.alert('Load Demo Data', 'This will add ~20 sample transactions. Continue?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Load',
-        onPress: async () => {
-          const db = await getDatabase();
-          await seedDemoTransactions(db);
-          await loadTransactions(true);
-          setSnackbar('Demo data loaded');
+    Alert.alert(
+      'Load Demo Data',
+      'This will add ~20 sample transactions. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Load',
+          onPress: async () => {
+            const db = await getDatabase();
+            await seedDemoTransactions(db);
+            await loadTransactions(true);
+            setSnackbar('Demo data loaded');
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const handleResetAll = () => {
@@ -77,154 +105,164 @@ export default function SettingsScreen({ navigation }: RootStackScreenProps<'Set
           text: 'Delete Everything',
           style: 'destructive',
           onPress: () => {
-            Alert.alert(
-              'Are you sure?',
-              'All data will be lost forever.',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Yes, Reset',
-                  style: 'destructive',
-                  onPress: async () => {
-                    await resetDatabase();
-                    await Promise.all([
-                      loadTransactions(true),
-                      loadCategories(),
-                      loadAccounts(),
-                      loadBudgets(),
-                      loadSettings(),
-                    ]);
-                    setSnackbar('All data has been reset');
-                  },
+            Alert.alert('Are you sure?', 'All data will be lost forever.', [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Yes, Reset',
+                style: 'destructive',
+                onPress: async () => {
+                  await resetDatabase();
+                  await Promise.all([
+                    loadTransactions(true),
+                    loadCategories(),
+                    loadAccounts(),
+                    loadBudgets(),
+                    loadSettings(),
+                  ]);
+                  setSnackbar('All data has been reset');
                 },
-              ]
-            );
+              },
+            ]);
           },
         },
-      ]
+      ],
     );
   };
 
   return (
     <View style={styles.container}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView contentContainerStyle={styles.content}>
+          <Text style={styles.sectionHeader}>Profile</Text>
+          <GroupedCard>
+            <CardRow
+              icon="account-outline"
+              title="Name"
+              right={
+                <TextInput
+                  value={settings.username}
+                  onChangeText={(v) => updateSetting('username', v)}
+                  placeholder="Your name"
+                  placeholderTextColor={colors.textTertiary}
+                  mode="flat"
+                  style={styles.nameInput}
+                  contentStyle={styles.inlineInputContent}
+                  underlineStyle={styles.inlineInputUnderline}
+                  maxLength={20}
+                />
+              }
+              isLast
+            />
+          </GroupedCard>
 
-        <Text style={styles.sectionHeader}>Profile</Text>
-        <GroupedCard>
-          <CardRow
-            icon="account-outline"
-            title="Name"
-            right={
-              <TextInput
-                value={settings.username}
-                onChangeText={(v) => updateSetting('username', v)}
-                placeholder="Your name"
-                placeholderTextColor={colors.textTertiary}
-                mode="flat"
-                style={styles.nameInput}
-                contentStyle={styles.inlineInputContent}
-                underlineStyle={styles.inlineInputUnderline}
-                maxLength={20}
-              />
-            }
-            isLast
-          />
-        </GroupedCard>
+          <Text style={styles.sectionHeader}>Currency</Text>
+          <GroupedCard>
+            <CardRow
+              icon="cash"
+              title="Code"
+              right={
+                <TextInput
+                  value={settings.baseCurrency}
+                  onChangeText={(v) =>
+                    updateSetting('baseCurrency', v.toUpperCase())
+                  }
+                  mode="flat"
+                  style={styles.inlineInput}
+                  contentStyle={styles.inlineInputContent}
+                  underlineStyle={styles.inlineInputUnderline}
+                  maxLength={3}
+                  autoCapitalize="characters"
+                />
+              }
+            />
+            <CardRow
+              icon="currency-usd"
+              title="Symbol"
+              right={
+                <TextInput
+                  value={settings.currencySymbol}
+                  onChangeText={(v) => updateSetting('currencySymbol', v)}
+                  mode="flat"
+                  style={styles.inlineInput}
+                  contentStyle={styles.inlineInputContent}
+                  underlineStyle={styles.inlineInputUnderline}
+                  maxLength={3}
+                />
+              }
+              isLast
+            />
+          </GroupedCard>
 
-        <Text style={styles.sectionHeader}>Currency</Text>
-        <GroupedCard>
-          <CardRow
-            icon="cash"
-            title="Code"
-            right={
-              <TextInput
-                value={settings.baseCurrency}
-                onChangeText={(v) => updateSetting('baseCurrency', v.toUpperCase())}
-                mode="flat"
-                style={styles.inlineInput}
-                contentStyle={styles.inlineInputContent}
-                underlineStyle={styles.inlineInputUnderline}
-                maxLength={3}
-                autoCapitalize="characters"
-              />
-            }
-          />
-          <CardRow
-            icon="currency-usd"
-            title="Symbol"
-            right={
-              <TextInput
-                value={settings.currencySymbol}
-                onChangeText={(v) => updateSetting('currencySymbol', v)}
-                mode="flat"
-                style={styles.inlineInput}
-                contentStyle={styles.inlineInputContent}
-                underlineStyle={styles.inlineInputUnderline}
-                maxLength={3}
-              />
-            }
-            isLast
-          />
-        </GroupedCard>
+          <Text style={styles.sectionHeader}>Data</Text>
+          <GroupedCard>
+            <CardRow
+              icon="cloud-upload"
+              title="Backup & Restore"
+              onPress={() => navigation.navigate('BackupRestore')}
+              right={<Text style={styles.cardRowValue}>Manage</Text>}
+            />
+            <CardRow
+              icon="database-plus"
+              title="Load Demo Data"
+              onPress={handleSeedDemo}
+            />
+            <CardRow
+              icon="delete-forever"
+              title="Reset All Data"
+              onPress={handleResetAll}
+              right={
+                <Text style={[styles.cardRowValue, { color: colors.error }]}>
+                  Erase
+                </Text>
+              }
+              isLast
+            />
+          </GroupedCard>
 
-        <Text style={styles.sectionHeader}>Data</Text>
-        <GroupedCard>
-          <CardRow
-            icon="cloud-upload"
-            title="Backup & Restore"
-            onPress={() => navigation.navigate('BackupRestore')}
-            right={<Text style={styles.cardRowValue}>Manage</Text>}
-          />
-          <CardRow
-            icon="database-plus"
-            title="Load Demo Data"
-            onPress={handleSeedDemo}
-          />
-          <CardRow
-            icon="delete-forever"
-            title="Reset All Data"
-            onPress={handleResetAll}
-            right={<Text style={[styles.cardRowValue, { color: colors.error }]}>Erase</Text>}
-            isLast
-          />
-        </GroupedCard>
+          <Text style={styles.sectionHeader}>Privacy</Text>
+          <GroupedCard>
+            <View style={styles.privacyInner}>
+              <Text variant="bodyMedium" style={styles.privacyText}>
+                Lumos stores all your data locally on your device. No data is
+                sent to any server. No internet connection is required. Your
+                financial data stays private and secure on your device.
+              </Text>
+            </View>
+          </GroupedCard>
 
-        <Text style={styles.sectionHeader}>Privacy</Text>
-        <GroupedCard>
-          <View style={styles.privacyInner}>
-            <Text variant="bodyMedium" style={styles.privacyText}>
-              Lumos stores all your data locally on your device. No data is sent to any server. No internet
-              connection is required. Your financial data stays private and secure on your device.
-            </Text>
-          </View>
-        </GroupedCard>
+          <Text style={styles.sectionHeader}>About</Text>
+          <GroupedCard>
+            <CardRow
+              icon="information-outline"
+              title="Version"
+              right={<Text style={styles.cardRowValue}>1.0.0</Text>}
+            />
+            <CardRow
+              icon="heart-outline"
+              title="Lumos"
+              right={<Text style={styles.cardRowValue}>Finance Manager</Text>}
+            />
+            <CardRow
+              icon="code-tags"
+              title="Built by"
+              right={<Text style={styles.cardRowValue}>Devesh</Text>}
+              isLast
+            />
+          </GroupedCard>
 
-        <Text style={styles.sectionHeader}>About</Text>
-        <GroupedCard>
-          <CardRow
-            icon="information-outline"
-            title="Version"
-            right={<Text style={styles.cardRowValue}>1.0.0</Text>}
-          />
-          <CardRow
-            icon="heart-outline"
-            title="Lumos"
-            right={<Text style={styles.cardRowValue}>Finance Manager</Text>}
-          />
-          <CardRow
-            icon="code-tags"
-            title="Built by"
-            right={<Text style={styles.cardRowValue}>Devesh</Text>}
-            isLast
-          />
-        </GroupedCard>
-
-        <Text style={styles.copyright}>{'\u00A9'} 2026 Devesh. All rights reserved.</Text>
-
-      </ScrollView>
+          <Text style={styles.copyright}>
+            {'\u00A9'} 2026 Devesh. All rights reserved.
+          </Text>
+        </ScrollView>
       </KeyboardAvoidingView>
-      <Snackbar visible={!!snackbar} onDismiss={() => setSnackbar('')} duration={3000}>
+      <Snackbar
+        visible={!!snackbar}
+        onDismiss={() => setSnackbar('')}
+        duration={3000}
+      >
         {snackbar}
       </Snackbar>
     </View>
@@ -259,8 +297,16 @@ const styles = StyleSheet.create({
   },
   cardRowTitle: { flex: 1, color: colors.text, fontWeight: '500' },
   cardRowRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  cardRowValue: { color: colors.textSecondary, fontWeight: '600', fontSize: 14 },
-  cardDivider: { height: 1, backgroundColor: colors.border, marginLeft: spacing.cardInset + 32 },
+  cardRowValue: {
+    color: colors.textSecondary,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  cardDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginLeft: spacing.cardInset + 32,
+  },
   nameInput: {
     backgroundColor: 'transparent',
     height: 36,

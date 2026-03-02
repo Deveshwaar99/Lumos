@@ -10,8 +10,13 @@ interface BudgetState {
   loading: boolean;
   error: string | null;
   loadBudgets: (month?: string) => Promise<void>;
-  addBudget: (data: Omit<Budget, 'id'>) => Promise<{ success: boolean; message?: string }>;
-  updateBudget: (id: string, data: Partial<Omit<Budget, 'id'>>) => Promise<void>;
+  addBudget: (
+    data: Omit<Budget, 'id'>,
+  ) => Promise<{ success: boolean; message?: string }>;
+  updateBudget: (
+    id: string,
+    data: Partial<Omit<Budget, 'id'>>,
+  ) => Promise<void>;
   removeBudget: (id: string) => Promise<void>;
   setMonth: (month: string) => Promise<void>;
   refreshAlerts: () => Promise<void>;

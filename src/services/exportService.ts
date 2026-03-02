@@ -31,7 +31,9 @@ export const exportService = {
       params.push(filter.type);
     }
     if (filter?.accountId) {
-      conditions.push('t.id IN (SELECT transaction_id FROM transaction_splits WHERE account_id = ?)');
+      conditions.push(
+        't.id IN (SELECT transaction_id FROM transaction_splits WHERE account_id = ?)',
+      );
       params.push(filter.accountId);
     }
     if (filter?.categoryId) {
@@ -49,19 +51,33 @@ export const exportService = {
     const splitRows = await db.getAllAsync<any>(
       `SELECT s.transaction_id, s.amount_cents, a.name as account_name
        FROM transaction_splits s
-       LEFT JOIN accounts a ON s.account_id = a.id`
+       LEFT JOIN accounts a ON s.account_id = a.id`,
     );
 
-    const splitMap = new Map<string, Array<{ accountName: string; amountCents: number }>>();
+    const splitMap = new Map<
+      string,
+      Array<{ accountName: string; amountCents: number }>
+    >();
     for (const sr of splitRows) {
       const existing = splitMap.get(sr.transaction_id) ?? [];
-      existing.push({ accountName: sr.account_name ?? '', amountCents: sr.amount_cents });
+      existing.push({
+        accountName: sr.account_name ?? '',
+        amountCents: sr.amount_cents,
+      });
       splitMap.set(sr.transaction_id, existing);
     }
 
     const headers = [
-      'Date', 'Type', 'Total Amount', 'Currency', 'Category',
-      'Account 1', 'Amount 1', 'Account 2', 'Amount 2', 'Note',
+      'Date',
+      'Type',
+      'Total Amount',
+      'Currency',
+      'Category',
+      'Account 1',
+      'Amount 1',
+      'Account 2',
+      'Amount 2',
+      'Note',
     ];
     const csvRows = rows.map((r: any) => {
       const splits = splitMap.get(r.id) ?? [];

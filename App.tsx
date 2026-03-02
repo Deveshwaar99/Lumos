@@ -1,11 +1,18 @@
 import React, { useEffect, useRef } from 'react';
-import { NavigationContainer, NavigationContainerRef, DarkTheme } from '@react-navigation/native';
+import {
+  NavigationContainer,
+  NavigationContainerRef,
+  DarkTheme,
+} from '@react-navigation/native';
 import { PaperProvider, ActivityIndicator } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { View, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useFonts, PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-display';
+import {
+  useFonts,
+  PlayfairDisplay_700Bold,
+} from '@expo-google-fonts/playfair-display';
 import * as QuickActions from 'expo-quick-actions';
 import { colors, paperTheme } from './src/theme';
 import { getDatabase } from './src/db/database';
@@ -17,7 +24,8 @@ import type { RootStackParamList } from './src/navigation/types';
 
 export default function App() {
   const [ready, setReady] = React.useState(false);
-  const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
+  const navigationRef =
+    useRef<NavigationContainerRef<RootStackParamList>>(null);
   const [fontsLoaded] = useFonts({ PlayfairDisplay_700Bold });
 
   useEffect(() => {
@@ -58,9 +66,14 @@ export default function App() {
     if (!ready) return;
 
     const handleQuickAction = (action: QuickActions.Action) => {
-      const type = (action.params as Record<string, unknown>)?.type as 'income' | 'expense' | undefined;
+      const type = (action.params as Record<string, unknown>)?.type as
+        | 'income'
+        | 'expense'
+        | undefined;
       setTimeout(() => {
-        navigationRef.current?.navigate('AddTransaction', { type: type ?? 'expense' });
+        navigationRef.current?.navigate('AddTransaction', {
+          type: type ?? 'expense',
+        });
       }, 500);
     };
 
@@ -82,7 +95,9 @@ export default function App() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
+    <GestureHandlerRootView
+      style={{ flex: 1, backgroundColor: colors.background }}
+    >
       <SafeAreaProvider>
         <PaperProvider theme={paperTheme}>
           <NavigationContainer

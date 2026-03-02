@@ -9,8 +9,13 @@ interface AccountState {
   error: string | null;
   loadAccounts: () => Promise<void>;
   addAccount: (data: Omit<Account, 'id'>) => Promise<Account>;
-  updateAccount: (id: string, data: Partial<Omit<Account, 'id'>>) => Promise<void>;
-  removeAccount: (id: string) => Promise<{ success: boolean; message?: string }>;
+  updateAccount: (
+    id: string,
+    data: Partial<Omit<Account, 'id'>>,
+  ) => Promise<void>;
+  removeAccount: (
+    id: string,
+  ) => Promise<{ success: boolean; message?: string }>;
   refreshBalances: () => Promise<void>;
 }
 
@@ -39,14 +44,18 @@ export const useAccountStore = create<AccountState>((set, get) => ({
     const account = await accountService.create(data);
     set((state) => ({ accounts: [...state.accounts, account] }));
     const balance = await accountService.getBalance(account.id);
-    set((state) => ({ balances: { ...state.balances, [account.id]: balance } }));
+    set((state) => ({
+      balances: { ...state.balances, [account.id]: balance },
+    }));
     return account;
   },
 
   updateAccount: async (id, data) => {
     await accountService.update(id, data);
     set((state) => ({
-      accounts: state.accounts.map((a) => (a.id === id ? { ...a, ...data } : a)),
+      accounts: state.accounts.map((a) =>
+        a.id === id ? { ...a, ...data } : a,
+      ),
     }));
   },
 
@@ -56,7 +65,7 @@ export const useAccountStore = create<AccountState>((set, get) => ({
       set((state) => ({
         accounts: state.accounts.filter((a) => a.id !== id),
         balances: Object.fromEntries(
-          Object.entries(state.balances).filter(([k]) => k !== id)
+          Object.entries(state.balances).filter(([k]) => k !== id),
         ),
       }));
     }

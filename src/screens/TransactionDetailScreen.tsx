@@ -23,21 +23,28 @@ export default function TransactionDetailScreen({
   const { accounts } = useAccountStore();
   const { settings } = useSettingsStore();
 
-  const [transaction, setTransaction] = useState<TransactionWithSplits | null>(null);
+  const [transaction, setTransaction] = useState<TransactionWithSplits | null>(
+    null,
+  );
 
   useFocusEffect(
     useCallback(() => {
       transactionService.getById(transactionId).then(setTransaction);
-    }, [transactionId])
+    }, [transactionId]),
   );
 
   const accountMap = Object.fromEntries(accounts.map((a) => [a.id, a]));
-  const category = transaction ? categories.find((c) => c.id === transaction.categoryId) : null;
+  const category = transaction
+    ? categories.find((c) => c.id === transaction.categoryId)
+    : null;
 
   if (!transaction) {
     return (
       <View style={styles.container}>
-        <Text variant="bodyLarge" style={{ textAlign: 'center', marginTop: 40 }}>
+        <Text
+          variant="bodyLarge"
+          style={{ textAlign: 'center', marginTop: 40 }}
+        >
           Transaction not found
         </Text>
       </View>
@@ -66,14 +73,18 @@ export default function TransactionDetailScreen({
             navigation.goBack();
           },
         },
-      ]
+      ],
     );
   };
 
   const hasTime = transaction.date.includes('T');
   const dateLabel = formatDate(transaction.date);
   const timeLabel = hasTime ? formatTimeShort(transaction.date) : null;
-  const heroBackground = isTransfer ? colors.transferBg : isIncome ? '#1B5E20' : '#7F1D1D';
+  const heroBackground = isTransfer
+    ? colors.transferBg
+    : isIncome
+      ? '#1B5E20'
+      : '#7F1D1D';
   const heroIcon = isTransfer
     ? 'swap-horizontal-circle-outline'
     : isIncome
@@ -82,8 +93,14 @@ export default function TransactionDetailScreen({
   const heroLabel = isTransfer ? 'Transfer' : isIncome ? 'Income' : 'Expense';
   const amountPrefix = isTransfer ? '' : isIncome ? '+' : '-';
 
-  const fromAcc = isTransfer && transaction.splits[0] ? accountMap[transaction.splits[0].accountId] : null;
-  const toAcc = isTransfer && transaction.splits[1] ? accountMap[transaction.splits[1].accountId] : null;
+  const fromAcc =
+    isTransfer && transaction.splits[0]
+      ? accountMap[transaction.splits[0].accountId]
+      : null;
+  const toAcc =
+    isTransfer && transaction.splits[1]
+      ? accountMap[transaction.splits[1].accountId]
+      : null;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -98,15 +115,29 @@ export default function TransactionDetailScreen({
           </View>
         </View>
         <Text style={styles.heroAmount}>
-          {amountPrefix}{formatMoney(transaction.totalAmountCents, transaction.currency, 2, settings.currencySymbol)}
+          {amountPrefix}
+          {formatMoney(
+            transaction.totalAmountCents,
+            transaction.currency,
+            2,
+            settings.currencySymbol,
+          )}
         </Text>
         <View style={styles.heroDateRow}>
-          <Icon source="calendar-outline" size={14} color="rgba(255,255,255,0.65)" />
+          <Icon
+            source="calendar-outline"
+            size={14}
+            color="rgba(255,255,255,0.65)"
+          />
           <Text style={styles.heroDateText}>{dateLabel}</Text>
           {timeLabel && (
             <>
               <Text style={styles.heroDot}>{'\u00B7'}</Text>
-              <Icon source="clock-outline" size={14} color="rgba(255,255,255,0.65)" />
+              <Icon
+                source="clock-outline"
+                size={14}
+                color="rgba(255,255,255,0.65)"
+              />
               <Text style={styles.heroDateText}>{timeLabel}</Text>
             </>
           )}
@@ -117,37 +148,69 @@ export default function TransactionDetailScreen({
         <Card.Content>
           {isTransfer ? (
             <>
-              <Text variant="titleSmall" style={styles.splitHeader}>From</Text>
+              <Text variant="titleSmall" style={styles.splitHeader}>
+                From
+              </Text>
               <View style={styles.splitRow}>
                 <View style={styles.detailValue}>
-                  {fromAcc && <Icon source={fromAcc.icon as any} size={18} color={colors.expense} />}
+                  {fromAcc && (
+                    <Icon
+                      source={fromAcc.icon as any}
+                      size={18}
+                      color={colors.expense}
+                    />
+                  )}
                   <Text variant="bodyLarge">{fromAcc?.name ?? 'Unknown'}</Text>
                 </View>
                 <Text variant="bodyLarge" style={{ fontWeight: '600' }}>
-                  {formatMoney(transaction.totalAmountCents, transaction.currency, 2, settings.currencySymbol)}
+                  {formatMoney(
+                    transaction.totalAmountCents,
+                    transaction.currency,
+                    2,
+                    settings.currencySymbol,
+                  )}
                 </Text>
               </View>
 
               <Divider />
 
-              <Text variant="titleSmall" style={styles.splitHeader}>To</Text>
+              <Text variant="titleSmall" style={styles.splitHeader}>
+                To
+              </Text>
               <View style={styles.splitRow}>
                 <View style={styles.detailValue}>
-                  {toAcc && <Icon source={toAcc.icon as any} size={18} color={colors.income} />}
+                  {toAcc && (
+                    <Icon
+                      source={toAcc.icon as any}
+                      size={18}
+                      color={colors.income}
+                    />
+                  )}
                   <Text variant="bodyLarge">{toAcc?.name ?? 'Unknown'}</Text>
                 </View>
                 <Text variant="bodyLarge" style={{ fontWeight: '600' }}>
-                  {formatMoney(transaction.totalAmountCents, transaction.currency, 2, settings.currencySymbol)}
+                  {formatMoney(
+                    transaction.totalAmountCents,
+                    transaction.currency,
+                    2,
+                    settings.currencySymbol,
+                  )}
                 </Text>
               </View>
             </>
           ) : (
             <>
               <View style={styles.detailRow}>
-                <Text variant="bodyMedium" style={styles.detailLabel}>Category</Text>
+                <Text variant="bodyMedium" style={styles.detailLabel}>
+                  Category
+                </Text>
                 <View style={styles.detailValue}>
                   {category && (
-                    <Icon source={category.icon as any} size={18} color={category.color} />
+                    <Icon
+                      source={category.icon as any}
+                      size={18}
+                      color={category.color}
+                    />
                   )}
                   <Text variant="bodyLarge">{category?.name ?? 'Unknown'}</Text>
                 </View>
@@ -163,11 +226,22 @@ export default function TransactionDetailScreen({
                 return (
                   <View key={split.id} style={styles.splitRow}>
                     <View style={styles.detailValue}>
-                      {acc && <Icon source={acc.icon as any} size={18} color={idx === 0 ? colors.primary : colors.secondary} />}
+                      {acc && (
+                        <Icon
+                          source={acc.icon as any}
+                          size={18}
+                          color={idx === 0 ? colors.primary : colors.secondary}
+                        />
+                      )}
                       <Text variant="bodyLarge">{acc?.name ?? 'Unknown'}</Text>
                     </View>
                     <Text variant="bodyLarge" style={{ fontWeight: '600' }}>
-                      {formatMoney(split.amountCents, transaction.currency, 2, settings.currencySymbol)}
+                      {formatMoney(
+                        split.amountCents,
+                        transaction.currency,
+                        2,
+                        settings.currencySymbol,
+                      )}
                     </Text>
                   </View>
                 );
@@ -179,20 +253,37 @@ export default function TransactionDetailScreen({
             <View>
               <Divider style={{ marginTop: spacing.sm }} />
               <View style={styles.detailRow}>
-                <Text variant="bodyMedium" style={styles.detailLabel}>Note</Text>
-                <Text variant="bodyLarge" style={{ flex: 1, textAlign: 'right' }}>{transaction.note}</Text>
+                <Text variant="bodyMedium" style={styles.detailLabel}>
+                  Note
+                </Text>
+                <Text
+                  variant="bodyLarge"
+                  style={{ flex: 1, textAlign: 'right' }}
+                >
+                  {transaction.note}
+                </Text>
               </View>
             </View>
           )}
-
         </Card.Content>
       </Card>
 
       <View style={styles.actions}>
-        <Button mode="contained" onPress={handleEdit} style={styles.editButton} icon="pencil">
+        <Button
+          mode="contained"
+          onPress={handleEdit}
+          style={styles.editButton}
+          icon="pencil"
+        >
           Edit
         </Button>
-        <Button mode="outlined" onPress={handleDelete} textColor={colors.error} style={styles.deleteButton} icon="delete">
+        <Button
+          mode="outlined"
+          onPress={handleDelete}
+          textColor={colors.error}
+          style={styles.deleteButton}
+          icon="delete"
+        >
           Delete
         </Button>
       </View>
@@ -252,7 +343,11 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.xxs,
   },
 
-  card: { marginBottom: spacing.lg, backgroundColor: colors.surface, borderRadius: radius.lg },
+  card: {
+    marginBottom: spacing.lg,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+  },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -261,7 +356,11 @@ const styles = StyleSheet.create({
   },
   detailLabel: { color: colors.textSecondary },
   detailValue: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  splitHeader: { marginTop: spacing.md, marginBottom: spacing.sm, color: colors.text },
+  splitHeader: {
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+    color: colors.text,
+  },
   splitRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -270,6 +369,14 @@ const styles = StyleSheet.create({
     paddingLeft: spacing.xs,
   },
   actions: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.sm },
-  editButton: { flex: 1, backgroundColor: colors.primary, borderRadius: radius.capsule },
-  deleteButton: { flex: 1, borderColor: colors.error, borderRadius: radius.capsule },
+  editButton: {
+    flex: 1,
+    backgroundColor: colors.primary,
+    borderRadius: radius.capsule,
+  },
+  deleteButton: {
+    flex: 1,
+    borderColor: colors.error,
+    borderRadius: radius.capsule,
+  },
 });

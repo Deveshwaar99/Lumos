@@ -18,7 +18,13 @@ import {
   isSameYear,
 } from 'date-fns';
 
-export type TimePeriod = 'day' | 'week' | 'month' | '3months' | '6months' | 'year';
+export type TimePeriod =
+  | 'day'
+  | 'week'
+  | 'month'
+  | '3months'
+  | '6months'
+  | 'year';
 
 /**
  * Returns current month in YYYY-MM format.
@@ -44,7 +50,7 @@ export function getMonthRange(month: string): { start: string; end: string } {
  * Returns yyyy-MM-dd date strings for the given preset range.
  */
 export function getDateRangePreset(
-  preset: 'today' | 'week' | 'month' | 'year'
+  preset: 'today' | 'week' | 'month' | 'year',
 ): { start: string; end: string } {
   const now = new Date();
   let startDate: Date;
@@ -268,5 +274,7 @@ export function getDaysInRange(start: string, end: string): string[] {
   const s = parse(start, 'yyyy-MM-dd', new Date());
   const e = addDays(parse(end, 'yyyy-MM-dd', new Date()), -1);
   if (e < s) return [];
-  return eachDayOfInterval({ start: s, end: e }).map((d) => format(d, 'yyyy-MM-dd'));
+  return eachDayOfInterval({ start: s, end: e }).map((d) =>
+    format(d, 'yyyy-MM-dd'),
+  );
 }

@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
-import { Text, Button, Card, Snackbar, ActivityIndicator, Divider } from 'react-native-paper';
+import {
+  Text,
+  Button,
+  Card,
+  Snackbar,
+  ActivityIndicator,
+  Divider,
+} from 'react-native-paper';
 import { backupService } from '../services/backupService';
 import { exportService } from '../services/exportService';
 import { useSettingsStore } from '../stores/useSettingsStore';
@@ -12,7 +19,9 @@ import { colors, spacing, radius } from '../theme';
 import type { RootStackScreenProps } from '../navigation/types';
 import type { BackupData } from '../models/types';
 
-export default function BackupRestoreScreen({ navigation }: RootStackScreenProps<'BackupRestore'>) {
+export default function BackupRestoreScreen({
+  navigation,
+}: RootStackScreenProps<'BackupRestore'>) {
   const { settings } = useSettingsStore();
   const { loadTransactions } = useTransactionStore();
   const { loadCategories } = useCategoryStore();
@@ -56,7 +65,12 @@ export default function BackupRestoreScreen({ navigation }: RootStackScreenProps
               setLoading(true);
               try {
                 await backupService.restoreFromData(backupData);
-                await Promise.all([loadCategories(), loadAccounts(), loadTransactions(true), loadBudgets()]);
+                await Promise.all([
+                  loadCategories(),
+                  loadAccounts(),
+                  loadTransactions(true),
+                  loadBudgets(),
+                ]);
                 navigation.navigate('Tabs');
               } catch (e: any) {
                 setSnackbar(e.message || 'Restore failed');
@@ -65,7 +79,7 @@ export default function BackupRestoreScreen({ navigation }: RootStackScreenProps
               }
             },
           },
-        ]
+        ],
       );
     } catch (e: any) {
       setSnackbar(e.message || 'Failed to read backup file');
@@ -87,7 +101,13 @@ export default function BackupRestoreScreen({ navigation }: RootStackScreenProps
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        {loading && <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />}
+        {loading && (
+          <ActivityIndicator
+            size="large"
+            color={colors.primary}
+            style={styles.loader}
+          />
+        )}
 
         <Card style={styles.card}>
           <Card.Content>
@@ -95,13 +115,21 @@ export default function BackupRestoreScreen({ navigation }: RootStackScreenProps
               Backup
             </Text>
             <Text variant="bodyMedium" style={styles.description}>
-              Create a full backup of your data (categories, accounts, transactions, budgets, and settings) as a JSON
-              file.
+              Create a full backup of your data (categories, accounts,
+              transactions, budgets, and settings) as a JSON file.
             </Text>
             {settings.lastBackupAt && (
-              <Text variant="bodySmall" style={styles.lastBackup}>Last backup: {settings.lastBackupAt}</Text>
+              <Text variant="bodySmall" style={styles.lastBackup}>
+                Last backup: {settings.lastBackupAt}
+              </Text>
             )}
-            <Button mode="contained" onPress={handleCreateBackup} style={styles.button} icon="cloud-upload" disabled={loading}>
+            <Button
+              mode="contained"
+              onPress={handleCreateBackup}
+              style={styles.button}
+              icon="cloud-upload"
+              disabled={loading}
+            >
               Create & Share Backup
             </Button>
           </Card.Content>
@@ -113,9 +141,16 @@ export default function BackupRestoreScreen({ navigation }: RootStackScreenProps
               Restore
             </Text>
             <Text variant="bodyMedium" style={styles.description}>
-              Restore data from a previously created backup file. Warning: this will replace all current data.
+              Restore data from a previously created backup file. Warning: this
+              will replace all current data.
             </Text>
-            <Button mode="outlined" onPress={handleRestore} style={styles.button} icon="cloud-download" disabled={loading}>
+            <Button
+              mode="outlined"
+              onPress={handleRestore}
+              style={styles.button}
+              icon="cloud-download"
+              disabled={loading}
+            >
               Restore from File
             </Button>
           </Card.Content>
@@ -127,15 +162,26 @@ export default function BackupRestoreScreen({ navigation }: RootStackScreenProps
               Export CSV
             </Text>
             <Text variant="bodyMedium" style={styles.description}>
-              Export all transactions as a CSV spreadsheet for printing or analysis.
+              Export all transactions as a CSV spreadsheet for printing or
+              analysis.
             </Text>
-            <Button mode="outlined" onPress={handleExportCSV} style={styles.button} icon="file-delimited" disabled={loading}>
+            <Button
+              mode="outlined"
+              onPress={handleExportCSV}
+              style={styles.button}
+              icon="file-delimited"
+              disabled={loading}
+            >
               Export Transactions CSV
             </Button>
           </Card.Content>
         </Card>
       </ScrollView>
-      <Snackbar visible={!!snackbar} onDismiss={() => setSnackbar('')} duration={3000}>
+      <Snackbar
+        visible={!!snackbar}
+        onDismiss={() => setSnackbar('')}
+        duration={3000}
+      >
         {snackbar}
       </Snackbar>
     </View>
@@ -146,9 +192,17 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: 16 },
   loader: { marginBottom: 16 },
-  card: { marginBottom: 16, backgroundColor: colors.surface, borderRadius: radius.lg },
+  card: {
+    marginBottom: 16,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+  },
   cardTitle: { marginBottom: 8, color: colors.text },
   description: { color: colors.textSecondary, marginBottom: 12 },
-  lastBackup: { color: colors.textSecondary, marginBottom: 8, fontStyle: 'italic' },
+  lastBackup: {
+    color: colors.textSecondary,
+    marginBottom: 8,
+    fontStyle: 'italic',
+  },
   button: { marginTop: 4, borderRadius: radius.capsule },
 });

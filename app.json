@@ -16,6 +16,7 @@
       "infoPlist": {}
     },
     "android": {
+      "package": "com.lumos.mymoney",
       "adaptiveIcon": {
         "backgroundColor": "#1A1A2E",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -30,14 +31,16 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-sqlite",
-      "expo-font"
-    ],
+    "plugins": ["expo-sqlite", "expo-font"],
     "androidStatusBar": {
       "barStyle": "light-content",
       "backgroundColor": "#1A1A2E",
       "translucent": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "2bfa852c-ad3b-490e-8b56-5f42ac2312f0"
+      }
     }
   }
 }

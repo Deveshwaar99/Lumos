@@ -28,7 +28,11 @@ export default function TimePeriodPicker({
 }: TimePeriodPickerProps) {
   return (
     <Portal>
-      <Modal visible={visible} onDismiss={onDismiss} contentContainerStyle={styles.modal}>
+      <Modal
+        visible={visible}
+        onDismiss={onDismiss}
+        contentContainerStyle={styles.modal}
+      >
         <Text variant="titleMedium" style={styles.title}>
           Time Period
         </Text>
@@ -47,12 +51,18 @@ export default function TimePeriodPicker({
                 }}
               >
                 <View style={styles.iconCircle}>
-                  <Icon source={item.icon as any} size={20} color={colors.primary} />
+                  <Icon
+                    source={item.icon as any}
+                    size={20}
+                    color={colors.primary}
+                  />
                 </View>
                 <Text variant="bodyLarge" style={styles.itemText}>
                   {item.label}
                 </Text>
-                {isSelected && <Icon source="check" size={20} color={colors.primary} />}
+                {isSelected && (
+                  <Icon source="check" size={20} color={colors.primary} />
+                )}
               </TouchableOpacity>
             );
           }}

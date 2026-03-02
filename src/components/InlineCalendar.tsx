@@ -10,7 +10,11 @@ interface InlineCalendarProps {
   onDone: () => void;
 }
 
-export default function InlineCalendar({ selectedDate, onDateSelect, onDone }: InlineCalendarProps) {
+export default function InlineCalendar({
+  selectedDate,
+  onDateSelect,
+  onDone,
+}: InlineCalendarProps) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>

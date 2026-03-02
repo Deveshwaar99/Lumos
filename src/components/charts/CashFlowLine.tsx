@@ -12,11 +12,17 @@ interface CashFlowLineProps {
   currencySymbol?: string;
 }
 
-export default function CashFlowLine({ data, currency = 'USD', currencySymbol }: CashFlowLineProps) {
+export default function CashFlowLine({
+  data,
+  currency = 'USD',
+  currencySymbol,
+}: CashFlowLineProps) {
   if (data.length === 0) {
     return (
       <View style={styles.container}>
-        <Text variant="bodyMedium" style={styles.empty}>No data for this month</Text>
+        <Text variant="bodyMedium" style={styles.empty}>
+          No data for this month
+        </Text>
       </View>
     );
   }
@@ -29,8 +35,11 @@ export default function CashFlowLine({ data, currency = 'USD', currencySymbol }:
 
   const points = data
     .map((d, i) => {
-      const x = padding + (i / Math.max(data.length - 1, 1)) * (chartWidth - 2 * padding);
-      const y = chartHeight / 2 - (d.net / maxVal) * (chartHeight / 2 - padding);
+      const x =
+        padding +
+        (i / Math.max(data.length - 1, 1)) * (chartWidth - 2 * padding);
+      const y =
+        chartHeight / 2 - (d.net / maxVal) * (chartHeight / 2 - padding);
       return `${x},${y}`;
     })
     .join(' ');
@@ -57,10 +66,12 @@ export default function CashFlowLine({ data, currency = 'USD', currencySymbol }:
       </ScrollView>
       <View style={styles.summary}>
         <Text variant="bodySmall" style={styles.summaryText}>
-          Best day: {formatMoney(Math.max(...values), currency, 2, currencySymbol)}
+          Best day:{' '}
+          {formatMoney(Math.max(...values), currency, 2, currencySymbol)}
         </Text>
         <Text variant="bodySmall" style={styles.summaryText}>
-          Worst day: {formatMoney(Math.min(...values), currency, 2, currencySymbol)}
+          Worst day:{' '}
+          {formatMoney(Math.min(...values), currency, 2, currencySymbol)}
         </Text>
       </View>
     </View>
@@ -70,6 +81,10 @@ export default function CashFlowLine({ data, currency = 'USD', currencySymbol }:
 const styles = StyleSheet.create({
   container: { padding: 8 },
   empty: { color: colors.textSecondary, textAlign: 'center', padding: 40 },
-  summary: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 8 },
+  summary: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 8,
+  },
   summaryText: { color: colors.textSecondary },
 });

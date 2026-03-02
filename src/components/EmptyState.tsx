@@ -13,8 +13,14 @@ export default function EmptyState({ icon, title, subtitle }: EmptyStateProps) {
   return (
     <View style={styles.container}>
       <Icon source={icon as any} size={64} color={colors.textSecondary} />
-      <Text variant="titleMedium" style={styles.title}>{title}</Text>
-      {subtitle && <Text variant="bodyMedium" style={styles.subtitle}>{subtitle}</Text>}
+      <Text variant="titleMedium" style={styles.title}>
+        {title}
+      </Text>
+      {subtitle && (
+        <Text variant="bodyMedium" style={styles.subtitle}>
+          {subtitle}
+        </Text>
+      )}
     </View>
   );
 }

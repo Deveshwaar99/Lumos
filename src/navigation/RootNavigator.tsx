@@ -26,20 +26,70 @@ export default function RootNavigator() {
         headerTitleStyle: { fontWeight: '700' },
         headerShadowVisible: false,
         contentStyle: { backgroundColor: colors.background },
-        ...(Platform.OS === 'android' ? { navigationBarColor: colors.background } : {}),
+        ...(Platform.OS === 'android'
+          ? { navigationBarColor: colors.background }
+          : {}),
       }}
     >
-      <Stack.Screen name="Tabs" component={TabNavigator} options={{ headerShown: false }} />
-      <Stack.Screen name="AddTransaction" component={AddTransactionScreen} options={{ title: 'Add Transaction', headerShown: false, presentation: 'modal' }} />
-      <Stack.Screen name="TransactionDetail" component={TransactionDetailScreen} options={{ title: 'Transaction Details' }} />
-      <Stack.Screen name="CategoryForm" component={CategoryFormScreen} options={{ title: 'Category' }} />
-      <Stack.Screen name="AccountForm" component={AccountFormScreen} options={{ title: 'Account' }} />
-      <Stack.Screen name="AccountTransactions" component={AccountTransactionsScreen} options={{ title: 'Account Transactions' }} />
-      <Stack.Screen name="BudgetForm" component={BudgetFormScreen} options={{ title: 'Budget' }} />
-      <Stack.Screen name="FDForm" component={FDFormScreen} options={{ title: 'Fixed Deposit' }} />
-      <Stack.Screen name="FDDetail" component={FDDetailScreen} options={{ title: 'FD Details' }} />
-      <Stack.Screen name="BackupRestore" component={BackupRestoreScreen} options={{ title: 'Backup & Restore' }} />
-      <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
+      <Stack.Screen
+        name="Tabs"
+        component={TabNavigator}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AddTransaction"
+        component={AddTransactionScreen}
+        options={{
+          title: 'Add Transaction',
+          headerShown: false,
+          presentation: 'modal',
+        }}
+      />
+      <Stack.Screen
+        name="TransactionDetail"
+        component={TransactionDetailScreen}
+        options={{ title: 'Transaction Details' }}
+      />
+      <Stack.Screen
+        name="CategoryForm"
+        component={CategoryFormScreen}
+        options={{ title: 'Category' }}
+      />
+      <Stack.Screen
+        name="AccountForm"
+        component={AccountFormScreen}
+        options={{ title: 'Account' }}
+      />
+      <Stack.Screen
+        name="AccountTransactions"
+        component={AccountTransactionsScreen}
+        options={{ title: 'Account Transactions' }}
+      />
+      <Stack.Screen
+        name="BudgetForm"
+        component={BudgetFormScreen}
+        options={{ title: 'Budget' }}
+      />
+      <Stack.Screen
+        name="FDForm"
+        component={FDFormScreen}
+        options={{ title: 'Fixed Deposit' }}
+      />
+      <Stack.Screen
+        name="FDDetail"
+        component={FDDetailScreen}
+        options={{ title: 'FD Details' }}
+      />
+      <Stack.Screen
+        name="BackupRestore"
+        component={BackupRestoreScreen}
+        options={{ title: 'Backup & Restore' }}
+      />
+      <Stack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ title: 'Settings' }}
+      />
     </Stack.Navigator>
   );
 }

@@ -1,5 +1,18 @@
-import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { View, SectionList, StyleSheet, RefreshControl, Animated, TextInput as RNTextInput } from 'react-native';
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+} from 'react';
+import {
+  View,
+  SectionList,
+  StyleSheet,
+  RefreshControl,
+  Animated,
+  TextInput as RNTextInput,
+} from 'react-native';
 import { Text, FAB, Icon } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -42,22 +55,38 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
   const [period, setPeriod] = useState<TimePeriod>('month');
   const [filterVisible, setFilterVisible] = useState(false);
   const [transactions, setTransactions] = useState<TransactionWithSplits[]>([]);
-  const [summary, setSummary] = useState<MonthSummary>({ totalIncome: 0, totalExpense: 0, net: 0 });
+  const [summary, setSummary] = useState<MonthSummary>({
+    totalIncome: 0,
+    totalExpense: 0,
+    net: 0,
+  });
   const [refreshing, setRefreshing] = useState(false);
 
-  const range = useMemo(() => getTimePeriodRange(anchor, period), [anchor, period]);
-  const navLabel = useMemo(() => getTimePeriodLabel(anchor, period), [anchor, period]);
+  const range = useMemo(
+    () => getTimePeriodRange(anchor, period),
+    [anchor, period],
+  );
+  const navLabel = useMemo(
+    () => getTimePeriodLabel(anchor, period),
+    [anchor, period],
+  );
 
   const [searchActive, setSearchActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<TransactionWithSplits[]>([]);
+  const [searchResults, setSearchResults] = useState<TransactionWithSplits[]>(
+    [],
+  );
   const searchInputRef = useRef<RNTextInput>(null);
   const searchAnim = useRef(new Animated.Value(0)).current;
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const openSearch = useCallback(() => {
     setSearchActive(true);
-    Animated.timing(searchAnim, { toValue: 1, duration: 250, useNativeDriver: false }).start(() => {
+    Animated.timing(searchAnim, {
+      toValue: 1,
+      duration: 250,
+      useNativeDriver: false,
+    }).start(() => {
       searchInputRef.current?.focus();
     });
   }, [searchAnim]);
@@ -65,7 +94,11 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
   const closeSearch = useCallback(() => {
     setSearchQuery('');
     setSearchResults([]);
-    Animated.timing(searchAnim, { toValue: 0, duration: 200, useNativeDriver: false }).start(() => {
+    Animated.timing(searchAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start(() => {
       setSearchActive(false);
     });
   }, [searchAnim]);
@@ -78,16 +111,30 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     searchTimerRef.current = setTimeout(async () => {
       const results = await transactionService.getAll(
-        { dateFrom: null, dateTo: null, type: null, accountId: null, categoryId: null, searchQuery: searchQuery.trim() },
+        {
+          dateFrom: null,
+          dateTo: null,
+          type: null,
+          accountId: null,
+          categoryId: null,
+          searchQuery: searchQuery.trim(),
+        },
         50,
       );
       setSearchResults(results);
     }, 300);
-    return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
   }, [searchQuery]);
 
   const loadData = useCallback(async () => {
-    await Promise.all([loadCategories(), loadAccounts(), loadBudgets(), loadSettings()]);
+    await Promise.all([
+      loadCategories(),
+      loadAccounts(),
+      loadBudgets(),
+      loadSettings(),
+    ]);
     const [txns, rangeSummary] = await Promise.all([
       transactionService.getAll(
         {
@@ -105,7 +152,11 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
     setSummary(rangeSummary);
   }, [range.start, range.end]);
 
-  useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData]),
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -116,13 +167,21 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
   const handlePrev = () => setAnchor((a) => stepAnchor(a, period, -1));
   const handleNext = () => setAnchor((a) => stepAnchor(a, period, 1));
 
-  const categoryMap = useMemo(() => Object.fromEntries(categories.map(c => [c.id, c])), [categories]);
-  const accountMap = useMemo(() => Object.fromEntries(accounts.map(a => [a.id, a])), [accounts]);
+  const categoryMap = useMemo(
+    () => Object.fromEntries(categories.map((c) => [c.id, c])),
+    [categories],
+  );
+  const accountMap = useMemo(
+    () => Object.fromEntries(accounts.map((a) => [a.id, a])),
+    [accounts],
+  );
 
   const sections: TransactionSection[] = useMemo(() => {
     const grouped = new Map<string, TransactionWithSplits[]>();
     for (const txn of transactions) {
-      const dateKey = txn.date.includes('T') ? txn.date.substring(0, 10) : txn.date;
+      const dateKey = txn.date.includes('T')
+        ? txn.date.substring(0, 10)
+        : txn.date;
       if (!grouped.has(dateKey)) grouped.set(dateKey, []);
       grouped.get(dateKey)!.push(txn);
     }
@@ -134,7 +193,9 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
   const searchSections: TransactionSection[] = useMemo(() => {
     const grouped = new Map<string, TransactionWithSplits[]>();
     for (const txn of searchResults) {
-      const dateKey = txn.date.includes('T') ? txn.date.substring(0, 10) : txn.date;
+      const dateKey = txn.date.includes('T')
+        ? txn.date.substring(0, 10)
+        : txn.date;
       if (!grouped.has(dateKey)) grouped.set(dateKey, []);
       grouped.get(dateKey)!.push(txn);
     }
@@ -143,13 +204,16 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
       .map(([dateKey, data]) => ({ title: dateKey, data }));
   }, [searchResults]);
 
-  const displaySections = searchActive && searchQuery.trim() ? searchSections : sections;
+  const displaySections =
+    searchActive && searchQuery.trim() ? searchSections : sections;
 
   return (
     <View style={styles.container}>
       <View style={styles.headerSection}>
         {searchActive ? (
-          <View style={[styles.searchBar, { paddingTop: insets.top + spacing.xs }]}>
+          <View
+            style={[styles.searchBar, { paddingTop: insets.top + spacing.xs }]}
+          >
             <TouchableOpacity hitSlop={12} onPress={closeSearch}>
               <Icon source="arrow-left" size={24} color={colors.text} />
             </TouchableOpacity>
@@ -165,14 +229,23 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity hitSlop={12} onPress={() => setSearchQuery('')}>
-                <Icon source="close-circle" size={20} color={colors.textTertiary} />
+                <Icon
+                  source="close-circle"
+                  size={20}
+                  color={colors.textTertiary}
+                />
               </TouchableOpacity>
             )}
           </View>
         ) : (
           <>
-            <View style={[styles.topBar, { paddingTop: insets.top + spacing.xs }]}>
-              <TouchableOpacity hitSlop={12} onPress={() => navigation.navigate('Settings' as any)}>
+            <View
+              style={[styles.topBar, { paddingTop: insets.top + spacing.xs }]}
+            >
+              <TouchableOpacity
+                hitSlop={12}
+                onPress={() => navigation.navigate('Settings' as any)}
+              >
                 <Icon source="menu" size={24} color={colors.text} />
               </TouchableOpacity>
               {settings.username ? (
@@ -181,7 +254,8 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
                 </Text>
               ) : (
                 <Text variant="titleLarge" style={styles.appTitle}>
-                  {'L'}<Text style={styles.appTitleRest}>umos</Text>
+                  {'L'}
+                  <Text style={styles.appTitleRest}>umos</Text>
                 </Text>
               )}
               <TouchableOpacity hitSlop={12} onPress={openSearch}>
@@ -210,23 +284,35 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
       <SectionList
         sections={displaySections}
         keyExtractor={(item) => item.id}
-        renderSectionHeader={({ section }) => <DateHeader dateStr={section.title} />}
+        renderSectionHeader={({ section }) => (
+          <DateHeader dateStr={section.title} />
+        )}
         renderItem={({ item, index }) => (
           <>
             {index > 0 && <View style={styles.itemDivider} />}
             <TransactionItem
               transaction={item}
-              category={item.categoryId ? categoryMap[item.categoryId] : undefined}
+              category={
+                item.categoryId ? categoryMap[item.categoryId] : undefined
+              }
               accountMap={accountMap}
               currencySymbol={settings.currencySymbol}
-              onPress={() => navigation.navigate('TransactionDetail', { transactionId: item.id })}
+              onPress={() =>
+                navigation.navigate('TransactionDetail', {
+                  transactionId: item.id,
+                })
+              }
             />
           </>
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIconWrap}>
-              <Icon source={searchActive ? 'magnify' : 'receipt'} size={64} color={colors.primaryLight} />
+              <Icon
+                source={searchActive ? 'magnify' : 'receipt'}
+                size={64}
+                color={colors.primaryLight}
+              />
             </View>
             <Text variant="titleMedium" style={styles.emptyTitle}>
               {searchActive && searchQuery.trim()
@@ -247,7 +333,12 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
         contentContainerStyle={styles.listContent}
         refreshControl={
           searchActive ? undefined : (
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
           )
         }
         stickySectionHeadersEnabled={false}
@@ -305,7 +396,11 @@ const styles = StyleSheet.create({
   },
   list: { flex: 1, marginTop: spacing.xs },
   listContent: { paddingBottom: 100 },
-  itemDivider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginLeft: 74 },
+  itemDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
+    marginLeft: 74,
+  },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',

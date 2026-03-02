@@ -16,13 +16,18 @@ function mapRow(row: any): Account {
 export const accountService = {
   async getAll(): Promise<Account[]> {
     const db = await getDatabase();
-    const rows = await db.getAllAsync<any>('SELECT * FROM accounts ORDER BY name');
+    const rows = await db.getAllAsync<any>(
+      'SELECT * FROM accounts ORDER BY name',
+    );
     return rows.map(mapRow);
   },
 
   async getById(id: string): Promise<Account | null> {
     const db = await getDatabase();
-    const row = await db.getFirstAsync<any>('SELECT * FROM accounts WHERE id = ?', id);
+    const row = await db.getFirstAsync<any>(
+      'SELECT * FROM accounts WHERE id = ?',
+      id,
+    );
     return row ? mapRow(row) : null;
   },
 
@@ -31,7 +36,12 @@ export const accountService = {
     const id = generateId();
     await db.runAsync(
       'INSERT INTO accounts (id, name, type, icon, opening_balance_cents, currency) VALUES (?, ?, ?, ?, ?, ?)',
-      id, data.name, data.type, data.icon, data.openingBalanceCents, data.currency
+      id,
+      data.name,
+      data.type,
+      data.icon,
+      data.openingBalanceCents,
+      data.currency,
     );
     return { id, ...data };
   },
@@ -40,23 +50,45 @@ export const accountService = {
     const db = await getDatabase();
     const fields: string[] = [];
     const values: any[] = [];
-    if (data.name !== undefined) { fields.push('name = ?'); values.push(data.name); }
-    if (data.type !== undefined) { fields.push('type = ?'); values.push(data.type); }
-    if (data.icon !== undefined) { fields.push('icon = ?'); values.push(data.icon); }
-    if (data.openingBalanceCents !== undefined) { fields.push('opening_balance_cents = ?'); values.push(data.openingBalanceCents); }
-    if (data.currency !== undefined) { fields.push('currency = ?'); values.push(data.currency); }
+    if (data.name !== undefined) {
+      fields.push('name = ?');
+      values.push(data.name);
+    }
+    if (data.type !== undefined) {
+      fields.push('type = ?');
+      values.push(data.type);
+    }
+    if (data.icon !== undefined) {
+      fields.push('icon = ?');
+      values.push(data.icon);
+    }
+    if (data.openingBalanceCents !== undefined) {
+      fields.push('opening_balance_cents = ?');
+      values.push(data.openingBalanceCents);
+    }
+    if (data.currency !== undefined) {
+      fields.push('currency = ?');
+      values.push(data.currency);
+    }
     if (fields.length === 0) return;
     values.push(id);
-    await db.runAsync(`UPDATE accounts SET ${fields.join(', ')} WHERE id = ?`, ...values);
+    await db.runAsync(
+      `UPDATE accounts SET ${fields.join(', ')} WHERE id = ?`,
+      ...values,
+    );
   },
 
   async delete(id: string): Promise<{ success: boolean; message?: string }> {
     const db = await getDatabase();
     const usage = await db.getFirstAsync<{ count: number }>(
-      'SELECT COUNT(*) as count FROM transaction_splits WHERE account_id = ?', id
+      'SELECT COUNT(*) as count FROM transaction_splits WHERE account_id = ?',
+      id,
     );
     if (usage && usage.count > 0) {
-      return { success: false, message: `Account is used by ${usage.count} transaction split(s). Please reassign or delete them first.` };
+      return {
+        success: false,
+        message: `Account is used by ${usage.count} transaction split(s). Please reassign or delete them first.`,
+      };
     }
     await db.runAsync('DELETE FROM accounts WHERE id = ?', id);
     return { success: true };
@@ -75,7 +107,7 @@ export const accountService = {
           WHERE s.account_id = a.id AND t.type = 'expense'), 0)
         as balance
       FROM accounts a WHERE a.id = ?`,
-      id
+      id,
     );
     return result?.balance ?? 0;
   },
@@ -92,7 +124,7 @@ export const accountService = {
           JOIN transactions t ON s.transaction_id = t.id
           WHERE s.account_id = a.id AND t.type = 'expense'), 0)
         as balance
-      FROM accounts a ORDER BY a.name`
+      FROM accounts a ORDER BY a.name`,
     );
     return rows.map((row: any) => ({
       ...mapRow(row),

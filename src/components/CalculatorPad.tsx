@@ -69,15 +69,23 @@ export default function CalculatorPad({
         </View>
       ))}
       <View style={styles.row}>
-        <TouchableOpacity style={[styles.key, styles.clearKey]} onPress={onClear} activeOpacity={0.6}>
-          <Text variant="titleMedium" style={styles.clearKeyText}>C</Text>
+        <TouchableOpacity
+          style={[styles.key, styles.clearKey]}
+          onPress={onClear}
+          activeOpacity={0.6}
+        >
+          <Text variant="titleMedium" style={styles.clearKeyText}>
+            C
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.key, styles.equalsKey, { flex: 3 }]}
           onPress={onEquals}
           activeOpacity={0.6}
         >
-          <Text variant="headlineSmall" style={styles.equalsKeyText}>=</Text>
+          <Text variant="headlineSmall" style={styles.equalsKeyText}>
+            =
+          </Text>
         </TouchableOpacity>
       </View>
     </View>

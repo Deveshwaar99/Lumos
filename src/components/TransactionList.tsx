@@ -31,8 +31,14 @@ export default function TransactionList({
   onItemPress,
   contentContainerStyle,
 }: TransactionListProps) {
-  const categoryMap = useMemo(() => Object.fromEntries(categories.map((c) => [c.id, c])), [categories]);
-  const accountMap = useMemo(() => Object.fromEntries(accounts.map((a) => [a.id, a])), [accounts]);
+  const categoryMap = useMemo(
+    () => Object.fromEntries(categories.map((c) => [c.id, c])),
+    [categories],
+  );
+  const accountMap = useMemo(
+    () => Object.fromEntries(accounts.map((a) => [a.id, a])),
+    [accounts],
+  );
 
   const renderItem = useCallback(
     ({ item }: { item: TransactionWithSplits }) => (
@@ -44,7 +50,7 @@ export default function TransactionList({
         onPress={() => onItemPress(item)}
       />
     ),
-    [categoryMap, accountMap, onItemPress]
+    [categoryMap, accountMap, onItemPress],
   );
 
   const renderFooter = () => {

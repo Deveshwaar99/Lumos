@@ -1,10 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, Icon, ActivityIndicator } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -52,25 +47,44 @@ const VIEW_OPTIONS: { key: AnalysisView; label: string; icon: string }[] = [
   { key: 'net_worth', label: 'Net Worth', icon: 'chart-timeline-variant' },
 ];
 
-export default function AnalyticsScreen({ navigation }: TabScreenProps<'Analytics'>) {
+export default function AnalyticsScreen({
+  navigation,
+}: TabScreenProps<'Analytics'>) {
   const { settings } = useSettingsStore();
   const insets = useSafeAreaInsets();
   const [anchor, setAnchor] = useState(() => new Date());
   const [period, setPeriod] = useState<TimePeriod>('month');
   const [filterVisible, setFilterVisible] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<AnalysisView>('expense_overview');
+  const [activeView, setActiveView] =
+    useState<AnalysisView>('expense_overview');
 
-  const range = useMemo(() => getTimePeriodRange(anchor, period), [anchor, period]);
-  const navLabel = useMemo(() => getTimePeriodLabel(anchor, period), [anchor, period]);
+  const range = useMemo(
+    () => getTimePeriodRange(anchor, period),
+    [anchor, period],
+  );
+  const navLabel = useMemo(
+    () => getTimePeriodLabel(anchor, period),
+    [anchor, period],
+  );
   const monthKey = useMemo(() => format(anchor, 'yyyy-MM'), [anchor]);
 
-  const [summary, setSummary] = useState<MonthSummary>({ totalIncome: 0, totalExpense: 0, net: 0 });
-  const [expenseBreakdown, setExpenseBreakdown] = useState<CategoryBreakdown[]>([]);
-  const [incomeBreakdown, setIncomeBreakdown] = useState<CategoryBreakdown[]>([]);
+  const [summary, setSummary] = useState<MonthSummary>({
+    totalIncome: 0,
+    totalExpense: 0,
+    net: 0,
+  });
+  const [expenseBreakdown, setExpenseBreakdown] = useState<CategoryBreakdown[]>(
+    [],
+  );
+  const [incomeBreakdown, setIncomeBreakdown] = useState<CategoryBreakdown[]>(
+    [],
+  );
   const [expenseFlow, setExpenseFlow] = useState<DailyCashFlow[]>([]);
   const [incomeFlow, setIncomeFlow] = useState<DailyCashFlow[]>([]);
-  const [accountPeriod, setAccountPeriod] = useState<AccountPeriodBalance[]>([]);
+  const [accountPeriod, setAccountPeriod] = useState<AccountPeriodBalance[]>(
+    [],
+  );
   const [netWorthHistory, setNetWorthHistory] = useState<NetWorthPoint[]>([]);
 
   const currency = settings.baseCurrency;
@@ -80,11 +94,22 @@ export default function AnalyticsScreen({ navigation }: TabScreenProps<'Analytic
     try {
       const [s, eb, ib, ef, inf, ap, nw] = await Promise.all([
         analyticsService.getSummaryForRange(range.start, range.end),
-        analyticsService.getCategoryBreakdownForRange(range.start, range.end, 'expense'),
-        analyticsService.getCategoryBreakdownForRange(range.start, range.end, 'income'),
+        analyticsService.getCategoryBreakdownForRange(
+          range.start,
+          range.end,
+          'expense',
+        ),
+        analyticsService.getCategoryBreakdownForRange(
+          range.start,
+          range.end,
+          'income',
+        ),
         analyticsService.getDailyExpenseFlowForRange(range.start, range.end),
         analyticsService.getDailyIncomeFlowForRange(range.start, range.end),
-        analyticsService.getAccountPeriodBalancesForRange(range.start, range.end),
+        analyticsService.getAccountPeriodBalancesForRange(
+          range.start,
+          range.end,
+        ),
         analyticsService.getNetWorthHistory(monthKey, 12),
       ]);
       setSummary(s);
@@ -101,12 +126,20 @@ export default function AnalyticsScreen({ navigation }: TabScreenProps<'Analytic
     }
   }, [range.start, range.end, monthKey]);
 
-  useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData]),
+  );
 
   const totalExpenseForBar = expenseBreakdown.reduce((s, c) => s + c.total, 0);
   const totalIncomeForBar = incomeBreakdown.reduce((s, c) => s + c.total, 0);
 
-  const renderBreakdownList = (data: CategoryBreakdown[], total: number, isExpense: boolean) => {
+  const renderBreakdownList = (
+    data: CategoryBreakdown[],
+    total: number,
+    isExpense: boolean,
+  ) => {
     if (data.length === 0) {
       return (
         <Text variant="bodyMedium" style={styles.emptyText}>
@@ -126,7 +159,9 @@ export default function AnalyticsScreen({ navigation }: TabScreenProps<'Analytic
                 idx < data.length - 1 && styles.breakdownRowBorder,
               ]}
             >
-              <View style={[styles.catIcon, { backgroundColor: cat.color + '18' }]}>
+              <View
+                style={[styles.catIcon, { backgroundColor: cat.color + '18' }]}
+              >
                 <Icon source={cat.icon as any} size={20} color={cat.color} />
               </View>
               <View style={styles.breakdownContent}>
@@ -142,7 +177,13 @@ export default function AnalyticsScreen({ navigation }: TabScreenProps<'Analytic
                       fontSize: 13,
                     }}
                   >
-                    {isExpense ? '-' : ''}{formatMoney(cat.total, currency, 2, settings.currencySymbol)}
+                    {isExpense ? '-' : ''}
+                    {formatMoney(
+                      cat.total,
+                      currency,
+                      2,
+                      settings.currencySymbol,
+                    )}
                   </Text>
                 </View>
                 <View style={styles.barRow}>
@@ -150,7 +191,10 @@ export default function AnalyticsScreen({ navigation }: TabScreenProps<'Analytic
                     <View
                       style={[
                         styles.barFill,
-                        { width: `${Math.min(pct, 100)}%`, backgroundColor: cat.color },
+                        {
+                          width: `${Math.min(pct, 100)}%`,
+                          backgroundColor: cat.color,
+                        },
                       ]}
                     />
                   </View>
@@ -172,7 +216,10 @@ export default function AnalyticsScreen({ navigation }: TabScreenProps<'Analytic
         return (
           <>
             <View style={styles.chartCard}>
-              <CategoryDonutChart data={expenseBreakdown} centerLabel="Expenses" />
+              <CategoryDonutChart
+                data={expenseBreakdown}
+                centerLabel="Expenses"
+              />
             </View>
             {renderBreakdownList(expenseBreakdown, totalExpenseForBar, true)}
           </>
@@ -182,7 +229,10 @@ export default function AnalyticsScreen({ navigation }: TabScreenProps<'Analytic
         return (
           <>
             <View style={styles.chartCard}>
-              <CategoryDonutChart data={incomeBreakdown} centerLabel="Incomes" />
+              <CategoryDonutChart
+                data={incomeBreakdown}
+                centerLabel="Incomes"
+              />
             </View>
             {renderBreakdownList(incomeBreakdown, totalIncomeForBar, false)}
           </>
@@ -237,14 +287,22 @@ export default function AnalyticsScreen({ navigation }: TabScreenProps<'Analytic
       case 'account_analysis':
         return (
           <View style={styles.chartCard}>
-            <AccountAnalysisChart data={accountPeriod} currency={currency} currencySymbol={settings.currencySymbol} />
+            <AccountAnalysisChart
+              data={accountPeriod}
+              currency={currency}
+              currencySymbol={settings.currencySymbol}
+            />
           </View>
         );
 
       case 'net_worth':
         return (
           <View style={styles.chartCard}>
-            <NetWorthChart data={netWorthHistory} currency={currency} currencySymbol={settings.currencySymbol} />
+            <NetWorthChart
+              data={netWorthHistory}
+              currency={currency}
+              currencySymbol={settings.currencySymbol}
+            />
           </View>
         );
     }
@@ -255,7 +313,10 @@ export default function AnalyticsScreen({ navigation }: TabScreenProps<'Analytic
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
         <PeriodNavigator
           label={navLabel}
           onPrev={handlePrev}
@@ -267,21 +328,37 @@ export default function AnalyticsScreen({ navigation }: TabScreenProps<'Analytic
         <View style={styles.summaryRow}>
           <View style={styles.summaryItem}>
             <Text style={[styles.summaryValue, { color: colors.income }]}>
-              {formatMoney(summary.totalIncome, currency, 0, settings.currencySymbol)}
+              {formatMoney(
+                summary.totalIncome,
+                currency,
+                0,
+                settings.currencySymbol,
+              )}
             </Text>
             <Text style={styles.summaryLabel}>Income</Text>
           </View>
           <View style={styles.summaryDivider} />
           <View style={styles.summaryItem}>
             <Text style={[styles.summaryValue, { color: colors.expense }]}>
-              {formatMoney(summary.totalExpense, currency, 0, settings.currencySymbol)}
+              {formatMoney(
+                summary.totalExpense,
+                currency,
+                0,
+                settings.currencySymbol,
+              )}
             </Text>
             <Text style={styles.summaryLabel}>Spent</Text>
           </View>
           <View style={styles.summaryDivider} />
           <View style={styles.summaryItem}>
-            <Text style={[styles.summaryValue, { color: summary.net >= 0 ? colors.income : colors.expense }]}>
-              {summary.net >= 0 ? '+' : ''}{formatMoney(summary.net, currency, 0, settings.currencySymbol)}
+            <Text
+              style={[
+                styles.summaryValue,
+                { color: summary.net >= 0 ? colors.income : colors.expense },
+              ]}
+            >
+              {summary.net >= 0 ? '+' : ''}
+              {formatMoney(summary.net, currency, 0, settings.currencySymbol)}
             </Text>
             <Text style={styles.summaryLabel}>Net</Text>
           </View>
@@ -310,7 +387,10 @@ export default function AnalyticsScreen({ navigation }: TabScreenProps<'Analytic
                   />
                   <Text
                     variant="labelMedium"
-                    style={[styles.chipLabel, isActive && styles.chipLabelActive]}
+                    style={[
+                      styles.chipLabel,
+                      isActive && styles.chipLabelActive,
+                    ]}
                   >
                     {opt.label}
                   </Text>
@@ -322,7 +402,9 @@ export default function AnalyticsScreen({ navigation }: TabScreenProps<'Analytic
           {loading ? (
             <View style={styles.loadingWrap}>
               <ActivityIndicator size="large" color={colors.primary} />
-              <Text variant="bodySmall" style={styles.loadingText}>Loading analytics...</Text>
+              <Text variant="bodySmall" style={styles.loadingText}>
+                Loading analytics...
+              </Text>
             </View>
           ) : (
             renderActiveView()
@@ -475,7 +557,15 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   barFill: { height: 5, borderRadius: 3 },
-  pctLabel: { color: colors.textSecondary, width: 44, textAlign: 'right', fontSize: 11 },
-  emptyText: { color: colors.textSecondary, textAlign: 'center', padding: spacing.lg },
-
+  pctLabel: {
+    color: colors.textSecondary,
+    width: 44,
+    textAlign: 'right',
+    fontSize: 11,
+  },
+  emptyText: {
+    color: colors.textSecondary,
+    textAlign: 'center',
+    padding: spacing.lg,
+  },
 });

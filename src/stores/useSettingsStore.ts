@@ -8,7 +8,10 @@ interface SettingsRow {
   value: string;
 }
 
-function parseValue(key: keyof AppSettings, value: string): string | number | boolean | null {
+function parseValue(
+  key: keyof AppSettings,
+  value: string,
+): string | number | boolean | null {
   if (value === 'null') return null;
   if (key === 'decimalPlaces') return parseInt(value, 10) || 0;
   return value;
@@ -30,7 +33,10 @@ interface SettingsState {
   loading: boolean;
   error: string | null;
   loadSettings: () => Promise<void>;
-  updateSetting: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => Promise<void>;
+  updateSetting: <K extends keyof AppSettings>(
+    key: K,
+    value: AppSettings[K],
+  ) => Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
@@ -53,11 +59,15 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   updateSetting: async (key, value) => {
     const db = await getDatabase();
     const strValue =
-      value === null ? 'null' : typeof value === 'boolean' ? String(value) : String(value);
+      value === null
+        ? 'null'
+        : typeof value === 'boolean'
+          ? String(value)
+          : String(value);
     await db.runAsync(
       'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
       key,
-      strValue
+      strValue,
     );
     set((state) => ({
       settings: { ...state.settings, [key]: value },

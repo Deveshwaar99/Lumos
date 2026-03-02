@@ -31,21 +31,31 @@ function formatCompactY(val: number, currencySymbol?: string): string {
   return `${sign}${sym}${abs.toFixed(0)}`;
 }
 
-export default function NetWorthChart({ data, currency, currencySymbol }: NetWorthChartProps) {
+export default function NetWorthChart({
+  data,
+  currency,
+  currencySymbol,
+}: NetWorthChartProps) {
   if (data.length === 0) {
     return (
       <View style={styles.container}>
-        <Text variant="bodyMedium" style={styles.empty}>No data available</Text>
+        <Text variant="bodyMedium" style={styles.empty}>
+          No data available
+        </Text>
       </View>
     );
   }
 
   const values = data.map((d) => d.netWorth);
   const currentNetWorth = values[values.length - 1];
-  const prevNetWorth = values.length > 1 ? values[values.length - 2] : currentNetWorth;
+  const prevNetWorth =
+    values.length > 1 ? values[values.length - 2] : currentNetWorth;
   const change = currentNetWorth - prevNetWorth;
   const changePositive = change >= 0;
-  const changePct = prevNetWorth !== 0 ? ((change / Math.abs(prevNetWorth)) * 100).toFixed(1) : '0';
+  const changePct =
+    prevNetWorth !== 0
+      ? ((change / Math.abs(prevNetWorth)) * 100).toFixed(1)
+      : '0';
 
   const chartWidth = Math.max(data.length * 50, 320);
   const chartHeight = 190;
@@ -63,7 +73,8 @@ export default function NetWorthChart({ data, currency, currencySymbol }: NetWor
   const yEnd = yMax + yPadding;
   const yRange = Math.max(yEnd - yStart, 1);
 
-  const getY = (val: number) => paddingTop + plotHeight - ((val - yStart) / yRange) * plotHeight;
+  const getY = (val: number) =>
+    paddingTop + plotHeight - ((val - yStart) / yRange) * plotHeight;
 
   const points = data.map((d, i) => {
     const x = paddingLeft + (i / Math.max(data.length - 1, 1)) * plotWidth;
@@ -93,26 +104,51 @@ export default function NetWorthChart({ data, currency, currencySymbol }: NetWor
       {/* Summary header */}
       <View style={styles.summarySection}>
         <View style={styles.summaryMain}>
-          <Text variant="labelSmall" style={styles.summaryLabel}>Current Net Worth</Text>
+          <Text variant="labelSmall" style={styles.summaryLabel}>
+            Current Net Worth
+          </Text>
           <Text
             variant="headlineSmall"
-            style={[styles.summaryValue, { color: currentNetWorth >= 0 ? colors.income : colors.expense }]}
+            style={[
+              styles.summaryValue,
+              { color: currentNetWorth >= 0 ? colors.income : colors.expense },
+            ]}
           >
             {formatMoney(currentNetWorth, currency, 0, currencySymbol)}
           </Text>
         </View>
-        <View style={[styles.changeBadge, { backgroundColor: (changePositive ? colors.income : colors.expense) + '14' }]}>
+        <View
+          style={[
+            styles.changeBadge,
+            {
+              backgroundColor:
+                (changePositive ? colors.income : colors.expense) + '14',
+            },
+          ]}
+        >
           <Icon
             source={changePositive ? 'trending-up' : 'trending-down'}
             size={16}
             color={changePositive ? colors.income : colors.expense}
           />
           <View>
-            <Text style={[styles.changeText, { color: changePositive ? colors.income : colors.expense }]}>
-              {changePositive ? '+' : ''}{formatMoney(change, currency, 0, currencySymbol)}
+            <Text
+              style={[
+                styles.changeText,
+                { color: changePositive ? colors.income : colors.expense },
+              ]}
+            >
+              {changePositive ? '+' : ''}
+              {formatMoney(change, currency, 0, currencySymbol)}
             </Text>
-            <Text style={[styles.changeSubtext, { color: changePositive ? colors.income : colors.expense }]}>
-              {changePositive ? '+' : ''}{changePct}% vs prev
+            <Text
+              style={[
+                styles.changeSubtext,
+                { color: changePositive ? colors.income : colors.expense },
+              ]}
+            >
+              {changePositive ? '+' : ''}
+              {changePct}% vs prev
             </Text>
           </View>
         </View>
@@ -129,7 +165,11 @@ export default function NetWorthChart({ data, currency, currencySymbol }: NetWor
             </Text>
           ))}
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollWrap}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.scrollWrap}
+        >
           <View>
             <Svg width={chartWidth} height={chartHeight}>
               <Defs>
@@ -176,9 +216,26 @@ export default function NetWorthChart({ data, currency, currencySymbol }: NetWor
 
               {points.map((p, idx) => {
                 const parts = p.month.split('-');
-                const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const monthNames = [
+                  '',
+                  'Jan',
+                  'Feb',
+                  'Mar',
+                  'Apr',
+                  'May',
+                  'Jun',
+                  'Jul',
+                  'Aug',
+                  'Sep',
+                  'Oct',
+                  'Nov',
+                  'Dec',
+                ];
                 const label = monthNames[parseInt(parts[1], 10)] || parts[1];
-                const show = data.length <= 6 || idx % Math.ceil(data.length / 6) === 0 || idx === data.length - 1;
+                const show =
+                  data.length <= 6 ||
+                  idx % Math.ceil(data.length / 6) === 0 ||
+                  idx === data.length - 1;
                 if (!show) return null;
                 return (
                   <SvgText
@@ -246,7 +303,12 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
   },
-  empty: { color: colors.textSecondary, textAlign: 'center', padding: 40, flex: 1 },
+  empty: {
+    color: colors.textSecondary,
+    textAlign: 'center',
+    padding: 40,
+    flex: 1,
+  },
   yAxisLabels: {
     justifyContent: 'space-between',
     paddingTop: 16,

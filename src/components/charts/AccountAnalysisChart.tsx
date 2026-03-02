@@ -29,18 +29,24 @@ function formatCompactY(val: number, currencySymbol?: string): string {
   return `${sym}${abs.toFixed(0)}`;
 }
 
-export default function AccountAnalysisChart({ data, currency, currencySymbol }: AccountAnalysisChartProps) {
+export default function AccountAnalysisChart({
+  data,
+  currency,
+  currencySymbol,
+}: AccountAnalysisChartProps) {
   if (data.length === 0) {
     return (
       <View style={styles.container}>
-        <Text variant="bodyMedium" style={styles.empty}>No accounts</Text>
+        <Text variant="bodyMedium" style={styles.empty}>
+          No accounts
+        </Text>
       </View>
     );
   }
 
   const maxVal = Math.max(
     ...data.map((d) => Math.max(d.periodIncome, d.periodExpense)),
-    1
+    1,
   );
 
   const chartHeight = 180;
@@ -50,7 +56,10 @@ export default function AccountAnalysisChart({ data, currency, currencySymbol }:
   const barGroupWidth = 52;
   const barWidth = 14;
   const gap = 4;
-  const chartWidth = Math.max(data.length * barGroupWidth + paddingLeft * 2, 280);
+  const chartWidth = Math.max(
+    data.length * barGroupWidth + paddingLeft * 2,
+    280,
+  );
   const plotHeight = chartHeight - paddingTop - paddingBottom;
 
   const yTicks = 4;
@@ -64,13 +73,34 @@ export default function AccountAnalysisChart({ data, currency, currencySymbol }:
   return (
     <View style={styles.container}>
       <View style={styles.legendRow}>
-        <View style={[styles.legendChip, { backgroundColor: colors.expense + '18' }]}>
-          <View style={[styles.legendDot, { backgroundColor: colors.expense }]} />
-          <Text variant="labelSmall" style={[styles.legendText, { color: colors.expense }]}>Expense</Text>
+        <View
+          style={[
+            styles.legendChip,
+            { backgroundColor: colors.expense + '18' },
+          ]}
+        >
+          <View
+            style={[styles.legendDot, { backgroundColor: colors.expense }]}
+          />
+          <Text
+            variant="labelSmall"
+            style={[styles.legendText, { color: colors.expense }]}
+          >
+            Expense
+          </Text>
         </View>
-        <View style={[styles.legendChip, { backgroundColor: colors.income + '18' }]}>
-          <View style={[styles.legendDot, { backgroundColor: colors.income }]} />
-          <Text variant="labelSmall" style={[styles.legendText, { color: colors.income }]}>Income</Text>
+        <View
+          style={[styles.legendChip, { backgroundColor: colors.income + '18' }]}
+        >
+          <View
+            style={[styles.legendDot, { backgroundColor: colors.income }]}
+          />
+          <Text
+            variant="labelSmall"
+            style={[styles.legendText, { color: colors.income }]}
+          >
+            Income
+          </Text>
         </View>
       </View>
 
@@ -83,7 +113,11 @@ export default function AccountAnalysisChart({ data, currency, currencySymbol }:
           ))}
         </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollWrap}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.scrollWrap}
+        >
           <Svg width={chartWidth} height={chartHeight}>
             {yLabels.map((label, i) => (
               <Line
@@ -99,7 +133,8 @@ export default function AccountAnalysisChart({ data, currency, currencySymbol }:
             ))}
 
             {data.map((item, idx) => {
-              const groupX = paddingLeft + idx * barGroupWidth + barGroupWidth / 2;
+              const groupX =
+                paddingLeft + idx * barGroupWidth + barGroupWidth / 2;
               const expenseH = (item.periodExpense / maxVal) * plotHeight;
               const incomeH = (item.periodIncome / maxVal) * plotHeight;
 
@@ -159,14 +194,28 @@ export default function AccountAnalysisChart({ data, currency, currencySymbol }:
               />
             </View>
             <View style={styles.accountInfo}>
-              <Text variant="bodyMedium" style={styles.accountName}>{item.accountName}</Text>
+              <Text variant="bodyMedium" style={styles.accountName}>
+                {item.accountName}
+              </Text>
               <View style={styles.periodRow}>
-                <Text variant="labelSmall" style={{ color: colors.income, fontSize: 11 }}>
+                <Text
+                  variant="labelSmall"
+                  style={{ color: colors.income, fontSize: 11 }}
+                >
                   +{formatMoney(item.periodIncome, currency, 0, currencySymbol)}
                 </Text>
-                <Text variant="labelSmall" style={{ color: colors.textTertiary, fontSize: 10 }}>/</Text>
-                <Text variant="labelSmall" style={{ color: colors.expense, fontSize: 11 }}>
-                  -{formatMoney(item.periodExpense, currency, 0, currencySymbol)}
+                <Text
+                  variant="labelSmall"
+                  style={{ color: colors.textTertiary, fontSize: 10 }}
+                >
+                  /
+                </Text>
+                <Text
+                  variant="labelSmall"
+                  style={{ color: colors.expense, fontSize: 11 }}
+                >
+                  -
+                  {formatMoney(item.periodExpense, currency, 0, currencySymbol)}
                 </Text>
               </View>
             </View>
@@ -178,7 +227,8 @@ export default function AccountAnalysisChart({ data, currency, currencySymbol }:
                 fontSize: 12,
               }}
             >
-              {net >= 0 ? '+' : ''}{formatMoney(net, currency, 0, currencySymbol)}
+              {net >= 0 ? '+' : ''}
+              {formatMoney(net, currency, 0, currencySymbol)}
             </Text>
           </View>
         );
@@ -248,7 +298,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   accountInfo: { flex: 1 },
-  accountName: { color: colors.text, fontWeight: '600', fontSize: 14, marginBottom: 2 },
+  accountName: {
+    color: colors.text,
+    fontWeight: '600',
+    fontSize: 14,
+    marginBottom: 2,
+  },
   periodRow: {
     flexDirection: 'row',
     alignItems: 'center',

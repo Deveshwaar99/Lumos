@@ -10,7 +10,12 @@ interface PeriodNavigatorProps {
   onFilterPress?: () => void;
 }
 
-export default function PeriodNavigator({ label, onPrev, onNext, onFilterPress }: PeriodNavigatorProps) {
+export default function PeriodNavigator({
+  label,
+  onPrev,
+  onNext,
+  onFilterPress,
+}: PeriodNavigatorProps) {
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={onPrev} hitSlop={12}>
@@ -23,8 +28,16 @@ export default function PeriodNavigator({ label, onPrev, onNext, onFilterPress }
         <TouchableOpacity onPress={onNext} hitSlop={12}>
           <Icon source="chevron-right" size={28} color={colors.text} />
         </TouchableOpacity>
-        <TouchableOpacity hitSlop={12} style={styles.filterBtn} onPress={onFilterPress}>
-          <Icon source="filter-variant" size={22} color={colors.textSecondary} />
+        <TouchableOpacity
+          hitSlop={12}
+          style={styles.filterBtn}
+          onPress={onFilterPress}
+        >
+          <Icon
+            source="filter-variant"
+            size={22}
+            color={colors.textSecondary}
+          />
         </TouchableOpacity>
       </View>
     </View>

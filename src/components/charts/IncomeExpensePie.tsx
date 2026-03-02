@@ -12,12 +12,19 @@ interface IncomeExpensePieProps {
   currencySymbol?: string;
 }
 
-export default function IncomeExpensePie({ income, expense, currency = 'USD', currencySymbol }: IncomeExpensePieProps) {
+export default function IncomeExpensePie({
+  income,
+  expense,
+  currency = 'USD',
+  currencySymbol,
+}: IncomeExpensePieProps) {
   const total = income + expense;
   if (total === 0) {
     return (
       <View style={styles.container}>
-        <Text variant="bodyMedium" style={styles.empty}>No data for this month</Text>
+        <Text variant="bodyMedium" style={styles.empty}>
+          No data for this month
+        </Text>
       </View>
     );
   }
@@ -60,11 +67,15 @@ export default function IncomeExpensePie({ income, expense, currency = 'USD', cu
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.dot, { backgroundColor: colors.income }]} />
-          <Text variant="bodySmall">Income: {formatMoney(income, currency, 2, currencySymbol)}</Text>
+          <Text variant="bodySmall">
+            Income: {formatMoney(income, currency, 2, currencySymbol)}
+          </Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.dot, { backgroundColor: colors.expense }]} />
-          <Text variant="bodySmall">Expense: {formatMoney(expense, currency, 2, currencySymbol)}</Text>
+          <Text variant="bodySmall">
+            Expense: {formatMoney(expense, currency, 2, currencySymbol)}
+          </Text>
         </View>
       </View>
     </View>

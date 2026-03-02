@@ -26,7 +26,7 @@ export function formatMoney(
   cents: number,
   currency: string = 'USD',
   decimalPlaces: number = 2,
-  currencySymbol?: string
+  currencySymbol?: string,
 ): string {
   const dollars = centsToDollars(cents);
 

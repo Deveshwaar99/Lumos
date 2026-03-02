@@ -25,14 +25,17 @@ export const budgetService = {
           WHERE t.category_id = b.category_id AND t.type = 'expense'
           AND t.date >= ? AND t.date < ?), 0) as spent
       FROM budgets b WHERE b.month = ? AND b.enabled = 1`,
-      start, end, month
+      start,
+      end,
+      month,
     );
 
     return rows.map((row) => {
       const budget = mapRow(row);
       const spent = row.spent ?? 0;
       const remaining = budget.limitCents - spent;
-      const percentage = budget.limitCents > 0 ? (spent / budget.limitCents) * 100 : 0;
+      const percentage =
+        budget.limitCents > 0 ? (spent / budget.limitCents) * 100 : 0;
       return { ...budget, spent, remaining, percentage };
     });
   },
@@ -42,7 +45,12 @@ export const budgetService = {
     const id = generateId();
     await db.runAsync(
       'INSERT INTO budgets (id, month, category_id, limit_cents, alert_threshold_pct, enabled) VALUES (?, ?, ?, ?, ?, ?)',
-      id, data.month, data.categoryId, data.limitCents, data.alertThresholdPct, data.enabled ? 1 : 0
+      id,
+      data.month,
+      data.categoryId,
+      data.limitCents,
+      data.alertThresholdPct,
+      data.enabled ? 1 : 0,
     );
     return { id, ...data };
   },
@@ -51,14 +59,32 @@ export const budgetService = {
     const db = await getDatabase();
     const fields: string[] = [];
     const values: any[] = [];
-    if (data.month !== undefined) { fields.push('month = ?'); values.push(data.month); }
-    if (data.categoryId !== undefined) { fields.push('category_id = ?'); values.push(data.categoryId); }
-    if (data.limitCents !== undefined) { fields.push('limit_cents = ?'); values.push(data.limitCents); }
-    if (data.alertThresholdPct !== undefined) { fields.push('alert_threshold_pct = ?'); values.push(data.alertThresholdPct); }
-    if (data.enabled !== undefined) { fields.push('enabled = ?'); values.push(data.enabled ? 1 : 0); }
+    if (data.month !== undefined) {
+      fields.push('month = ?');
+      values.push(data.month);
+    }
+    if (data.categoryId !== undefined) {
+      fields.push('category_id = ?');
+      values.push(data.categoryId);
+    }
+    if (data.limitCents !== undefined) {
+      fields.push('limit_cents = ?');
+      values.push(data.limitCents);
+    }
+    if (data.alertThresholdPct !== undefined) {
+      fields.push('alert_threshold_pct = ?');
+      values.push(data.alertThresholdPct);
+    }
+    if (data.enabled !== undefined) {
+      fields.push('enabled = ?');
+      values.push(data.enabled ? 1 : 0);
+    }
     if (fields.length === 0) return;
     values.push(id);
-    await db.runAsync(`UPDATE budgets SET ${fields.join(', ')} WHERE id = ?`, ...values);
+    await db.runAsync(
+      `UPDATE budgets SET ${fields.join(', ')} WHERE id = ?`,
+      ...values,
+    );
   },
 
   async delete(id: string): Promise<void> {
@@ -75,7 +101,7 @@ export const budgetService = {
     const db = await getDatabase();
     const result = await db.getFirstAsync<{ count: number }>(
       'SELECT COUNT(*) as count FROM budgets WHERE month = ? AND enabled = 1',
-      month
+      month,
     );
     return result?.count ?? 0;
   },

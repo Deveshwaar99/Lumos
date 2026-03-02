@@ -7,8 +7,16 @@ import { formatDateTimeShort } from '../utils/dates';
 import type { TransactionWithSplits, Category, Account } from '../models/types';
 
 const BADGE_COLORS = [
-  '#FC4C02', '#5C6BC0', '#26A69A', '#AB47BC', '#42A5F5',
-  '#FF7043', '#78909C', '#8D6E63', '#EC407A', '#9CCC65',
+  '#FC4C02',
+  '#5C6BC0',
+  '#26A69A',
+  '#AB47BC',
+  '#42A5F5',
+  '#FF7043',
+  '#78909C',
+  '#8D6E63',
+  '#EC407A',
+  '#9CCC65',
 ];
 
 function hashColor(str: string): string {
@@ -36,22 +44,40 @@ function TransactionItemComponent({
 }: TransactionItemProps) {
   const isIncome = transaction.type === 'income';
   const isTransfer = transaction.type === 'transfer';
-  const amountColor = isTransfer ? colors.transfer : isIncome ? colors.income : colors.expense;
+  const amountColor = isTransfer
+    ? colors.transfer
+    : isIncome
+      ? colors.income
+      : colors.expense;
   const prefix = isTransfer ? '' : isIncome ? '+' : '-';
 
-  const iconSource = isTransfer ? 'swap-horizontal' : (category?.icon ?? 'help-circle');
-  const iconColor = isTransfer ? colors.transfer : (category?.color ?? colors.textSecondary);
-  const iconBg = isTransfer ? colors.transfer + '18' : (category?.color ?? colors.textSecondary) + '18';
+  const iconSource = isTransfer
+    ? 'swap-horizontal'
+    : (category?.icon ?? 'help-circle');
+  const iconColor = isTransfer
+    ? colors.transfer
+    : (category?.color ?? colors.textSecondary);
+  const iconBg = isTransfer
+    ? colors.transfer + '18'
+    : (category?.color ?? colors.textSecondary) + '18';
 
-  const titleText = isTransfer
-    ? 'Transfer'
-    : (category?.name ?? 'Unknown');
+  const titleText = isTransfer ? 'Transfer' : (category?.name ?? 'Unknown');
 
-  const fromAcc = isTransfer && transaction.splits[0] ? accountMap[transaction.splits[0].accountId] : null;
-  const toAcc = isTransfer && transaction.splits[1] ? accountMap[transaction.splits[1].accountId] : null;
+  const fromAcc =
+    isTransfer && transaction.splits[0]
+      ? accountMap[transaction.splits[0].accountId]
+      : null;
+  const toAcc =
+    isTransfer && transaction.splits[1]
+      ? accountMap[transaction.splits[1].accountId]
+      : null;
 
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={styles.container}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
       <View style={[styles.iconCircle, { backgroundColor: iconBg }]}>
         <Icon source={iconSource as any} size={20} color={iconColor} />
       </View>
@@ -61,7 +87,12 @@ function TransactionItemComponent({
         </Text>
         {isTransfer ? (
           <View style={styles.badgeRow}>
-            <View style={[styles.badge, { backgroundColor: colors.transfer + '22' }]}>
+            <View
+              style={[
+                styles.badge,
+                { backgroundColor: colors.transfer + '22' },
+              ]}
+            >
               <Text style={[styles.badgeText, { color: colors.transfer }]}>
                 {fromAcc?.name ?? '?'} → {toAcc?.name ?? '?'}
               </Text>
@@ -74,8 +105,13 @@ function TransactionItemComponent({
               const name = acc?.name ?? '?';
               const badgeColor = hashColor(name);
               return (
-                <View key={s.id} style={[styles.badge, { backgroundColor: badgeColor + '22' }]}>
-                  <Text style={[styles.badgeText, { color: badgeColor }]}>{name}</Text>
+                <View
+                  key={s.id}
+                  style={[styles.badge, { backgroundColor: badgeColor + '22' }]}
+                >
+                  <Text style={[styles.badgeText, { color: badgeColor }]}>
+                    {name}
+                  </Text>
                 </View>
               );
             })}
@@ -88,8 +124,17 @@ function TransactionItemComponent({
         ) : null}
       </View>
       <View style={styles.right}>
-        <Text variant="titleSmall" style={{ color: amountColor, fontWeight: '600' }}>
-          {prefix}{formatMoney(transaction.totalAmountCents, transaction.currency, 2, currencySymbol)}
+        <Text
+          variant="titleSmall"
+          style={{ color: amountColor, fontWeight: '600' }}
+        >
+          {prefix}
+          {formatMoney(
+            transaction.totalAmountCents,
+            transaction.currency,
+            2,
+            currencySymbol,
+          )}
         </Text>
         <Text variant="bodySmall" style={styles.date}>
           {formatDateTimeShort(transaction.date)}

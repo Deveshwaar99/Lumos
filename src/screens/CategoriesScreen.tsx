@@ -1,5 +1,11 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, FlatList, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+} from 'react-native';
 import { FAB, Snackbar, Icon, Text, Menu } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,24 +16,36 @@ import EmptyState from '../components/EmptyState';
 import type { TabScreenProps } from '../navigation/types';
 import type { Category } from '../models/types';
 
-export default function CategoriesScreen({ navigation }: TabScreenProps<'Categories'>) {
+export default function CategoriesScreen({
+  navigation,
+}: TabScreenProps<'Categories'>) {
   const { categories, loadCategories, removeCategory } = useCategoryStore();
-  const [selectedType, setSelectedType] = useState<'expense' | 'income'>('expense');
+  const [selectedType, setSelectedType] = useState<'expense' | 'income'>(
+    'expense',
+  );
   const [snackbar, setSnackbar] = useState('');
   const [menuVisible, setMenuVisible] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
 
-  useFocusEffect(useCallback(() => {
-    loadCategories();
-  }, []));
+  useFocusEffect(
+    useCallback(() => {
+      loadCategories();
+    }, []),
+  );
 
   const filtered = useMemo(
     () => categories.filter((c) => c.type === selectedType),
     [categories, selectedType],
   );
 
-  const expenseCount = useMemo(() => categories.filter(c => c.type === 'expense').length, [categories]);
-  const incomeCount = useMemo(() => categories.filter(c => c.type === 'income').length, [categories]);
+  const expenseCount = useMemo(
+    () => categories.filter((c) => c.type === 'expense').length,
+    [categories],
+  );
+  const incomeCount = useMemo(
+    () => categories.filter((c) => c.type === 'income').length,
+    [categories],
+  );
 
   const handleDelete = useCallback(
     (cat: Category) => {
@@ -106,42 +124,82 @@ export default function CategoriesScreen({ navigation }: TabScreenProps<'Categor
   const renderSegmentedControl = () => (
     <View style={styles.segmentContainer}>
       <TouchableOpacity
-        style={[styles.segmentTab, selectedType === 'expense' && styles.segmentTabActive]}
+        style={[
+          styles.segmentTab,
+          selectedType === 'expense' && styles.segmentTabActive,
+        ]}
         onPress={() => setSelectedType('expense')}
         activeOpacity={0.8}
       >
         <Icon
           source="arrow-down-bold-circle-outline"
           size={18}
-          color={selectedType === 'expense' ? colors.onPrimary : colors.textSecondary}
+          color={
+            selectedType === 'expense' ? colors.onPrimary : colors.textSecondary
+          }
         />
-        <Text style={[styles.segmentText, selectedType === 'expense' && styles.segmentTextActive]}>
+        <Text
+          style={[
+            styles.segmentText,
+            selectedType === 'expense' && styles.segmentTextActive,
+          ]}
+        >
           Expense
         </Text>
         {expenseCount > 0 && (
-          <View style={[styles.segmentBadge, selectedType === 'expense' && styles.segmentBadgeActive]}>
-            <Text style={[styles.segmentBadgeText, selectedType === 'expense' && styles.segmentBadgeTextActive]}>
+          <View
+            style={[
+              styles.segmentBadge,
+              selectedType === 'expense' && styles.segmentBadgeActive,
+            ]}
+          >
+            <Text
+              style={[
+                styles.segmentBadgeText,
+                selectedType === 'expense' && styles.segmentBadgeTextActive,
+              ]}
+            >
               {expenseCount}
             </Text>
           </View>
         )}
       </TouchableOpacity>
       <TouchableOpacity
-        style={[styles.segmentTab, selectedType === 'income' && styles.segmentTabActive]}
+        style={[
+          styles.segmentTab,
+          selectedType === 'income' && styles.segmentTabActive,
+        ]}
         onPress={() => setSelectedType('income')}
         activeOpacity={0.8}
       >
         <Icon
           source="arrow-up-bold-circle-outline"
           size={18}
-          color={selectedType === 'income' ? colors.onPrimary : colors.textSecondary}
+          color={
+            selectedType === 'income' ? colors.onPrimary : colors.textSecondary
+          }
         />
-        <Text style={[styles.segmentText, selectedType === 'income' && styles.segmentTextActive]}>
+        <Text
+          style={[
+            styles.segmentText,
+            selectedType === 'income' && styles.segmentTextActive,
+          ]}
+        >
           Income
         </Text>
         {incomeCount > 0 && (
-          <View style={[styles.segmentBadge, selectedType === 'income' && styles.segmentBadgeActive]}>
-            <Text style={[styles.segmentBadgeText, selectedType === 'income' && styles.segmentBadgeTextActive]}>
+          <View
+            style={[
+              styles.segmentBadge,
+              selectedType === 'income' && styles.segmentBadgeActive,
+            ]}
+          >
+            <Text
+              style={[
+                styles.segmentBadgeText,
+                selectedType === 'income' && styles.segmentBadgeTextActive,
+              ]}
+            >
               {incomeCount}
             </Text>
           </View>
@@ -155,14 +213,20 @@ export default function CategoriesScreen({ navigation }: TabScreenProps<'Categor
       <View style={[styles.categoryAccent, { backgroundColor: item.color }]} />
       <TouchableOpacity
         style={styles.categoryContent}
-        onPress={() => navigation.navigate('CategoryForm', { categoryId: item.id })}
+        onPress={() =>
+          navigation.navigate('CategoryForm', { categoryId: item.id })
+        }
         activeOpacity={0.7}
       >
-        <View style={[styles.categoryIcon, { backgroundColor: item.color + '1A' }]}>
+        <View
+          style={[styles.categoryIcon, { backgroundColor: item.color + '1A' }]}
+        >
           <Icon source={item.icon as any} size={22} color={item.color} />
         </View>
         <View style={styles.categoryDetails}>
-          <Text style={styles.categoryName} numberOfLines={1}>{item.name}</Text>
+          <Text style={styles.categoryName} numberOfLines={1}>
+            {item.name}
+          </Text>
           <Text style={styles.categoryType}>
             {selectedType === 'expense' ? 'Expense' : 'Income'}
           </Text>
@@ -171,14 +235,30 @@ export default function CategoriesScreen({ navigation }: TabScreenProps<'Categor
           visible={menuVisible === item.id}
           onDismiss={() => setMenuVisible(null)}
           anchor={
-            <TouchableOpacity onPress={() => setMenuVisible(item.id)} hitSlop={12} style={styles.menuTrigger}>
-              <Icon source="dots-horizontal" size={20} color={colors.textTertiary} />
+            <TouchableOpacity
+              onPress={() => setMenuVisible(item.id)}
+              hitSlop={12}
+              style={styles.menuTrigger}
+            >
+              <Icon
+                source="dots-horizontal"
+                size={20}
+                color={colors.textTertiary}
+              />
             </TouchableOpacity>
           }
           contentStyle={styles.menuContent}
         >
-          <Menu.Item onPress={() => handleEdit(item)} title="Edit" leadingIcon="pencil" />
-          <Menu.Item onPress={() => handleDelete(item)} title="Delete" leadingIcon="delete-outline" />
+          <Menu.Item
+            onPress={() => handleEdit(item)}
+            title="Edit"
+            leadingIcon="pencil"
+          />
+          <Menu.Item
+            onPress={() => handleDelete(item)}
+            title="Delete"
+            leadingIcon="delete-outline"
+          />
         </Menu>
       </TouchableOpacity>
     </View>
@@ -214,10 +294,16 @@ export default function CategoriesScreen({ navigation }: TabScreenProps<'Categor
       <FAB
         icon="plus"
         style={[styles.fab, { bottom: insets.bottom + 10 }]}
-        onPress={() => navigation.navigate('CategoryForm', { categoryType: selectedType })}
+        onPress={() =>
+          navigation.navigate('CategoryForm', { categoryType: selectedType })
+        }
         color="#fff"
       />
-      <Snackbar visible={!!snackbar} onDismiss={() => setSnackbar('')} duration={3000}>
+      <Snackbar
+        visible={!!snackbar}
+        onDismiss={() => setSnackbar('')}
+        duration={3000}
+      >
         {snackbar}
       </Snackbar>
     </View>
@@ -226,7 +312,11 @@ export default function CategoriesScreen({ navigation }: TabScreenProps<'Categor
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  listContent: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: 100 },
+  listContent: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: 100,
+  },
   emptyWrap: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
 
   /* ── Summary Card ── */
@@ -387,7 +477,15 @@ const styles = StyleSheet.create({
   menuTrigger: {
     padding: spacing.xxs,
   },
-  menuContent: { backgroundColor: colors.surfaceVariant, borderRadius: radius.md },
+  menuContent: {
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: radius.md,
+  },
 
-  fab: { position: 'absolute', right: spacing.lg, backgroundColor: colors.primary, ...elevation.lg },
+  fab: {
+    position: 'absolute',
+    right: spacing.lg,
+    backgroundColor: colors.primary,
+    ...elevation.lg,
+  },
 });

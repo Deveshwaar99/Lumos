@@ -11,7 +11,11 @@ interface DateHeaderProps {
 export default function DateHeader({ dateStr }: DateHeaderProps) {
   const date = dateStr.includes('T') ? parseISO(dateStr) : new Date(dateStr);
   const label = format(date, 'EEE, dd MMM');
-  const relative = isToday(date) ? 'Today' : isYesterday(date) ? 'Yesterday' : null;
+  const relative = isToday(date)
+    ? 'Today'
+    : isYesterday(date)
+      ? 'Yesterday'
+      : null;
 
   return (
     <View style={styles.container}>

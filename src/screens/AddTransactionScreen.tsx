@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  useMemo,
+} from 'react';
 import {
   View,
   ScrollView,
@@ -12,13 +18,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  TextInput,
-  Text,
-  Icon,
-  Snackbar,
-  Switch,
-} from 'react-native-paper';
+import { TextInput, Text, Icon, Snackbar, Switch } from 'react-native-paper';
 import { format, parseISO } from 'date-fns';
 import { useTransactionStore } from '../stores/useTransactionStore';
 import { useCategoryStore } from '../stores/useCategoryStore';
@@ -62,12 +62,15 @@ export default function AddTransactionScreen({
   const transactionId = params?.transactionId;
   const initialType = params?.type ?? 'expense';
 
-  const { addTransaction, updateTransaction, removeTransaction } = useTransactionStore();
+  const { addTransaction, updateTransaction, removeTransaction } =
+    useTransactionStore();
   const { categories, loadCategories } = useCategoryStore();
   const { accounts, loadAccounts } = useAccountStore();
   const { settings } = useSettingsStore();
 
-  const [existing, setExisting] = useState<Awaited<ReturnType<typeof transactionService.getById>> | null>(null);
+  const [existing, setExisting] = useState<Awaited<
+    ReturnType<typeof transactionService.getById>
+  > | null>(null);
   const [loaded, setLoaded] = useState(!transactionId);
   const isEditing = !!existing;
 
@@ -92,10 +95,13 @@ export default function AddTransactionScreen({
 
   const [activePanel, setActivePanel] = useState<PanelType>('none');
   const panelAnim = useRef(new Animated.Value(0)).current;
-  const typeAnimVal = initialType === 'income' ? 0 : initialType === 'expense' ? 1 : 2;
+  const typeAnimVal =
+    initialType === 'income' ? 0 : initialType === 'expense' ? 1 : 2;
   const typeAnim = useRef(new Animated.Value(typeAnimVal)).current;
 
-  const filteredCategories = isTransfer(type) ? [] : categories.filter((c) => c.type === type);
+  const filteredCategories = isTransfer(type)
+    ? []
+    : categories.filter((c) => c.type === type);
   const selectedCategory = categories.find((c) => c.id === categoryId);
   const selectedAccount1 = accounts.find((a) => a.id === account1Id);
   const selectedAccount2 = accounts.find((a) => a.id === account2Id);
@@ -162,46 +168,61 @@ export default function AddTransactionScreen({
     const total = dollarsToCents(evalExpression(expression));
     const s1 = dollarsToCents(evalExpression(split1Expression));
     const s2 = dollarsToCents(evalExpression(split2Expression));
-    if (total > 0 && (s1 + s2) > 0 && s1 + s2 !== total) {
+    if (total > 0 && s1 + s2 > 0 && s1 + s2 !== total) {
       const diff = Math.abs(s1 + s2 - total);
       return `Split total is off by ${formatMoney(diff, settings.baseCurrency)}`;
     }
     return '';
-  }, [splitEnabled, expression, split1Expression, split2Expression, settings.baseCurrency]);
+  }, [
+    splitEnabled,
+    expression,
+    split1Expression,
+    split2Expression,
+    settings.baseCurrency,
+  ]);
 
-  const handleSplit1Change = useCallback((val: string) => {
-    setSplit1Expression(val);
-    const total = evalExpression(expression);
-    const s1 = evalExpression(val);
-    if (total > 0 && s1 > 0 && s1 <= total) {
-      const remainder = Math.round((total - s1) * 100) / 100;
-      setSplit2Expression(String(remainder));
-    }
-  }, [expression]);
+  const handleSplit1Change = useCallback(
+    (val: string) => {
+      setSplit1Expression(val);
+      const total = evalExpression(expression);
+      const s1 = evalExpression(val);
+      if (total > 0 && s1 > 0 && s1 <= total) {
+        const remainder = Math.round((total - s1) * 100) / 100;
+        setSplit2Expression(String(remainder));
+      }
+    },
+    [expression],
+  );
 
-  const handleSplit2Change = useCallback((val: string) => {
-    setSplit2Expression(val);
-    const total = evalExpression(expression);
-    const s2 = evalExpression(val);
-    if (total > 0 && s2 > 0 && s2 <= total) {
-      const remainder = Math.round((total - s2) * 100) / 100;
-      setSplit1Expression(String(remainder));
-    }
-  }, [expression]);
+  const handleSplit2Change = useCallback(
+    (val: string) => {
+      setSplit2Expression(val);
+      const total = evalExpression(expression);
+      const s2 = evalExpression(val);
+      if (total > 0 && s2 > 0 && s2 <= total) {
+        const remainder = Math.round((total - s2) * 100) / 100;
+        setSplit1Expression(String(remainder));
+      }
+    },
+    [expression],
+  );
 
-  const togglePanel = useCallback((panel: PanelType) => {
-    Keyboard.dismiss();
-    setShowTimePicker(false);
-    setActivePanel((prev) => {
-      const next = prev === panel ? 'none' : panel;
-      Animated.timing(panelAnim, {
-        toValue: next === 'none' ? 0 : 1,
-        duration: 250,
-        useNativeDriver: false,
-      }).start();
-      return next;
-    });
-  }, [panelAnim]);
+  const togglePanel = useCallback(
+    (panel: PanelType) => {
+      Keyboard.dismiss();
+      setShowTimePicker(false);
+      setActivePanel((prev) => {
+        const next = prev === panel ? 'none' : panel;
+        Animated.timing(panelAnim, {
+          toValue: next === 'none' ? 0 : 1,
+          duration: 250,
+          useNativeDriver: false,
+        }).start();
+        return next;
+      });
+    },
+    [panelAnim],
+  );
 
   const closePanel = useCallback(() => {
     setActivePanel('none');
@@ -212,7 +233,10 @@ export default function AddTransactionScreen({
     }).start();
   }, [panelAnim]);
 
-  const handleDigit = useCallback((d: string) => setExpression((e) => e + d), []);
+  const handleDigit = useCallback(
+    (d: string) => setExpression((e) => e + d),
+    [],
+  );
   const handleOperator = useCallback((op: string) => {
     setExpression((e) => {
       if (e.length === 0) return e;
@@ -229,7 +253,10 @@ export default function AddTransactionScreen({
       return e + '.';
     });
   }, []);
-  const handleBackspace = useCallback(() => setExpression((e) => e.slice(0, -1)), []);
+  const handleBackspace = useCallback(
+    () => setExpression((e) => e.slice(0, -1)),
+    [],
+  );
   const handleClear = useCallback(() => setExpression(''), []);
   const handleEquals = useCallback(() => {
     const result = evalExpression(expression);
@@ -250,7 +277,9 @@ export default function AddTransactionScreen({
       return;
     }
     if (!account1Id) {
-      setSnackbar(isTransfer(type) ? 'Select a From account' : 'Select an account');
+      setSnackbar(
+        isTransfer(type) ? 'Select a From account' : 'Select an account',
+      );
       return;
     }
 
@@ -337,7 +366,12 @@ export default function AddTransactionScreen({
 
   if (!loaded) return null;
 
-  const amountColor = type === 'income' ? colors.income : type === 'expense' ? colors.expense : colors.transfer;
+  const amountColor =
+    type === 'income'
+      ? colors.income
+      : type === 'expense'
+        ? colors.expense
+        : colors.transfer;
   const dateLabel = format(new Date(dateStr + 'T00:00:00'), 'MMM d, yyyy');
   const [hh, mm] = timeStr.split(':').map(Number);
   const timeLabel = format(new Date(2000, 0, 1, hh, mm), 'h:mm a');
@@ -345,7 +379,11 @@ export default function AddTransactionScreen({
 
   const typeSwitcherBg = typeAnim.interpolate({
     inputRange: [0, 1, 2],
-    outputRange: [colors.income + '20', colors.expense + '20', colors.transfer + '20'],
+    outputRange: [
+      colors.income + '20',
+      colors.expense + '20',
+      colors.transfer + '20',
+    ],
   });
 
   return (
@@ -362,18 +400,27 @@ export default function AddTransactionScreen({
         <Text style={styles.headerTitle}>
           {isEditing ? 'Edit Transaction' : 'New Transaction'}
         </Text>
-        <TouchableOpacity onPress={onSubmit} hitSlop={16} style={styles.saveBtn}>
+        <TouchableOpacity
+          onPress={onSubmit}
+          hitSlop={16}
+          style={styles.saveBtn}
+        >
           <Icon source="check" size={18} color={colors.onPrimary} />
           <Text style={styles.saveBtnText}>Save</Text>
         </TouchableOpacity>
       </View>
 
       {/* ── Type Switcher ── */}
-      <Animated.View style={[styles.typeSwitcher, { backgroundColor: typeSwitcherBg }]}>
+      <Animated.View
+        style={[styles.typeSwitcher, { backgroundColor: typeSwitcherBg }]}
+      >
         <TouchableOpacity
           style={[
             styles.typeTab,
-            type === 'expense' && [styles.typeTabActive, { backgroundColor: colors.expense }],
+            type === 'expense' && [
+              styles.typeTabActive,
+              { backgroundColor: colors.expense },
+            ],
           ]}
           onPress={() => setType('expense')}
           activeOpacity={0.7}
@@ -383,14 +430,22 @@ export default function AddTransactionScreen({
             size={16}
             color={type === 'expense' ? '#fff' : colors.textSecondary}
           />
-          <Text style={[styles.typeTabText, type === 'expense' && styles.typeTabTextActive]}>
+          <Text
+            style={[
+              styles.typeTabText,
+              type === 'expense' && styles.typeTabTextActive,
+            ]}
+          >
             Expense
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[
             styles.typeTab,
-            type === 'income' && [styles.typeTabActive, { backgroundColor: colors.income }],
+            type === 'income' && [
+              styles.typeTabActive,
+              { backgroundColor: colors.income },
+            ],
           ]}
           onPress={() => setType('income')}
           activeOpacity={0.7}
@@ -400,14 +455,22 @@ export default function AddTransactionScreen({
             size={16}
             color={type === 'income' ? '#fff' : colors.textSecondary}
           />
-          <Text style={[styles.typeTabText, type === 'income' && styles.typeTabTextActive]}>
+          <Text
+            style={[
+              styles.typeTabText,
+              type === 'income' && styles.typeTabTextActive,
+            ]}
+          >
             Income
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[
             styles.typeTab,
-            type === 'transfer' && [styles.typeTabActive, { backgroundColor: colors.transfer }],
+            type === 'transfer' && [
+              styles.typeTabActive,
+              { backgroundColor: colors.transfer },
+            ],
           ]}
           onPress={() => setType('transfer')}
           activeOpacity={0.7}
@@ -417,7 +480,12 @@ export default function AddTransactionScreen({
             size={16}
             color={type === 'transfer' ? '#fff' : colors.textSecondary}
           />
-          <Text style={[styles.typeTabText, type === 'transfer' && styles.typeTabTextActive]}>
+          <Text
+            style={[
+              styles.typeTabText,
+              type === 'transfer' && styles.typeTabTextActive,
+            ]}
+          >
             Transfer
           </Text>
         </TouchableOpacity>
@@ -435,8 +503,12 @@ export default function AddTransactionScreen({
           showsVerticalScrollIndicator={false}
         >
           {/* ── Amount Hero ── */}
-          <View style={[styles.amountHero, { borderColor: amountColor + '30' }]}>
-            <View style={[styles.amountAccent, { backgroundColor: amountColor }]} />
+          <View
+            style={[styles.amountHero, { borderColor: amountColor + '30' }]}
+          >
+            <View
+              style={[styles.amountAccent, { backgroundColor: amountColor }]}
+            />
             <View style={styles.amountContent}>
               <Text style={styles.amountLabel}>Amount</Text>
               <View style={styles.amountInputRow}>
@@ -458,7 +530,10 @@ export default function AddTransactionScreen({
               </View>
             </View>
             <TouchableOpacity
-              style={[styles.calcTrigger, { backgroundColor: amountColor + '18' }]}
+              style={[
+                styles.calcTrigger,
+                { backgroundColor: amountColor + '18' },
+              ]}
               onPress={() => togglePanel('calculator')}
               activeOpacity={0.7}
             >
@@ -475,8 +550,17 @@ export default function AddTransactionScreen({
                 onPress={() => setAccount1PickerVisible(true)}
                 activeOpacity={0.6}
               >
-                <View style={[styles.selectorIconWrap, { backgroundColor: colors.expense + '18' }]}>
-                  <Icon source={selectedAccount1?.icon ?? 'wallet'} size={20} color={colors.expense} />
+                <View
+                  style={[
+                    styles.selectorIconWrap,
+                    { backgroundColor: colors.expense + '18' },
+                  ]}
+                >
+                  <Icon
+                    source={selectedAccount1?.icon ?? 'wallet'}
+                    size={20}
+                    color={colors.expense}
+                  />
                 </View>
                 <View style={styles.selectorTextCol}>
                   <Text style={styles.selectorLabel}>From Account</Text>
@@ -484,7 +568,11 @@ export default function AddTransactionScreen({
                     {selectedAccount1?.name ?? 'Select account'}
                   </Text>
                 </View>
-                <Icon source="chevron-right" size={20} color={colors.textTertiary} />
+                <Icon
+                  source="chevron-right"
+                  size={20}
+                  color={colors.textTertiary}
+                />
               </TouchableOpacity>
 
               <View style={styles.selectorDivider} />
@@ -500,8 +588,17 @@ export default function AddTransactionScreen({
                 onPress={() => setAccount2PickerVisible(true)}
                 activeOpacity={0.6}
               >
-                <View style={[styles.selectorIconWrap, { backgroundColor: colors.income + '18' }]}>
-                  <Icon source={selectedAccount2?.icon ?? 'wallet'} size={20} color={colors.income} />
+                <View
+                  style={[
+                    styles.selectorIconWrap,
+                    { backgroundColor: colors.income + '18' },
+                  ]}
+                >
+                  <Icon
+                    source={selectedAccount2?.icon ?? 'wallet'}
+                    size={20}
+                    color={colors.income}
+                  />
                 </View>
                 <View style={styles.selectorTextCol}>
                   <Text style={styles.selectorLabel}>To Account</Text>
@@ -509,7 +606,11 @@ export default function AddTransactionScreen({
                     {selectedAccount2?.name ?? 'Select account'}
                   </Text>
                 </View>
-                <Icon source="chevron-right" size={20} color={colors.textTertiary} />
+                <Icon
+                  source="chevron-right"
+                  size={20}
+                  color={colors.textTertiary}
+                />
               </TouchableOpacity>
             </View>
           ) : (
@@ -519,8 +620,17 @@ export default function AddTransactionScreen({
                 onPress={() => setAccount1PickerVisible(true)}
                 activeOpacity={0.6}
               >
-                <View style={[styles.selectorIconWrap, { backgroundColor: colors.primary + '18' }]}>
-                  <Icon source={selectedAccount1?.icon ?? 'wallet'} size={20} color={colors.primary} />
+                <View
+                  style={[
+                    styles.selectorIconWrap,
+                    { backgroundColor: colors.primary + '18' },
+                  ]}
+                >
+                  <Icon
+                    source={selectedAccount1?.icon ?? 'wallet'}
+                    size={20}
+                    color={colors.primary}
+                  />
                 </View>
                 <View style={styles.selectorTextCol}>
                   <Text style={styles.selectorLabel}>Account</Text>
@@ -528,7 +638,11 @@ export default function AddTransactionScreen({
                     {selectedAccount1?.name ?? 'Select account'}
                   </Text>
                 </View>
-                <Icon source="chevron-right" size={20} color={colors.textTertiary} />
+                <Icon
+                  source="chevron-right"
+                  size={20}
+                  color={colors.textTertiary}
+                />
               </TouchableOpacity>
 
               <View style={styles.selectorDivider} />
@@ -541,7 +655,11 @@ export default function AddTransactionScreen({
                 <View
                   style={[
                     styles.selectorIconWrap,
-                    { backgroundColor: (selectedCategory?.color ?? colors.textSecondary) + '18' },
+                    {
+                      backgroundColor:
+                        (selectedCategory?.color ?? colors.textSecondary) +
+                        '18',
+                    },
                   ]}
                 >
                   <Icon
@@ -556,7 +674,11 @@ export default function AddTransactionScreen({
                     {selectedCategory?.name ?? 'Select category'}
                   </Text>
                 </View>
-                <Icon source="chevron-right" size={20} color={colors.textTertiary} />
+                <Icon
+                  source="chevron-right"
+                  size={20}
+                  color={colors.textTertiary}
+                />
               </TouchableOpacity>
             </View>
           )}
@@ -592,7 +714,11 @@ export default function AddTransactionScreen({
               <Icon
                 source="calendar-month-outline"
                 size={18}
-                color={activePanel === 'calendar' ? colors.primary : colors.textSecondary}
+                color={
+                  activePanel === 'calendar'
+                    ? colors.primary
+                    : colors.textSecondary
+                }
               />
               <Text
                 style={[
@@ -605,7 +731,10 @@ export default function AddTransactionScreen({
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.dateTimeChip, showTimePicker && styles.dateTimeChipActive]}
+              style={[
+                styles.dateTimeChip,
+                showTimePicker && styles.dateTimeChipActive,
+              ]}
               onPress={() => {
                 Keyboard.dismiss();
                 setShowTimePicker((v) => !v);
@@ -619,7 +748,10 @@ export default function AddTransactionScreen({
                 color={showTimePicker ? colors.primary : colors.textSecondary}
               />
               <Text
-                style={[styles.dateTimeText, showTimePicker && { color: colors.primary }]}
+                style={[
+                  styles.dateTimeText,
+                  showTimePicker && { color: colors.primary },
+                ]}
               >
                 {timeLabel}
               </Text>
@@ -637,11 +769,18 @@ export default function AddTransactionScreen({
               <View style={styles.timePickerBody}>
                 <View style={styles.timeColumn}>
                   <Text style={styles.timeColumnLabel}>Hour</Text>
-                  <ScrollView style={styles.timeScroll} showsVerticalScrollIndicator={false} nestedScrollEnabled>
+                  <ScrollView
+                    style={styles.timeScroll}
+                    showsVerticalScrollIndicator={false}
+                    nestedScrollEnabled
+                  >
                     {HOURS.map((h) => (
                       <TouchableOpacity
                         key={h}
-                        style={[styles.timeOption, hh === h && styles.timeOptionActive]}
+                        style={[
+                          styles.timeOption,
+                          hh === h && styles.timeOptionActive,
+                        ]}
                         onPress={() =>
                           setTimeStr(
                             `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`,
@@ -669,11 +808,18 @@ export default function AddTransactionScreen({
                 <View style={styles.timeColumnDivider} />
                 <View style={styles.timeColumn}>
                   <Text style={styles.timeColumnLabel}>Minute</Text>
-                  <ScrollView style={styles.timeScroll} showsVerticalScrollIndicator={false} nestedScrollEnabled>
+                  <ScrollView
+                    style={styles.timeScroll}
+                    showsVerticalScrollIndicator={false}
+                    nestedScrollEnabled
+                  >
                     {MINUTES.map((m) => (
                       <TouchableOpacity
                         key={m}
-                        style={[styles.timeOption, mm === m && styles.timeOptionActive]}
+                        style={[
+                          styles.timeOption,
+                          mm === m && styles.timeOptionActive,
+                        ]}
                         onPress={() =>
                           setTimeStr(
                             `${String(hh).padStart(2, '0')}:${String(m).padStart(2, '0')}`,
@@ -698,117 +844,169 @@ export default function AddTransactionScreen({
 
           {/* ── Split Payment (hidden for transfers) ── */}
           {!isTransfer(type) && (
-          <>
-          <Text style={styles.sectionLabel}>PAYMENT</Text>
-          <View style={styles.splitToggleCard}>
-            <View style={styles.splitToggleLeft}>
-              <View style={[styles.splitToggleIcon, { backgroundColor: colors.transfer + '18' }]}>
-                <Icon source="call-split" size={18} color={colors.transfer} />
-              </View>
-              <View>
-                <Text style={styles.splitTitle}>Split Payment</Text>
-                <Text style={styles.splitSubtitle}>Pay from two accounts</Text>
-              </View>
-            </View>
-            <Switch value={splitEnabled} onValueChange={setSplitEnabled} color={colors.primary} />
-          </View>
-
-          {splitEnabled && (
-            <View style={styles.splitSection}>
-              <View style={styles.splitAccountCard}>
-                <View style={styles.splitAccountHeader}>
-                  <View style={[styles.splitDot, { backgroundColor: colors.primary }]} />
-                  <TouchableOpacity
-                    style={styles.splitAccountChip}
-                    onPress={() => setAccount1PickerVisible(true)}
+            <>
+              <Text style={styles.sectionLabel}>PAYMENT</Text>
+              <View style={styles.splitToggleCard}>
+                <View style={styles.splitToggleLeft}>
+                  <View
+                    style={[
+                      styles.splitToggleIcon,
+                      { backgroundColor: colors.transfer + '18' },
+                    ]}
                   >
-                    <Text style={styles.splitAccountText} numberOfLines={1}>
-                      {selectedAccount1?.name ?? 'Account 1'}
+                    <Icon
+                      source="call-split"
+                      size={18}
+                      color={colors.transfer}
+                    />
+                  </View>
+                  <View>
+                    <Text style={styles.splitTitle}>Split Payment</Text>
+                    <Text style={styles.splitSubtitle}>
+                      Pay from two accounts
                     </Text>
-                    <Icon source="chevron-down" size={14} color={colors.textSecondary} />
-                  </TouchableOpacity>
+                  </View>
                 </View>
-                <View style={styles.splitInputRow}>
-                  <Text style={styles.splitCurrency}>{settings.currencySymbol}</Text>
-                  <TextInput
-                    value={split1Expression}
-                    onChangeText={handleSplit1Change}
-                    placeholder="0.00"
-                    placeholderTextColor={colors.textTertiary}
-                    keyboardType="decimal-pad"
-                    mode="flat"
-                    style={styles.splitAmountInput}
-                    underlineColor="transparent"
-                    activeUnderlineColor={colors.primary}
-                    textColor={colors.text}
-                    dense
-                  />
-                </View>
+                <Switch
+                  value={splitEnabled}
+                  onValueChange={setSplitEnabled}
+                  color={colors.primary}
+                />
               </View>
 
-              <View style={styles.splitConnector}>
-                <View style={styles.splitConnectorLine} />
-                <View style={styles.splitPlusCircle}>
-                  <Icon source="plus" size={12} color={colors.textSecondary} />
-                </View>
-                <View style={styles.splitConnectorLine} />
-              </View>
+              {splitEnabled && (
+                <View style={styles.splitSection}>
+                  <View style={styles.splitAccountCard}>
+                    <View style={styles.splitAccountHeader}>
+                      <View
+                        style={[
+                          styles.splitDot,
+                          { backgroundColor: colors.primary },
+                        ]}
+                      />
+                      <TouchableOpacity
+                        style={styles.splitAccountChip}
+                        onPress={() => setAccount1PickerVisible(true)}
+                      >
+                        <Text style={styles.splitAccountText} numberOfLines={1}>
+                          {selectedAccount1?.name ?? 'Account 1'}
+                        </Text>
+                        <Icon
+                          source="chevron-down"
+                          size={14}
+                          color={colors.textSecondary}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                    <View style={styles.splitInputRow}>
+                      <Text style={styles.splitCurrency}>
+                        {settings.currencySymbol}
+                      </Text>
+                      <TextInput
+                        value={split1Expression}
+                        onChangeText={handleSplit1Change}
+                        placeholder="0.00"
+                        placeholderTextColor={colors.textTertiary}
+                        keyboardType="decimal-pad"
+                        mode="flat"
+                        style={styles.splitAmountInput}
+                        underlineColor="transparent"
+                        activeUnderlineColor={colors.primary}
+                        textColor={colors.text}
+                        dense
+                      />
+                    </View>
+                  </View>
 
-              <View style={styles.splitAccountCard}>
-                <View style={styles.splitAccountHeader}>
-                  <View style={[styles.splitDot, { backgroundColor: colors.transfer }]} />
-                  <TouchableOpacity
-                    style={styles.splitAccountChip}
-                    onPress={() => setAccount2PickerVisible(true)}
-                  >
-                    <Text style={styles.splitAccountText} numberOfLines={1}>
-                      {selectedAccount2?.name ?? 'Account 2'}
-                    </Text>
-                    <Icon source="chevron-down" size={14} color={colors.textSecondary} />
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.splitInputRow}>
-                  <Text style={styles.splitCurrency}>{settings.currencySymbol}</Text>
-                  <TextInput
-                    value={split2Expression}
-                    onChangeText={handleSplit2Change}
-                    placeholder="0.00"
-                    placeholderTextColor={colors.textTertiary}
-                    keyboardType="decimal-pad"
-                    mode="flat"
-                    style={styles.splitAmountInput}
-                    underlineColor="transparent"
-                    activeUnderlineColor={colors.primary}
-                    textColor={colors.text}
-                    dense
-                  />
-                </View>
-              </View>
+                  <View style={styles.splitConnector}>
+                    <View style={styles.splitConnectorLine} />
+                    <View style={styles.splitPlusCircle}>
+                      <Icon
+                        source="plus"
+                        size={12}
+                        color={colors.textSecondary}
+                      />
+                    </View>
+                    <View style={styles.splitConnectorLine} />
+                  </View>
 
-              {totalForSplit > 0 && (
-                <View style={styles.splitTotalRow}>
-                  <Text style={styles.splitTotalLabel}>Total</Text>
-                  <Text style={styles.splitTotalValue}>
-                    {settings.currencySymbol} {totalForSplit}
-                  </Text>
+                  <View style={styles.splitAccountCard}>
+                    <View style={styles.splitAccountHeader}>
+                      <View
+                        style={[
+                          styles.splitDot,
+                          { backgroundColor: colors.transfer },
+                        ]}
+                      />
+                      <TouchableOpacity
+                        style={styles.splitAccountChip}
+                        onPress={() => setAccount2PickerVisible(true)}
+                      >
+                        <Text style={styles.splitAccountText} numberOfLines={1}>
+                          {selectedAccount2?.name ?? 'Account 2'}
+                        </Text>
+                        <Icon
+                          source="chevron-down"
+                          size={14}
+                          color={colors.textSecondary}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                    <View style={styles.splitInputRow}>
+                      <Text style={styles.splitCurrency}>
+                        {settings.currencySymbol}
+                      </Text>
+                      <TextInput
+                        value={split2Expression}
+                        onChangeText={handleSplit2Change}
+                        placeholder="0.00"
+                        placeholderTextColor={colors.textTertiary}
+                        keyboardType="decimal-pad"
+                        mode="flat"
+                        style={styles.splitAmountInput}
+                        underlineColor="transparent"
+                        activeUnderlineColor={colors.primary}
+                        textColor={colors.text}
+                        dense
+                      />
+                    </View>
+                  </View>
+
+                  {totalForSplit > 0 && (
+                    <View style={styles.splitTotalRow}>
+                      <Text style={styles.splitTotalLabel}>Total</Text>
+                      <Text style={styles.splitTotalValue}>
+                        {settings.currencySymbol} {totalForSplit}
+                      </Text>
+                    </View>
+                  )}
+
+                  {!!splitSumError && (
+                    <View style={styles.splitErrorRow}>
+                      <Icon
+                        source="alert-circle-outline"
+                        size={14}
+                        color={colors.error}
+                      />
+                      <Text style={styles.splitErrorText}>{splitSumError}</Text>
+                    </View>
+                  )}
                 </View>
               )}
-
-              {!!splitSumError && (
-                <View style={styles.splitErrorRow}>
-                  <Icon source="alert-circle-outline" size={14} color={colors.error} />
-                  <Text style={styles.splitErrorText}>{splitSumError}</Text>
-                </View>
-              )}
-            </View>
-          )}
-          </>
+            </>
           )}
 
           {isEditing && (
-            <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={handleDelete}
+            >
               <View style={styles.deleteIconWrap}>
-                <Icon source="trash-can-outline" size={18} color={colors.error} />
+                <Icon
+                  source="trash-can-outline"
+                  size={18}
+                  color={colors.error}
+                />
               </View>
               <Text style={styles.deleteText}>Delete Transaction</Text>
             </TouchableOpacity>
@@ -850,16 +1048,26 @@ export default function AddTransactionScreen({
       )}
 
       {/* ── Bottom Toolbar ── */}
-      <View style={[styles.bottomToolbar, { paddingBottom: insets.bottom + spacing.xs }]}>
+      <View
+        style={[
+          styles.bottomToolbar,
+          { paddingBottom: insets.bottom + spacing.xs },
+        ]}
+      >
         <TouchableOpacity
-          style={[styles.toolbarBtn, activePanel === 'calendar' && styles.toolbarBtnActive]}
+          style={[
+            styles.toolbarBtn,
+            activePanel === 'calendar' && styles.toolbarBtnActive,
+          ]}
           onPress={() => togglePanel('calendar')}
           activeOpacity={0.7}
         >
           <Icon
             source="calendar-month"
             size={22}
-            color={activePanel === 'calendar' ? colors.primary : colors.textSecondary}
+            color={
+              activePanel === 'calendar' ? colors.primary : colors.textSecondary
+            }
           />
           <Text
             style={[
@@ -885,21 +1093,31 @@ export default function AddTransactionScreen({
             color={showTimePicker ? colors.primary : colors.textSecondary}
           />
           <Text
-            style={[styles.toolbarLabel, showTimePicker && { color: colors.primary }]}
+            style={[
+              styles.toolbarLabel,
+              showTimePicker && { color: colors.primary },
+            ]}
           >
             Time
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.toolbarBtn, activePanel === 'calculator' && styles.toolbarBtnActive]}
+          style={[
+            styles.toolbarBtn,
+            activePanel === 'calculator' && styles.toolbarBtnActive,
+          ]}
           onPress={() => togglePanel('calculator')}
           activeOpacity={0.7}
         >
           <Icon
             source="calculator"
             size={22}
-            color={activePanel === 'calculator' ? colors.primary : colors.textSecondary}
+            color={
+              activePanel === 'calculator'
+                ? colors.primary
+                : colors.textSecondary
+            }
           />
           <Text
             style={[
@@ -935,7 +1153,11 @@ export default function AddTransactionScreen({
         selectedId={account2Id}
         title={isTransfer(type) ? 'To Account' : undefined}
       />
-      <Snackbar visible={!!snackbar} onDismiss={() => setSnackbar('')} duration={3000}>
+      <Snackbar
+        visible={!!snackbar}
+        onDismiss={() => setSnackbar('')}
+        duration={3000}
+      >
         {snackbar}
       </Snackbar>
     </View>

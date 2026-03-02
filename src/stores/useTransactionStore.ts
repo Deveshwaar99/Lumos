@@ -1,5 +1,9 @@
 import { create } from 'zustand';
-import { TransactionWithSplits, TransactionFilter, CreateTransactionInput } from '../models/types';
+import {
+  TransactionWithSplits,
+  TransactionFilter,
+  CreateTransactionInput,
+} from '../models/types';
 import { transactionService } from '../services/transactionService';
 
 const PAGE_SIZE = 20;
@@ -22,8 +26,13 @@ interface TransactionState {
   hasMore: boolean;
   loadTransactions: (reset?: boolean) => Promise<void>;
   setFilter: (filter: Partial<TransactionFilter>) => Promise<void>;
-  addTransaction: (data: CreateTransactionInput) => Promise<TransactionWithSplits>;
-  updateTransaction: (id: string, data: Partial<CreateTransactionInput>) => Promise<void>;
+  addTransaction: (
+    data: CreateTransactionInput,
+  ) => Promise<TransactionWithSplits>;
+  updateTransaction: (
+    id: string,
+    data: Partial<CreateTransactionInput>,
+  ) => Promise<void>;
   removeTransaction: (id: string) => Promise<void>;
   loadMore: () => Promise<void>;
   getRecent: (limit: number) => Promise<TransactionWithSplits[]>;
@@ -52,7 +61,9 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
       const hasMore = transactions.length === PAGE_SIZE;
 
       set((state) => ({
-        transactions: reset ? transactions : [...state.transactions, ...transactions],
+        transactions: reset
+          ? transactions
+          : [...state.transactions, ...transactions],
         offset: offset + transactions.length,
         totalCount: count,
         hasMore,

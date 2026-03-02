@@ -5,7 +5,14 @@ import { colors } from '../../theme';
 import { formatMoney } from '../../utils/money';
 import type { AccountBalance } from '../../models/types';
 
-const BAR_COLORS = ['#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#F44336', '#00BCD4'];
+const BAR_COLORS = [
+  '#4CAF50',
+  '#2196F3',
+  '#FF9800',
+  '#9C27B0',
+  '#F44336',
+  '#00BCD4',
+];
 
 interface AccountContributionBarProps {
   data: AccountBalance[];
@@ -13,11 +20,17 @@ interface AccountContributionBarProps {
   currencySymbol?: string;
 }
 
-export default function AccountContributionBar({ data, currency = 'USD', currencySymbol }: AccountContributionBarProps) {
+export default function AccountContributionBar({
+  data,
+  currency = 'USD',
+  currencySymbol,
+}: AccountContributionBarProps) {
   if (data.length === 0) {
     return (
       <View style={styles.container}>
-        <Text variant="bodyMedium" style={styles.empty}>No accounts</Text>
+        <Text variant="bodyMedium" style={styles.empty}>
+          No accounts
+        </Text>
       </View>
     );
   }
@@ -35,9 +48,20 @@ export default function AccountContributionBar({ data, currency = 'USD', currenc
               {item.accountName}
             </Text>
             <View style={styles.barContainer}>
-              <View style={[styles.bar, { width: `${width}%`, backgroundColor: color }]} />
+              <View
+                style={[
+                  styles.bar,
+                  { width: `${width}%`, backgroundColor: color },
+                ]}
+              />
             </View>
-            <Text variant="bodySmall" style={[styles.value, item.balance < 0 && { color: colors.error }]}>
+            <Text
+              variant="bodySmall"
+              style={[
+                styles.value,
+                item.balance < 0 && { color: colors.error },
+              ]}
+            >
               {formatMoney(item.balance, currency, 2, currencySymbol)}
             </Text>
           </View>
