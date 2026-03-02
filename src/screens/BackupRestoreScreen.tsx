@@ -71,7 +71,7 @@ export default function BackupRestoreScreen({
                   loadTransactions(true),
                   loadBudgets(),
                 ]);
-                navigation.navigate('Tabs');
+                navigation.navigate('Tabs' as any);
               } catch (e: any) {
                 setSnackbar(e.message || 'Restore failed');
               } finally {
