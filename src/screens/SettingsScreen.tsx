@@ -72,6 +72,7 @@ export default function SettingsScreen({
   const { loadAccounts } = useAccountStore();
   const { loadBudgets } = useBudgetStore();
   const [snackbar, setSnackbar] = useState('');
+
   useEffect(() => {
     loadSettings();
   }, []);
