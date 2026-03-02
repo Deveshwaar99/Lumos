@@ -81,6 +81,19 @@ const DEFAULT_SETTINGS: Record<string, string> = {
 };
 
 export async function seedDatabase(db: SQLiteDatabase): Promise<void> {
+  const alreadySeeded = await db.getFirstAsync<{ value: string }>(
+    "SELECT value FROM settings WHERE key = 'seeded'",
+  );
+  if (alreadySeeded) return;
+
+  for (const [key, value] of Object.entries(DEFAULT_SETTINGS)) {
+    await db.runAsync(
+      'INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)',
+      key,
+      value,
+    );
+  }
+
   for (const cat of EXPENSE_CATEGORIES) {
     await db.runAsync(
       'INSERT OR IGNORE INTO categories (id, name, type, icon, color) VALUES (?, ?, ?, ?, ?)',
@@ -115,13 +128,9 @@ export async function seedDatabase(db: SQLiteDatabase): Promise<void> {
     );
   }
 
-  for (const [key, value] of Object.entries(DEFAULT_SETTINGS)) {
-    await db.runAsync(
-      'INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)',
-      key,
-      value,
-    );
-  }
+  await db.runAsync(
+    "INSERT OR REPLACE INTO settings (key, value) VALUES ('seeded', 'true')",
+  );
 }
 
 export async function seedDemoTransactions(db: SQLiteDatabase): Promise<void> {
