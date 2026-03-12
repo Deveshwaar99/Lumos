@@ -118,9 +118,8 @@ export default function TransactionDetailScreen({
           {amountPrefix}
           {formatMoney(
             transaction.totalAmountCents,
-            transaction.currency,
-            2,
             settings.currencySymbol,
+            2,
           )}
         </Text>
         <View style={styles.heroDateRow}>
@@ -165,9 +164,8 @@ export default function TransactionDetailScreen({
                 <Text variant="bodyLarge" style={{ fontWeight: '600' }}>
                   {formatMoney(
                     transaction.totalAmountCents,
-                    transaction.currency,
-                    2,
                     settings.currencySymbol,
+                    2,
                   )}
                 </Text>
               </View>
@@ -191,9 +189,8 @@ export default function TransactionDetailScreen({
                 <Text variant="bodyLarge" style={{ fontWeight: '600' }}>
                   {formatMoney(
                     transaction.totalAmountCents,
-                    transaction.currency,
-                    2,
                     settings.currencySymbol,
+                    2,
                   )}
                 </Text>
               </View>
@@ -238,9 +235,8 @@ export default function TransactionDetailScreen({
                     <Text variant="bodyLarge" style={{ fontWeight: '600' }}>
                       {formatMoney(
                         split.amountCents,
-                        transaction.currency,
-                        2,
                         settings.currencySymbol,
+                        2,
                       )}
                     </Text>
                   </View>

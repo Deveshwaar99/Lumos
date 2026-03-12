@@ -16,13 +16,11 @@ const BAR_COLORS = [
 
 interface AccountContributionBarProps {
   data: AccountBalance[];
-  currency?: string;
   currencySymbol?: string;
 }
 
 export default function AccountContributionBar({
   data,
-  currency = 'USD',
   currencySymbol,
 }: AccountContributionBarProps) {
   if (data.length === 0) {
@@ -62,7 +60,7 @@ export default function AccountContributionBar({
                 item.balance < 0 && { color: colors.error },
               ]}
             >
-              {formatMoney(item.balance, currency, 2, currencySymbol)}
+              {formatMoney(item.balance, currencySymbol)}
             </Text>
           </View>
         );

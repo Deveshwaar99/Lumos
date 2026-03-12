@@ -17,7 +17,6 @@ import type { NetWorthPoint } from '../../models/types';
 
 interface NetWorthChartProps {
   data: NetWorthPoint[];
-  currency: string;
   currencySymbol?: string;
 }
 
@@ -33,7 +32,6 @@ function formatCompactY(val: number, currencySymbol?: string): string {
 
 export default function NetWorthChart({
   data,
-  currency,
   currencySymbol,
 }: NetWorthChartProps) {
   if (data.length === 0) {
@@ -114,7 +112,7 @@ export default function NetWorthChart({
               { color: currentNetWorth >= 0 ? colors.income : colors.expense },
             ]}
           >
-            {formatMoney(currentNetWorth, currency, 0, currencySymbol)}
+            {formatMoney(currentNetWorth, currencySymbol, 0)}
           </Text>
         </View>
         <View
@@ -139,7 +137,7 @@ export default function NetWorthChart({
               ]}
             >
               {changePositive ? '+' : ''}
-              {formatMoney(change, currency, 0, currencySymbol)}
+              {formatMoney(change, currencySymbol, 0)}
             </Text>
             <Text
               style={[

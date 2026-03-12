@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -17,6 +17,7 @@ import { useCategoryStore } from '../stores/useCategoryStore';
 import { useAccountStore } from '../stores/useAccountStore';
 import { useBudgetStore } from '../stores/useBudgetStore';
 import { colors, spacing, radius } from '../theme';
+import type { AppSettings } from '../models/types';
 import type { RootStackScreenProps } from '../navigation/types';
 
 function GroupedCard({ children }: { children: React.ReactNode }) {
@@ -72,10 +73,31 @@ export default function SettingsScreen({
   const { loadAccounts } = useAccountStore();
   const { loadBudgets } = useBudgetStore();
   const [snackbar, setSnackbar] = useState('');
+  const [localName, setLocalName] = useState(settings.username);
+  const [localSymbol, setLocalSymbol] = useState(settings.currencySymbol);
+  const debounceRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   useEffect(() => {
     loadSettings();
+    return () => {
+      Object.values(debounceRef.current).forEach(clearTimeout);
+    };
   }, []);
+
+  useEffect(() => {
+    setLocalName(settings.username);
+    setLocalSymbol(settings.currencySymbol);
+  }, [settings.username, settings.currencySymbol]);
+
+  const debouncedUpdate = <K extends keyof AppSettings>(
+    key: K,
+    value: AppSettings[K],
+  ) => {
+    if (debounceRef.current[key]) clearTimeout(debounceRef.current[key]);
+    debounceRef.current[key] = setTimeout(() => {
+      updateSetting(key, value);
+    }, 500);
+  };
 
   const handleSeedDemo = () => {
     Alert.alert(
@@ -144,8 +166,11 @@ export default function SettingsScreen({
               title="Name"
               right={
                 <TextInput
-                  value={settings.username}
-                  onChangeText={(v) => updateSetting('username', v)}
+                  value={localName}
+                  onChangeText={(v) => {
+                    setLocalName(v);
+                    debouncedUpdate('username', v);
+                  }}
                   placeholder="Your name"
                   placeholderTextColor={colors.textTertiary}
                   mode="flat"
@@ -164,32 +189,15 @@ export default function SettingsScreen({
           <Text style={styles.sectionHeader}>Currency</Text>
           <GroupedCard>
             <CardRow
-              icon="cash"
-              title="Code"
-              right={
-                <TextInput
-                  value={settings.baseCurrency}
-                  onChangeText={(v) =>
-                    updateSetting('baseCurrency', v.toUpperCase())
-                  }
-                  mode="flat"
-                  style={styles.inlineInput}
-                  contentStyle={styles.inlineInputContent}
-                  underlineStyle={styles.inlineInputUnderline}
-                  maxLength={3}
-                  autoCapitalize="characters"
-                  cursorColor={colors.primary}
-                  selectionColor={colors.primary + '40'}
-                />
-              }
-            />
-            <CardRow
               icon="currency-usd"
               title="Symbol"
               right={
                 <TextInput
-                  value={settings.currencySymbol}
-                  onChangeText={(v) => updateSetting('currencySymbol', v)}
+                  value={localSymbol}
+                  onChangeText={(v) => {
+                    setLocalSymbol(v);
+                    debouncedUpdate('currencySymbol', v);
+                  }}
                   mode="flat"
                   style={styles.inlineInput}
                   contentStyle={styles.inlineInputContent}

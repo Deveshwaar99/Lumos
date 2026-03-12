@@ -9,7 +9,6 @@ function mapRow(row: any): Account {
     type: row.type,
     icon: row.icon,
     openingBalanceCents: row.opening_balance_cents,
-    currency: row.currency,
   };
 }
 
@@ -41,7 +40,7 @@ export const accountService = {
       data.type,
       data.icon,
       data.openingBalanceCents,
-      data.currency,
+      'USD',
     );
     return { id, ...data };
   },
@@ -65,10 +64,6 @@ export const accountService = {
     if (data.openingBalanceCents !== undefined) {
       fields.push('opening_balance_cents = ?');
       values.push(data.openingBalanceCents);
-    }
-    if (data.currency !== undefined) {
-      fields.push('currency = ?');
-      values.push(data.currency);
     }
     if (fields.length === 0) return;
     values.push(id);

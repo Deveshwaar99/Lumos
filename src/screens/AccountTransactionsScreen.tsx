@@ -97,9 +97,8 @@ export default function AccountTransactionsScreen({
         >
           {formatMoney(
             balance,
-            settings.baseCurrency,
-            2,
             settings.currencySymbol,
+            2,
           )}
         </Text>
       </View>
@@ -152,7 +151,7 @@ export default function AccountTransactionsScreen({
 
       <FAB
         icon="plus"
-        style={[styles.fab, { bottom: insets.bottom + 2 }]}
+        style={[styles.fab, { bottom: insets.bottom + 16 }]}
         onPress={() => navigation.navigate('AddTransaction')}
         color="#fff"
       />
@@ -217,5 +216,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.lg,
     backgroundColor: colors.primary,
+    opacity: 0.6,
   },
 });

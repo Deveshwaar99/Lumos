@@ -125,7 +125,7 @@ export default function FDFormScreen({
   const selectedCategory = incomeCategories.find(
     (c) => c.id === interestCategoryId,
   );
-  const currency = settings.baseCurrency;
+  const sym = settings.currencySymbol;
 
   const handleSubmit = useCallback(async () => {
     const principal = dollarsToCents(parseFloat(amountText) || 0);
@@ -172,7 +172,7 @@ export default function FDFormScreen({
         startDate,
         maturityDate,
         taxRate: tax,
-        currency,
+        currency: 'USD',
         note: note || null,
       });
       navigation.goBack();
@@ -190,7 +190,6 @@ export default function FDFormScreen({
     creditAccountId,
     interestCategoryId,
     note,
-    currency,
     addDeposit,
     navigation,
   ]);
@@ -481,9 +480,8 @@ export default function FDFormScreen({
                 <Text style={styles.previewValue}>
                   {formatMoney(
                     preview.grossInterest,
-                    currency,
+                    sym,
                     2,
-                    settings.currencySymbol,
                   )}
                 </Text>
               </View>
@@ -495,9 +493,8 @@ export default function FDFormScreen({
                   -
                   {formatMoney(
                     preview.tds,
-                    currency,
+                    sym,
                     2,
-                    settings.currencySymbol,
                   )}
                 </Text>
               </View>
@@ -512,9 +509,8 @@ export default function FDFormScreen({
                 >
                   {formatMoney(
                     preview.netInterest,
-                    currency,
+                    sym,
                     2,
-                    settings.currencySymbol,
                   )}
                 </Text>
               </View>
@@ -528,9 +524,8 @@ export default function FDFormScreen({
                 >
                   {formatMoney(
                     preview.maturityValue,
-                    currency,
+                    sym,
                     2,
-                    settings.currencySymbol,
                   )}
                 </Text>
               </View>

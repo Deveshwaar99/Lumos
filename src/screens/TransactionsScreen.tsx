@@ -75,7 +75,7 @@ export default function TransactionsScreen({
       />
       <FAB
         icon="plus"
-        style={[styles.fab, { bottom: insets.bottom + 2 }]}
+        style={[styles.fab, { bottom: insets.bottom + 16 }]}
         onPress={() => navigation.navigate('AddTransaction')}
         color="#fff"
       />
@@ -98,5 +98,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.lg,
     backgroundColor: colors.primary,
+    opacity: 0.6,
   },
 });

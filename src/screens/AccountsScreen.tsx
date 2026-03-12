@@ -59,7 +59,7 @@ export default function AccountsScreen({
   const [menuVisible, setMenuVisible] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('accounts');
   const insets = useSafeAreaInsets();
-  const currency = settings.baseCurrency;
+  const sym = settings.currencySymbol;
 
   useFocusEffect(
     useCallback(() => {
@@ -161,9 +161,8 @@ export default function AccountsScreen({
       >
         {formatMoney(
           portfolioData.netBalance,
-          currency,
+          sym,
           2,
-          settings.currencySymbol,
         )}
       </Text>
 
@@ -176,9 +175,8 @@ export default function AccountsScreen({
           <Text style={[styles.summaryAmount, { color: colors.income }]}>
             {formatMoney(
               portfolioData.totalAssets,
-              currency,
+              sym,
               2,
-              settings.currencySymbol,
             )}
           </Text>
         </View>
@@ -193,9 +191,8 @@ export default function AccountsScreen({
           <Text style={[styles.summaryAmount, { color: colors.warning }]}>
             {formatMoney(
               portfolioData.totalLiabilities,
-              currency,
+              sym,
               2,
-              settings.currencySymbol,
             )}
           </Text>
         </View>
@@ -336,7 +333,7 @@ export default function AccountsScreen({
                 balance < 0 && { color: colors.expense },
               ]}
             >
-              {formatMoney(balance, item.currency, 2, settings.currencySymbol)}
+              {formatMoney(balance, sym, 2)}
             </Text>
             <Menu
               visible={menuVisible === item.id}
@@ -430,9 +427,8 @@ export default function AccountsScreen({
               <Text style={styles.fdStatValue}>
                 {formatMoney(
                   item.principalCents,
-                  currency,
+                  sym,
                   2,
-                  settings.currencySymbol,
                 )}
               </Text>
             </View>
@@ -440,7 +436,7 @@ export default function AccountsScreen({
             <View style={styles.fdStat}>
               <Text style={styles.fdStatLabel}>Net Interest</Text>
               <Text style={[styles.fdStatValue, { color: colors.income }]}>
-                {formatMoney(net, currency, 2, settings.currencySymbol)}
+                {formatMoney(net, sym, 2)}
               </Text>
             </View>
           </View>
@@ -541,7 +537,7 @@ export default function AccountsScreen({
         : renderInvestmentsList()}
       <FAB
         icon="plus"
-        style={[styles.fab, { bottom: insets.bottom + 2 }]}
+        style={[styles.fab, { bottom: insets.bottom + 16 }]}
         onPress={() => {
           if (activeTab === 'investments') {
             (navigation as any).navigate('FDForm');
@@ -858,6 +854,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.lg,
     backgroundColor: colors.primary,
+    opacity: 0.6,
     ...elevation.lg,
   },
 });

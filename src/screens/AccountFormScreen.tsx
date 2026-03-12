@@ -12,6 +12,7 @@ import { Button, Text, Icon, Chip, Snackbar } from 'react-native-paper';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAccountStore } from '../stores/useAccountStore';
+import { z } from 'zod';
 import { accountSchema } from '../models/schemas';
 import { colors, spacing, radius } from '../theme';
 import { dollarsToCents, centsToDollars } from '../utils/money';
@@ -71,13 +72,7 @@ const ACCOUNT_ICONS = [
   'airplane',
 ];
 
-type FormData = {
-  name: string;
-  type: 'cash' | 'bank' | 'card' | 'savings' | 'other';
-  icon: string;
-  openingBalanceCents: number;
-  currency: string;
-};
+type FormData = z.infer<typeof accountSchema>;
 
 const TypePicker = React.memo(function TypePicker({
   selectedType,
@@ -176,7 +171,6 @@ export default function AccountFormScreen({
       type: existing?.type ?? 'cash',
       icon: existing?.icon ?? 'wallet',
       openingBalanceCents: existing?.openingBalanceCents ?? 0,
-      currency: existing?.currency ?? settings.baseCurrency,
     },
   });
 
@@ -256,24 +250,6 @@ export default function AccountFormScreen({
               style={[styles.textInput, { flex: 1 }]}
             />
           </View>
-
-          <Text style={styles.label}>Currency Code</Text>
-          <Controller
-            control={control}
-            name="currency"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <RNTextInput
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                placeholder="USD"
-                placeholderTextColor={colors.textTertiary}
-                maxLength={3}
-                autoCapitalize="characters"
-                style={styles.textInput}
-              />
-            )}
-          />
 
           <Button
             mode="contained"

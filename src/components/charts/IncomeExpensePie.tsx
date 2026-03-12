@@ -8,14 +8,12 @@ import { formatMoney } from '../../utils/money';
 interface IncomeExpensePieProps {
   income: number;
   expense: number;
-  currency?: string;
   currencySymbol?: string;
 }
 
 export default function IncomeExpensePie({
   income,
   expense,
-  currency = 'USD',
   currencySymbol,
 }: IncomeExpensePieProps) {
   const total = income + expense;
@@ -68,13 +66,13 @@ export default function IncomeExpensePie({
         <View style={styles.legendItem}>
           <View style={[styles.dot, { backgroundColor: colors.income }]} />
           <Text variant="bodySmall">
-            Income: {formatMoney(income, currency, 2, currencySymbol)}
+            Income: {formatMoney(income, currencySymbol)}
           </Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.dot, { backgroundColor: colors.expense }]} />
           <Text variant="bodySmall">
-            Expense: {formatMoney(expense, currency, 2, currencySymbol)}
+            Expense: {formatMoney(expense, currencySymbol)}
           </Text>
         </View>
       </View>

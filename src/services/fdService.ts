@@ -70,7 +70,6 @@ export const fdService = {
       type: 'savings',
       icon: 'lock',
       openingBalanceCents: 0,
-      currency: data.currency,
     });
 
     const id = generateId();

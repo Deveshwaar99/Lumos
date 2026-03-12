@@ -56,7 +56,7 @@ export default function FDDetailScreen({
   const { categories } = useCategoryStore();
   const { closeDeposit, removeDeposit, loadDeposits } = useFDStore();
   const { settings } = useSettingsStore();
-  const currency = settings.baseCurrency;
+  const sym = settings.currencySymbol;
 
   const [fd, setFd] = useState<FixedDeposit | null>(null);
   const [linkedTxns, setLinkedTxns] = useState<Transaction[]>([]);
@@ -199,9 +199,8 @@ export default function FDDetailScreen({
           <Text style={styles.heroAmount}>
             {formatMoney(
               fd.principalCents,
-              currency,
+              sym,
               2,
-              settings.currencySymbol,
             )}
           </Text>
           <View style={styles.heroMeta}>
@@ -339,9 +338,8 @@ export default function FDDetailScreen({
             <Text style={styles.breakdownValue}>
               {formatMoney(
                 breakdown.gross,
-                currency,
+                sym,
                 2,
-                settings.currencySymbol,
               )}
             </Text>
           </View>
@@ -349,7 +347,7 @@ export default function FDDetailScreen({
             <Text style={styles.breakdownLabel}>TDS ({fd.taxRate}%)</Text>
             <Text style={[styles.breakdownValue, { color: colors.expense }]}>
               -
-              {formatMoney(breakdown.tds, currency, 2, settings.currencySymbol)}
+              {formatMoney(breakdown.tds, sym, 2)}
             </Text>
           </View>
           <View style={styles.breakdownDivider} />
@@ -363,7 +361,7 @@ export default function FDDetailScreen({
                 { color: colors.income, fontWeight: '800' },
               ]}
             >
-              {formatMoney(breakdown.net, currency, 2, settings.currencySymbol)}
+              {formatMoney(breakdown.net, sym, 2)}
             </Text>
           </View>
           <View style={styles.breakdownRow}>
@@ -378,9 +376,8 @@ export default function FDDetailScreen({
             >
               {formatMoney(
                 breakdown.maturityValue,
-                currency,
+                sym,
                 2,
-                settings.currencySymbol,
               )}
             </Text>
           </View>
@@ -424,9 +421,8 @@ export default function FDDetailScreen({
                   {txn.type === 'income' ? '+' : '-'}
                   {formatMoney(
                     txn.totalAmountCents,
-                    currency,
+                    sym,
                     2,
-                    settings.currencySymbol,
                   )}
                 </Text>
               </View>

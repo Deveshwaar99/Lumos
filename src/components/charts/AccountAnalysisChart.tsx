@@ -8,7 +8,6 @@ import type { AccountPeriodBalance } from '../../models/types';
 
 interface AccountAnalysisChartProps {
   data: AccountPeriodBalance[];
-  currency: string;
   currencySymbol?: string;
 }
 
@@ -31,7 +30,6 @@ function formatCompactY(val: number, currencySymbol?: string): string {
 
 export default function AccountAnalysisChart({
   data,
-  currency,
   currencySymbol,
 }: AccountAnalysisChartProps) {
   if (data.length === 0) {
@@ -202,7 +200,7 @@ export default function AccountAnalysisChart({
                   variant="labelSmall"
                   style={{ color: colors.income, fontSize: 11 }}
                 >
-                  +{formatMoney(item.periodIncome, currency, 0, currencySymbol)}
+                  +{formatMoney(item.periodIncome, currencySymbol, 0)}
                 </Text>
                 <Text
                   variant="labelSmall"
@@ -215,7 +213,7 @@ export default function AccountAnalysisChart({
                   style={{ color: colors.expense, fontSize: 11 }}
                 >
                   -
-                  {formatMoney(item.periodExpense, currency, 0, currencySymbol)}
+                  {formatMoney(item.periodExpense, currencySymbol, 0)}
                 </Text>
               </View>
             </View>
@@ -228,7 +226,7 @@ export default function AccountAnalysisChart({
               }}
             >
               {net >= 0 ? '+' : ''}
-              {formatMoney(net, currency, 0, currencySymbol)}
+              {formatMoney(net, currencySymbol, 0)}
             </Text>
           </View>
         );

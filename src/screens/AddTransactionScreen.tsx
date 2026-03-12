@@ -171,7 +171,7 @@ export default function AddTransactionScreen({
     const s2 = dollarsToCents(evalExpression(split2Expression));
     if (total > 0 && s1 + s2 > 0 && s1 + s2 !== total) {
       const diff = Math.abs(s1 + s2 - total);
-      return `Split total is off by ${formatMoney(diff, settings.baseCurrency)}`;
+      return `Split total is off by ${formatMoney(diff, settings.currencySymbol)}`;
     }
     return '';
   }, [
@@ -179,7 +179,7 @@ export default function AddTransactionScreen({
     expression,
     split1Expression,
     split2Expression,
-    settings.baseCurrency,
+    settings.currencySymbol,
   ]);
 
   const handleSplit1Change = useCallback(
@@ -332,7 +332,7 @@ export default function AddTransactionScreen({
       const payload = {
         type,
         totalAmountCents: totalCents,
-        currency: settings.baseCurrency,
+        currency: 'USD',
         categoryId: isTransfer(type) ? null : categoryId,
         note: note || null,
         date: fullDate,

@@ -87,7 +87,7 @@ export default function AnalyticsScreen({
   );
   const [netWorthHistory, setNetWorthHistory] = useState<NetWorthPoint[]>([]);
 
-  const currency = settings.baseCurrency;
+
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -180,9 +180,8 @@ export default function AnalyticsScreen({
                     {isExpense ? '-' : ''}
                     {formatMoney(
                       cat.total,
-                      currency,
-                      2,
                       settings.currencySymbol,
+                      2,
                     )}
                   </Text>
                 </View>
@@ -244,7 +243,6 @@ export default function AnalyticsScreen({
             <View style={styles.chartCard}>
               <FlowLineChart
                 data={expenseFlow}
-                currency={currency}
                 currencySymbol={settings.currencySymbol}
                 valueKey="expense"
                 lineColor={colors.expense}
@@ -267,7 +265,6 @@ export default function AnalyticsScreen({
             <View style={styles.chartCard}>
               <FlowLineChart
                 data={incomeFlow}
-                currency={currency}
                 currencySymbol={settings.currencySymbol}
                 valueKey="income"
                 lineColor={colors.income}
@@ -289,7 +286,6 @@ export default function AnalyticsScreen({
           <View style={styles.chartCard}>
             <AccountAnalysisChart
               data={accountPeriod}
-              currency={currency}
               currencySymbol={settings.currencySymbol}
             />
           </View>
@@ -300,7 +296,6 @@ export default function AnalyticsScreen({
           <View style={styles.chartCard}>
             <NetWorthChart
               data={netWorthHistory}
-              currency={currency}
               currencySymbol={settings.currencySymbol}
             />
           </View>
@@ -330,9 +325,8 @@ export default function AnalyticsScreen({
             <Text style={[styles.summaryValue, { color: colors.income }]}>
               {formatMoney(
                 summary.totalIncome,
-                currency,
-                0,
                 settings.currencySymbol,
+                0,
               )}
             </Text>
             <Text style={styles.summaryLabel}>Income</Text>
@@ -342,9 +336,8 @@ export default function AnalyticsScreen({
             <Text style={[styles.summaryValue, { color: colors.expense }]}>
               {formatMoney(
                 summary.totalExpense,
-                currency,
-                0,
                 settings.currencySymbol,
+                0,
               )}
             </Text>
             <Text style={styles.summaryLabel}>Spent</Text>
@@ -358,7 +351,7 @@ export default function AnalyticsScreen({
               ]}
             >
               {summary.net >= 0 ? '+' : ''}
-              {formatMoney(summary.net, currency, 0, settings.currencySymbol)}
+              {formatMoney(summary.net, settings.currencySymbol, 0)}
             </Text>
             <Text style={styles.summaryLabel}>Net</Text>
           </View>

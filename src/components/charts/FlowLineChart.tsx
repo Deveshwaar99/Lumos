@@ -17,17 +17,12 @@ import type { DailyCashFlow } from '../../models/types';
 
 interface FlowLineChartProps {
   data: DailyCashFlow[];
-  currency: string;
   currencySymbol?: string;
   valueKey: 'income' | 'expense' | 'net';
   lineColor: string;
 }
 
-function formatCompactY(
-  val: number,
-  currency: string,
-  currencySymbol?: string,
-): string {
+function formatCompactY(val: number, currencySymbol?: string): string {
   const abs = Math.abs(val) / 100;
   const sign = val < 0 ? '-' : '';
   const sym = currencySymbol || '';
@@ -39,7 +34,6 @@ function formatCompactY(
 
 export default function FlowLineChart({
   data,
-  currency,
   currencySymbol,
   valueKey,
   lineColor,
@@ -111,7 +105,7 @@ export default function FlowLineChart({
       <View style={styles.yAxisLabels}>
         {[...yLabels].reverse().map((label, i) => (
           <Text key={i} variant="labelSmall" style={styles.yLabel}>
-            {formatCompactY(label.val, currency, currencySymbol)}
+            {formatCompactY(label.val, currencySymbol)}
           </Text>
         ))}
       </View>

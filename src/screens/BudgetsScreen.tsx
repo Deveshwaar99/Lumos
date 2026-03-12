@@ -30,7 +30,7 @@ export default function BudgetsScreen({
   const { settings } = useSettingsStore();
   const [snackbar, setSnackbar] = React.useState('');
   const insets = useSafeAreaInsets();
-  const currency = settings.baseCurrency;
+  const sym = settings.currencySymbol;
 
   useFocusEffect(
     useCallback(() => {
@@ -121,9 +121,8 @@ export default function BudgetsScreen({
               >
                 {formatMoney(
                   totalRemaining,
-                  currency,
+                  sym,
                   2,
-                  settings.currencySymbol,
                 )}
               </Text>
             </View>
@@ -156,9 +155,8 @@ export default function BudgetsScreen({
               <Text style={styles.statValue}>
                 {formatMoney(
                   totalBudgeted,
-                  currency,
+                  sym,
                   2,
-                  settings.currencySymbol,
                 )}
               </Text>
             </View>
@@ -176,7 +174,7 @@ export default function BudgetsScreen({
                   totalSpent > totalBudgeted && { color: colors.expense },
                 ]}
               >
-                {formatMoney(totalSpent, currency, 2, settings.currencySymbol)}
+                {formatMoney(totalSpent, sym, 2)}
               </Text>
             </View>
           </View>
@@ -267,16 +265,14 @@ export default function BudgetsScreen({
                 <Text style={styles.budgetMeta}>
                   {formatMoney(
                     item.spent,
-                    currency,
+                    sym,
                     2,
-                    settings.currencySymbol,
                   )}{' '}
                   of{' '}
                   {formatMoney(
                     item.limitCents,
-                    currency,
+                    sym,
                     2,
-                    settings.currencySymbol,
                   )}
                 </Text>
               </View>
@@ -289,12 +285,11 @@ export default function BudgetsScreen({
                 ]}
               >
                 {isOver
-                  ? `−${formatMoney(Math.abs(item.remaining), currency, 2, settings.currencySymbol)}`
+                  ? `−${formatMoney(Math.abs(item.remaining), sym, 2)}`
                   : formatMoney(
                       item.remaining,
-                      currency,
+                      sym,
                       2,
-                      settings.currencySymbol,
                     )}
               </Text>
               <Text
@@ -311,8 +306,7 @@ export default function BudgetsScreen({
             spent={item.spent}
             limit={item.limitCents}
             alertThreshold={item.alertThresholdPct}
-            currency={currency}
-            currencySymbol={settings.currencySymbol}
+            currencySymbol={sym}
             showLabels={false}
           />
         </View>
@@ -417,7 +411,7 @@ export default function BudgetsScreen({
 
       <FAB
         icon="plus"
-        style={[styles.fab, { bottom: insets.bottom + 2 }]}
+        style={[styles.fab, { bottom: insets.bottom + 16 }]}
         onPress={() => navigation.navigate('BudgetForm', { month })}
         color="#fff"
       />
@@ -785,6 +779,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.lg,
     backgroundColor: colors.primary,
+    opacity: 0.6,
     ...elevation.lg,
   },
 });

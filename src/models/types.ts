@@ -38,7 +38,6 @@ export interface Account {
   type: 'cash' | 'bank' | 'card' | 'savings' | 'other';
   icon: string;
   openingBalanceCents: number;
-  currency: string;
 }
 
 export interface Budget {
@@ -51,7 +50,6 @@ export interface Budget {
 }
 
 export interface AppSettings {
-  baseCurrency: string;
   decimalPlaces: number;
   currencySymbol: string;
   lastBackupAt: string | null;

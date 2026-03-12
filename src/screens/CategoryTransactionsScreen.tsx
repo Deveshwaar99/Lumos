@@ -87,7 +87,7 @@ export default function CategoryTransactionsScreen({
   }, [transactions]);
 
   const fmt = (cents: number) =>
-    formatMoney(cents, settings.baseCurrency, 2, settings.currencySymbol);
+    formatMoney(cents, settings.currencySymbol, 2);
 
   return (
     <View style={styles.container}>
@@ -160,7 +160,7 @@ export default function CategoryTransactionsScreen({
 
       <FAB
         icon="plus"
-        style={[styles.fab, { bottom: insets.bottom + 2 }]}
+        style={[styles.fab, { bottom: insets.bottom + 16 }]}
         onPress={() => navigation.navigate('AddTransaction')}
         color="#fff"
       />
@@ -237,5 +237,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.lg,
     backgroundColor: colors.primary,
+    opacity: 0.6,
   },
 });

@@ -1,9 +1,3 @@
-export type CurrencyConfig = {
-  code: string;
-  symbol: string;
-  decimalPlaces: number;
-};
-
 /**
  * Converts cents to dollars.
  */
@@ -19,49 +13,20 @@ export function dollarsToCents(dollars: number): number {
 }
 
 /**
- * Formats a cents value as currency string.
- * Falls back to manual formatting if Intl.NumberFormat is not fully available (e.g. React Native).
+ * Formats a cents value as currency string using the given symbol.
  */
 export function formatMoney(
   cents: number,
-  currency: string = 'USD',
+  currencySymbol: string = '$',
   decimalPlaces: number = 2,
-  currencySymbol?: string,
 ): string {
   const dollars = centsToDollars(cents);
-
-  if (currencySymbol) {
-    const fixed = dollars.toFixed(decimalPlaces);
-    const isNeg = fixed.startsWith('-');
-    const abs = isNeg ? fixed.slice(1) : fixed;
-    const [whole, frac] = abs.split('.');
-    const withCommas = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    const formatted = `${currencySymbol} ${withCommas}${frac ? '.' + frac : ''}`;
-    return isNeg ? `-${formatted}` : formatted;
-  }
-
-  try {
-    if (
-      typeof Intl !== 'undefined' &&
-      typeof Intl.NumberFormat === 'function'
-    ) {
-      return new Intl.NumberFormat(undefined, {
-        style: 'currency',
-        currency,
-        minimumFractionDigits: decimalPlaces,
-        maximumFractionDigits: decimalPlaces,
-      }).format(dollars);
-    }
-  } catch {
-    // Intl might throw on some React Native environments
-  }
   const fixed = dollars.toFixed(decimalPlaces);
   const isNeg = fixed.startsWith('-');
   const abs = isNeg ? fixed.slice(1) : fixed;
   const [whole, frac] = abs.split('.');
   const withCommas = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  const symbol = currency === 'USD' ? '$ ' : currency + ' ';
-  const formatted = `${symbol}${withCommas}${frac ? '.' + frac : ''}`;
+  const formatted = `${currencySymbol} ${withCommas}${frac ? '.' + frac : ''}`;
   return isNeg ? `-${formatted}` : formatted;
 }
 

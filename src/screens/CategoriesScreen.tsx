@@ -243,7 +243,7 @@ export default function CategoriesScreen({
       )}
       <FAB
         icon="plus"
-        style={[styles.fab, { bottom: insets.bottom + 2 }]}
+        style={[styles.fab, { bottom: insets.bottom + 16 }]}
         onPress={() =>
           navigation.navigate('CategoryForm', { categoryType: selectedType })
         }
@@ -376,6 +376,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.lg,
     backgroundColor: colors.primary,
+    opacity: 0.6,
     ...elevation.lg,
   },
 });

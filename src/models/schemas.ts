@@ -64,7 +64,6 @@ export const accountSchema = z.object({
   type: z.enum(['cash', 'bank', 'card', 'savings', 'other']),
   icon: z.string().min(1),
   openingBalanceCents: z.number().int(),
-  currency: z.string().min(1),
 });
 
 export const budgetSchema = z.object({

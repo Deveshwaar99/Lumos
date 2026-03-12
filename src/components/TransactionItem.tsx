@@ -131,9 +131,8 @@ function TransactionItemComponent({
           {prefix}
           {formatMoney(
             transaction.totalAmountCents,
-            transaction.currency,
-            2,
             currencySymbol,
+            2,
           )}
         </Text>
         <Text variant="bodySmall" style={styles.date}>

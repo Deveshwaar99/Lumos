@@ -240,41 +240,29 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
         ) : (
           <>
             <View
-              style={[styles.topBar, { paddingTop: insets.top + spacing.xs }]}
+              style={[styles.topBar, { paddingTop: insets.top + spacing.md }]}
             >
               <TouchableOpacity
                 hitSlop={12}
                 onPress={() => navigation.navigate('Settings' as any)}
               >
-                <Icon source="menu" size={24} color={colors.text} />
+                <Icon source="cog" size={24} color={colors.text} />
               </TouchableOpacity>
-              {settings.username ? (
-                <Text variant="titleLarge" style={styles.appTitle}>
-                  Hi {settings.username}!
-                </Text>
-              ) : (
-                <Text variant="titleLarge" style={styles.appTitle}>
-                  {'L'}
-                  <Text style={styles.appTitleRest}>umos</Text>
-                </Text>
-              )}
+              <PeriodNavigator
+                label={navLabel}
+                onPrev={handlePrev}
+                onNext={handleNext}
+                onFilterPress={() => setFilterVisible(true)}
+              />
               <TouchableOpacity hitSlop={12} onPress={openSearch}>
                 <Icon source="magnify" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
 
-            <PeriodNavigator
-              label={navLabel}
-              onPrev={handlePrev}
-              onNext={handleNext}
-              onFilterPress={() => setFilterVisible(true)}
-            />
-
             <SummaryBar
               income={summary.totalIncome}
               expense={summary.totalExpense}
               balance={summary.net}
-              currency={settings.baseCurrency}
               currencySymbol={settings.currencySymbol}
             />
           </>
@@ -348,7 +336,7 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
       {!searchActive && (
         <FAB
           icon="plus"
-          style={[styles.fab, { bottom: insets.bottom + 2 }]}
+          style={[styles.fab, { bottom: insets.bottom + 16 }]}
           onPress={() => navigation.navigate('AddTransaction')}
           color="#fff"
         />
@@ -380,19 +368,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.sm,
-  },
-  appTitle: {
-    fontFamily: 'PlayfairDisplay_700Bold',
-    fontSize: 28,
-    color: colors.primaryLight,
-    letterSpacing: 1.5,
-  },
-  appTitleRest: {
-    fontFamily: 'PlayfairDisplay_700Bold',
-    fontSize: 28,
-    color: colors.primary,
-    letterSpacing: 1.5,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
   },
   list: { flex: 1, marginTop: spacing.xs },
   listContent: { paddingBottom: 100 },
@@ -430,6 +407,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.lg,
     backgroundColor: colors.primary,
+    opacity: 0.6,
     ...elevation.lg,
   },
   searchBar: {

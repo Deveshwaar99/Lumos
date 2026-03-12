@@ -75,7 +75,6 @@ const DEFAULT_ACCOUNTS = [
 ];
 
 const DEFAULT_SETTINGS: Record<string, string> = {
-  baseCurrency: 'USD',
   decimalPlaces: '2',
   currencySymbol: '$',
 };

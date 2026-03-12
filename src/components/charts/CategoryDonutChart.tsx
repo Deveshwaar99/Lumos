@@ -1,9 +1,16 @@
 import React from 'react';
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
 import Svg, { Circle, G } from 'react-native-svg';
 import { colors, spacing } from '../../theme';
 import type { CategoryBreakdown } from '../../models/types';
+
+const CHART_SIZE = 150;
+const RING_RADIUS = CHART_SIZE * 0.36;
+const STROKE_WIDTH = CHART_SIZE * 0.16;
+const CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+const CX = CHART_SIZE / 2;
+const CY = CHART_SIZE / 2;
 
 interface CategoryDonutChartProps {
   data: CategoryBreakdown[];
@@ -14,8 +21,6 @@ export default function CategoryDonutChart({
   data,
   centerLabel,
 }: CategoryDonutChartProps) {
-  const { width: screenWidth } = useWindowDimensions();
-
   if (data.length === 0) {
     return (
       <View style={styles.container}>
@@ -27,40 +32,35 @@ export default function CategoryDonutChart({
   }
 
   const total = data.reduce((s, c) => s + c.total, 0);
-  const size = Math.min(screenWidth * 0.48, 200);
-  const ringRadius = size * 0.36;
-  const strokeWidth = size * 0.16;
-  const cx = size / 2;
-  const cy = size / 2;
-  const circumference = 2 * Math.PI * ringRadius;
 
   let cumulativeOffset = 0;
   const segments = data.map((cat) => {
     const ratio = total > 0 ? cat.total / total : 0;
-    const arc = circumference * ratio;
+    const arc = CIRCUMFERENCE * ratio;
     const gap = data.length > 1 ? 2 : 0;
     const offset = -cumulativeOffset;
     cumulativeOffset += arc;
     return { ...cat, arc: Math.max(arc - gap, 0), offset, ratio };
   });
 
-  const visibleLegend = data.slice(0, 6);
-  const hasMore = data.length > 6;
-
   return (
     <View style={styles.container}>
       <View style={styles.svgWrap}>
-        <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-          <G transform={`rotate(-90 ${cx} ${cy})`}>
+        <Svg
+          width={CHART_SIZE}
+          height={CHART_SIZE}
+          viewBox={`0 0 ${CHART_SIZE} ${CHART_SIZE}`}
+        >
+          <G transform={`rotate(-90 ${CX} ${CY})`}>
             {segments.map((seg) => (
               <Circle
                 key={seg.categoryId}
-                cx={cx}
-                cy={cy}
-                r={ringRadius}
+                cx={CX}
+                cy={CY}
+                r={RING_RADIUS}
                 stroke={seg.color}
-                strokeWidth={strokeWidth}
-                strokeDasharray={`${seg.arc} ${circumference - seg.arc}`}
+                strokeWidth={STROKE_WIDTH}
+                strokeDasharray={`${seg.arc} ${CIRCUMFERENCE - seg.arc}`}
                 strokeDashoffset={seg.offset}
                 strokeLinecap="round"
                 fill="transparent"
@@ -73,13 +73,13 @@ export default function CategoryDonutChart({
             {centerLabel}
           </Text>
           <Text variant="bodySmall" style={styles.centerCount}>
-            {data.length} categories
+            {data.length} cat.
           </Text>
         </View>
       </View>
 
       <View style={styles.legend}>
-        {visibleLegend.map((cat) => {
+        {data.map((cat) => {
           const pct = total > 0 ? ((cat.total / total) * 100).toFixed(1) : '0';
           return (
             <View key={cat.categoryId} style={styles.legendItem}>
@@ -97,11 +97,6 @@ export default function CategoryDonutChart({
             </View>
           );
         })}
-        {hasMore && (
-          <Text variant="labelSmall" style={styles.moreText}>
-            +{data.length - 6} more
-          </Text>
-        )}
       </View>
     </View>
   );
@@ -109,15 +104,19 @@ export default function CategoryDonutChart({
 
 const styles = StyleSheet.create({
   container: {
+    flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: spacing.sm,
+    gap: spacing.md,
   },
   empty: { color: colors.textSecondary, textAlign: 'center', padding: 40 },
   svgWrap: {
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.md,
+    width: CHART_SIZE,
+    height: CHART_SIZE,
+    flexShrink: 0,
   },
   centerLabel: {
     position: 'absolute',
@@ -127,21 +126,20 @@ const styles = StyleSheet.create({
   centerText: {
     color: colors.textSecondary,
     fontWeight: '700',
-    fontSize: 12,
+    fontSize: 11,
     letterSpacing: 0.3,
     textTransform: 'uppercase',
   },
   centerCount: {
     color: colors.textTertiary,
-    fontSize: 10,
-    marginTop: 2,
+    fontSize: 9,
+    marginTop: 1,
   },
   legend: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
+    flex: 1,
+    maxHeight: CHART_SIZE,
+    overflow: 'hidden',
     gap: 4,
-    paddingHorizontal: spacing.sm,
   },
   legendItem: {
     flexDirection: 'row',
@@ -153,12 +151,6 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   dot: { width: 8, height: 8, borderRadius: 4 },
-  legendText: { color: colors.text, fontSize: 11, maxWidth: 80 },
+  legendText: { color: colors.text, fontSize: 11, flex: 1 },
   legendPct: { color: colors.textSecondary, fontSize: 10 },
-  moreText: {
-    color: colors.textTertiary,
-    fontSize: 11,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-  },
 });

@@ -8,7 +8,6 @@ interface BudgetProgressBarProps {
   spent: number;
   limit: number;
   alertThreshold: number;
-  currency?: string;
   currencySymbol?: string;
   showLabels?: boolean;
 }
@@ -17,7 +16,6 @@ export default function BudgetProgressBar({
   spent,
   limit,
   alertThreshold,
-  currency = 'USD',
   currencySymbol,
   showLabels = true,
 }: BudgetProgressBarProps) {
@@ -34,8 +32,8 @@ export default function BudgetProgressBar({
       {showLabels && (
         <View style={styles.labels}>
           <Text variant="bodySmall" style={{ color }}>
-            {formatMoney(spent, currency, 2, currencySymbol)} of{' '}
-            {formatMoney(limit, currency, 2, currencySymbol)}
+            {formatMoney(spent, currencySymbol)} of{' '}
+            {formatMoney(limit, currencySymbol)}
           </Text>
           <Text variant="bodySmall" style={{ color }}>
             {Math.round(percentage)}%
