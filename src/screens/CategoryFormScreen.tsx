@@ -115,6 +115,8 @@ export default function CategoryFormScreen({
                 mode="outlined"
                 error={!!errors.name}
                 style={styles.input}
+                cursorColor={colors.primary}
+                selectionColor={colors.primary + '40'}
               />
             )}
           />

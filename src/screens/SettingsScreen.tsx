@@ -153,6 +153,8 @@ export default function SettingsScreen({
                   contentStyle={styles.inlineInputContent}
                   underlineStyle={styles.inlineInputUnderline}
                   maxLength={20}
+                  cursorColor={colors.primary}
+                  selectionColor={colors.primary + '40'}
                 />
               }
               isLast
@@ -176,6 +178,8 @@ export default function SettingsScreen({
                   underlineStyle={styles.inlineInputUnderline}
                   maxLength={3}
                   autoCapitalize="characters"
+                  cursorColor={colors.primary}
+                  selectionColor={colors.primary + '40'}
                 />
               }
             />
@@ -191,6 +195,8 @@ export default function SettingsScreen({
                   contentStyle={styles.inlineInputContent}
                   underlineStyle={styles.inlineInputUnderline}
                   maxLength={3}
+                  cursorColor={colors.primary}
+                  selectionColor={colors.primary + '40'}
                 />
               }
               isLast

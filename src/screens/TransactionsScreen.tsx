@@ -75,7 +75,7 @@ export default function TransactionsScreen({
       />
       <FAB
         icon="plus"
-        style={[styles.fab, { bottom: insets.bottom + spacing.lg }]}
+        style={[styles.fab, { bottom: insets.bottom + 2 }]}
         onPress={() => navigation.navigate('AddTransaction')}
         color="#fff"
       />

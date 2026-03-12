@@ -36,7 +36,7 @@ export function formatMoney(
     const abs = isNeg ? fixed.slice(1) : fixed;
     const [whole, frac] = abs.split('.');
     const withCommas = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    const formatted = `${currencySymbol}${withCommas}${frac ? '.' + frac : ''}`;
+    const formatted = `${currencySymbol} ${withCommas}${frac ? '.' + frac : ''}`;
     return isNeg ? `-${formatted}` : formatted;
   }
 
@@ -60,7 +60,7 @@ export function formatMoney(
   const abs = isNeg ? fixed.slice(1) : fixed;
   const [whole, frac] = abs.split('.');
   const withCommas = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  const symbol = currency === 'USD' ? '$' : currency + ' ';
+  const symbol = currency === 'USD' ? '$ ' : currency + ' ';
   const formatted = `${symbol}${withCommas}${frac ? '.' + frac : ''}`;
   return isNeg ? `-${formatted}` : formatted;
 }

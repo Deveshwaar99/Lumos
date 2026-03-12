@@ -348,7 +348,7 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
       {!searchActive && (
         <FAB
           icon="plus"
-          style={[styles.fab, { bottom: insets.bottom + 16 }]}
+          style={[styles.fab, { bottom: insets.bottom + 2 }]}
           onPress={() => navigation.navigate('AddTransaction')}
           color="#fff"
         />

@@ -18,12 +18,12 @@ interface TransactionSection {
   data: TransactionWithSplits[];
 }
 
-export default function AccountTransactionsScreen({
+export default function CategoryTransactionsScreen({
   navigation,
   route,
-}: RootStackScreenProps<'AccountTransactions'>) {
-  const { accountId } = route.params;
-  const { accounts, balances } = useAccountStore();
+}: RootStackScreenProps<'CategoryTransactions'>) {
+  const { categoryId } = route.params;
+  const { accounts } = useAccountStore();
   const { categories } = useCategoryStore();
   const { settings } = useSettingsStore();
   const insets = useSafeAreaInsets();
@@ -31,17 +31,16 @@ export default function AccountTransactionsScreen({
   const [transactions, setTransactions] = useState<TransactionWithSplits[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
-  const account = accounts.find((a) => a.id === accountId);
-  const balance = balances[accountId] ?? account?.openingBalanceCents ?? 0;
+  const category = categories.find((c) => c.id === categoryId);
 
   const loadData = useCallback(async () => {
     const txns = await transactionService.getAll(
-      { dateFrom: null, dateTo: null, type: null, accountId, categoryId: null },
+      { dateFrom: null, dateTo: null, type: null, accountId: null, categoryId },
       200,
       0,
     );
     setTransactions(txns);
-  }, [accountId]);
+  }, [categoryId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -78,30 +77,39 @@ export default function AccountTransactionsScreen({
       .map(([dateKey, data]) => ({ title: dateKey, data }));
   }, [transactions]);
 
+  const catColor = category?.color ?? colors.primary;
+  const iconBg = category ? category.color + '1A' : colors.primaryContainer;
+
+  const stats = useMemo(() => {
+    const count = transactions.length;
+    const total = transactions.reduce((s, t) => s + t.totalAmountCents, 0);
+    return { count, total };
+  }, [transactions]);
+
+  const fmt = (cents: number) =>
+    formatMoney(cents, settings.baseCurrency, 2, settings.currencySymbol);
+
   return (
     <View style={styles.container}>
       <View style={styles.headerCard}>
-        <View style={styles.headerIcon}>
+        <View style={[styles.headerIcon, { backgroundColor: iconBg }]}>
           <Icon
-            source={account?.icon ?? 'wallet'}
-            size={28}
-            color={colors.primary}
+            source={(category?.icon as any) ?? 'shape-outline'}
+            size={24}
+            color={catColor}
           />
         </View>
-        <Text style={styles.headerName}>{account?.name ?? 'Account'}</Text>
-        <Text
-          style={[
-            styles.headerBalance,
-            balance < 0 && { color: colors.expense },
-          ]}
-        >
-          {formatMoney(
-            balance,
-            settings.baseCurrency,
-            2,
-            settings.currencySymbol,
-          )}
-        </Text>
+        <View style={styles.headerInfo}>
+          <Text style={styles.headerName} numberOfLines={1}>
+            {category?.name ?? 'Category'}
+          </Text>
+          <Text style={styles.headerTotal}>{fmt(stats.total)}</Text>
+        </View>
+        <View style={styles.headerBadge}>
+          <Text style={styles.headerBadgeText}>
+            {stats.count} txn{stats.count !== 1 ? 's' : ''}
+          </Text>
+        </View>
       </View>
 
       <SectionList
@@ -134,7 +142,7 @@ export default function AccountTransactionsScreen({
           <View style={styles.emptyContainer}>
             <Icon source="receipt" size={48} color={colors.textTertiary} />
             <Text variant="bodyLarge" style={styles.emptyText}>
-              No transactions for this account
+              No transactions for this category
             </Text>
           </View>
         }
@@ -164,32 +172,44 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
 
   headerCard: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.xl,
+    paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     backgroundColor: colors.surface,
-    borderBottomLeftRadius: radius.lg,
-    borderBottomRightRadius: radius.lg,
+    gap: spacing.md,
   },
   headerIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.primaryContainer,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.md,
+  },
+  headerInfo: {
+    flex: 1,
   },
   headerName: {
     color: colors.text,
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '600',
   },
-  headerBalance: {
-    color: colors.income,
-    fontSize: 28,
-    fontWeight: '700',
-    marginTop: spacing.xs,
+  headerTotal: {
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: '800',
+    marginTop: 2,
+  },
+  headerBadge: {
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: radius.xl,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.xxs + 1,
+  },
+  headerBadgeText: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '600',
   },
 
   sectionHeader: {

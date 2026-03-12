@@ -16,6 +16,7 @@ import {
   Animated,
   Keyboard,
   Dimensions,
+  TextInput as RNTextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TextInput, Text, Icon, Snackbar, Switch } from 'react-native-paper';
@@ -525,7 +526,10 @@ export default function AddTransactionScreen({
                   underlineColor="transparent"
                   activeUnderlineColor="transparent"
                   textColor={amountColor}
+                  cursorColor={amountColor}
+                  selectionColor={amountColor + '40'}
                   keyboardType="decimal-pad"
+                  returnKeyType="done"
                 />
               </View>
             </View>
@@ -698,6 +702,8 @@ export default function AddTransactionScreen({
               underlineColor="transparent"
               activeUnderlineColor="transparent"
               textColor={colors.text}
+              cursorColor={colors.primary}
+              selectionColor={colors.primary + '40'}
             />
           </View>
 
@@ -913,6 +919,8 @@ export default function AddTransactionScreen({
                         underlineColor="transparent"
                         activeUnderlineColor={colors.primary}
                         textColor={colors.text}
+                        cursorColor={colors.primary}
+                        selectionColor={colors.primary + '40'}
                         dense
                       />
                     </View>
@@ -967,6 +975,8 @@ export default function AddTransactionScreen({
                         underlineColor="transparent"
                         activeUnderlineColor={colors.primary}
                         textColor={colors.text}
+                        cursorColor={colors.primary}
+                        selectionColor={colors.primary + '40'}
                         dense
                       />
                     </View>

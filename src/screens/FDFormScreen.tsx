@@ -220,6 +220,8 @@ export default function FDFormScreen({
             mode="outlined"
             placeholder="e.g. HDFC 1-Year FD"
             style={styles.input}
+            cursorColor={colors.primary}
+            selectionColor={colors.primary + '40'}
           />
 
           <TextInput
@@ -230,6 +232,8 @@ export default function FDFormScreen({
             keyboardType="decimal-pad"
             left={<TextInput.Affix text={settings.currencySymbol} />}
             style={styles.input}
+            cursorColor={colors.primary}
+            selectionColor={colors.primary + '40'}
           />
 
           <View style={styles.row}>
@@ -241,6 +245,8 @@ export default function FDFormScreen({
               keyboardType="decimal-pad"
               right={<TextInput.Affix text="%" />}
               style={[styles.input, styles.halfInput]}
+              cursorColor={colors.primary}
+              selectionColor={colors.primary + '40'}
             />
             <TextInput
               label="TDS Rate (%)"
@@ -250,6 +256,8 @@ export default function FDFormScreen({
               keyboardType="decimal-pad"
               right={<TextInput.Affix text="%" />}
               style={[styles.input, styles.halfInput]}
+              cursorColor={colors.primary}
+              selectionColor={colors.primary + '40'}
             />
           </View>
 
@@ -461,6 +469,8 @@ export default function FDFormScreen({
             onChangeText={setNote}
             mode="outlined"
             style={styles.input}
+            cursorColor={colors.primary}
+            selectionColor={colors.primary + '40'}
           />
 
           {preview && (

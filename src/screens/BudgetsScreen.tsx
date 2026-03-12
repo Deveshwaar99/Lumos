@@ -417,7 +417,7 @@ export default function BudgetsScreen({
 
       <FAB
         icon="plus"
-        style={[styles.fab, { bottom: insets.bottom + 10 }]}
+        style={[styles.fab, { bottom: insets.bottom + 2 }]}
         onPress={() => navigation.navigate('BudgetForm', { month })}
         color="#fff"
       />

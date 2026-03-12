@@ -316,7 +316,7 @@ export default function AccountsScreen({
             ]}
           >
             <Icon
-              source={getAccountTypeIcon(item.type) as any}
+              source={(item.icon || getAccountTypeIcon(item.type)) as any}
               size={22}
               color={accentColor}
             />
@@ -541,7 +541,7 @@ export default function AccountsScreen({
         : renderInvestmentsList()}
       <FAB
         icon="plus"
-        style={[styles.fab, { bottom: insets.bottom + 10 }]}
+        style={[styles.fab, { bottom: insets.bottom + 2 }]}
         onPress={() => {
           if (activeTab === 'investments') {
             (navigation as any).navigate('FDForm');

@@ -9,7 +9,6 @@ import {
 import { FAB, Snackbar, Icon, Text, Menu } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useCategoryStore } from '../stores/useCategoryStore';
 import { colors, spacing, radius, elevation } from '../theme';
 import EmptyState from '../components/EmptyState';
@@ -73,52 +72,6 @@ export default function CategoriesScreen({
       navigation.navigate('CategoryForm', { categoryId: cat.id });
     },
     [navigation],
-  );
-
-  const renderSummaryCard = () => (
-    <LinearGradient
-      colors={['#2E2660', '#1E1545', '#252540']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.summaryCard}
-    >
-      <View style={styles.summaryHeader}>
-        <View style={styles.summaryIconWrap}>
-          <Icon source="shape-outline" size={20} color={colors.primaryLight} />
-        </View>
-        <Text style={styles.summaryTitle}>Categories</Text>
-      </View>
-
-      <View style={styles.statsRow}>
-        <View style={styles.statItem}>
-          <Icon source="arrow-down-circle" size={16} color={colors.expense} />
-          <View>
-            <Text style={styles.statValue}>{expenseCount}</Text>
-            <Text style={styles.statLabel}>Expense</Text>
-          </View>
-        </View>
-
-        <View style={styles.statDivider} />
-
-        <View style={styles.statItem}>
-          <Icon source="arrow-up-circle" size={16} color={colors.income} />
-          <View>
-            <Text style={styles.statValue}>{incomeCount}</Text>
-            <Text style={styles.statLabel}>Income</Text>
-          </View>
-        </View>
-
-        <View style={styles.statDivider} />
-
-        <View style={styles.statItem}>
-          <Icon source="sigma" size={16} color={colors.primaryLight} />
-          <View>
-            <Text style={styles.statValue}>{categories.length}</Text>
-            <Text style={styles.statLabel}>Total</Text>
-          </View>
-        </View>
-      </View>
-    </LinearGradient>
   );
 
   const renderSegmentedControl = () => (
@@ -214,7 +167,9 @@ export default function CategoriesScreen({
       <TouchableOpacity
         style={styles.categoryContent}
         onPress={() =>
-          navigation.navigate('CategoryForm', { categoryId: item.id })
+          (navigation as any).navigate('CategoryTransactions', {
+            categoryId: item.id,
+          })
         }
         activeOpacity={0.7}
       >
@@ -264,12 +219,7 @@ export default function CategoriesScreen({
     </View>
   );
 
-  const ListHeader = () => (
-    <>
-      {renderSummaryCard()}
-      {renderSegmentedControl()}
-    </>
-  );
+  const ListHeader = () => <>{renderSegmentedControl()}</>;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -293,7 +243,7 @@ export default function CategoriesScreen({
       )}
       <FAB
         icon="plus"
-        style={[styles.fab, { bottom: insets.bottom + 10 }]}
+        style={[styles.fab, { bottom: insets.bottom + 2 }]}
         onPress={() =>
           navigation.navigate('CategoryForm', { categoryType: selectedType })
         }
@@ -318,66 +268,6 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   emptyWrap: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
-
-  /* ── Summary Card ── */
-  summaryCard: {
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.lg,
-    ...elevation.md,
-  },
-  summaryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.lg,
-  },
-  summaryIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(139,125,209,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  summaryTitle: {
-    color: colors.text,
-    fontSize: 17,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    borderRadius: radius.md,
-    padding: spacing.md,
-  },
-  statItem: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    justifyContent: 'center',
-  },
-  statValue: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: '800',
-    lineHeight: 22,
-  },
-  statLabel: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  statDivider: {
-    width: 1,
-    height: '60%' as any,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-  },
 
   /* ── Segmented Control ── */
   segmentContainer: {

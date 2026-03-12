@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TextInput } from 'react-native-paper';
 import { dollarsToCents, centsToDollars } from '../utils/money';
+import { colors } from '../theme';
 
 interface AmountInputProps {
   value: number; // cents
@@ -56,6 +57,8 @@ export default function AmountInput({
       left={<TextInput.Affix text={currencySymbol} />}
       error={error}
       placeholder="0.00"
+      cursorColor={colors.primary}
+      selectionColor={colors.primary + '40'}
     />
   );
 }

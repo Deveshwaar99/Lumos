@@ -9,6 +9,7 @@ import TransactionDetailScreen from '../screens/TransactionDetailScreen';
 import CategoryFormScreen from '../screens/CategoryFormScreen';
 import AccountFormScreen from '../screens/AccountFormScreen';
 import AccountTransactionsScreen from '../screens/AccountTransactionsScreen';
+import CategoryTransactionsScreen from '../screens/CategoryTransactionsScreen';
 import BudgetFormScreen from '../screens/BudgetFormScreen';
 import FDFormScreen from '../screens/FDFormScreen';
 import FDDetailScreen from '../screens/FDDetailScreen';
@@ -64,6 +65,11 @@ export default function RootNavigator() {
         name="AccountTransactions"
         component={AccountTransactionsScreen}
         options={{ title: 'Account Transactions' }}
+      />
+      <Stack.Screen
+        name="CategoryTransactions"
+        component={CategoryTransactionsScreen}
+        options={{ title: 'Category Transactions' }}
       />
       <Stack.Screen
         name="BudgetForm"

@@ -165,6 +165,8 @@ export default function BudgetFormScreen({
             keyboardType="number-pad"
             right={<TextInput.Affix text="%" />}
             style={styles.input}
+            cursorColor={colors.primary}
+            selectionColor={colors.primary + '40'}
           />
 
           <View style={styles.switchRow}>

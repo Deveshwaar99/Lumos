@@ -44,7 +44,7 @@ export default function TransactionList({
     ({ item }: { item: TransactionWithSplits }) => (
       <TransactionItem
         transaction={item}
-        category={categoryMap[item.categoryId]}
+        category={item.categoryId ? categoryMap[item.categoryId] : undefined}
         accountMap={accountMap}
         currencySymbol={currencySymbol}
         onPress={() => onItemPress(item)}
