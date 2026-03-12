@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   NavigationContainer,
   NavigationContainerRef,
@@ -7,7 +7,7 @@ import {
 import { PaperProvider, ActivityIndicator } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, AppState } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import {
   useFonts,
@@ -20,12 +20,19 @@ import { seedDatabase } from './src/db/seed';
 import { useSettingsStore } from './src/stores/useSettingsStore';
 import { useFDStore } from './src/stores/useFDStore';
 import RootNavigator from './src/navigation/RootNavigator';
+import LockScreen from './src/components/LockScreen';
 import type { RootStackParamList } from './src/navigation/types';
 
 export default function App() {
   const [ready, setReady] = React.useState(false);
+  const [isLocked, setIsLocked] = useState(true);
+  const screenLockEnabled = useSettingsStore(
+    (s) => s.settings.screenLockEnabled,
+  );
   const navigationRef =
     useRef<NavigationContainerRef<RootStackParamList>>(null);
+  const appStateRef = useRef(AppState.currentState);
+  const backgroundAtRef = useRef<number | null>(null);
   const [fontsLoaded] = useFonts({ PlayfairDisplay_700Bold });
 
   useEffect(() => {
@@ -35,6 +42,11 @@ export default function App() {
 
       const { loadSettings } = useSettingsStore.getState();
       await loadSettings();
+
+      const { settings } = useSettingsStore.getState();
+      if (!settings.screenLockEnabled) {
+        setIsLocked(false);
+      }
 
       const { processMaturedDeposits } = useFDStore.getState();
       await processMaturedDeposits();
@@ -61,6 +73,38 @@ export default function App() {
       setReady(true);
     })();
   }, []);
+
+  useEffect(() => {
+    if (!screenLockEnabled) return;
+
+    const LOCK_GRACE_MS = 20_000;
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      // User leaves the app (e.g. presses home, switches apps, pulls notification shade)
+      // Record the timestamp so we can measure how long the app was in the background
+      if (
+        appStateRef.current === 'active' &&
+        nextState.match(/inactive|background/)
+      ) {
+        backgroundAtRef.current = Date.now();
+      }
+
+      // User returns to the app 
+      // Only re-lock if they were away for longer than the grace period (20s)
+      if (
+        appStateRef.current.match(/inactive|background/) &&
+        nextState === 'active'
+      ) {
+        if (Date.now() - (backgroundAtRef.current ?? 0) >= LOCK_GRACE_MS) {
+          setIsLocked(true);
+        }
+        backgroundAtRef.current = null;
+      }
+
+      // Always track the latest state so the next transition can be detected
+      appStateRef.current = nextState;
+    });
+    return () => subscription.remove();
+  }, [screenLockEnabled]);
 
   useEffect(() => {
     if (!ready) return;
@@ -117,6 +161,9 @@ export default function App() {
           >
             <StatusBar style="light" backgroundColor={colors.background} />
             <RootNavigator />
+            {isLocked && screenLockEnabled && (
+              <LockScreen onUnlock={() => setIsLocked(false)} />
+            )}
           </NavigationContainer>
         </PaperProvider>
       </SafeAreaProvider>

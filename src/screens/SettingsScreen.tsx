@@ -7,8 +7,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
+  Switch,
 } from 'react-native';
 import { Text, Snackbar, TextInput, Icon } from 'react-native-paper';
+import * as LocalAuthentication from 'expo-local-authentication';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { seedDemoTransactions } from '../db/seed';
 import { getDatabase, resetDatabase } from '../db/database';
@@ -97,6 +99,40 @@ export default function SettingsScreen({
     debounceRef.current[key] = setTimeout(() => {
       updateSetting(key, value);
     }, 500);
+  };
+
+  const handleScreenLockToggle = async (enable: boolean) => {
+    if (!enable) {
+      await updateSetting('screenLockEnabled', false);
+      return;
+    }
+
+    const hasHardware = await LocalAuthentication.hasHardwareAsync();
+    if (!hasHardware) {
+      Alert.alert(
+        'Not Available',
+        'Your device does not support biometric authentication.',
+      );
+      return;
+    }
+
+    const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+    if (!isEnrolled) {
+      Alert.alert(
+        'No Fingerprint Enrolled',
+        'Please set up a fingerprint in your device settings first.',
+      );
+      return;
+    }
+
+    const result = await LocalAuthentication.authenticateAsync({
+      promptMessage: 'Verify to enable Screen Lock',
+      disableDeviceFallback: true,
+    });
+
+    if (result.success) {
+      await updateSetting('screenLockEnabled', true);
+    }
   };
 
   const handleSeedDemo = () => {
@@ -205,6 +241,30 @@ export default function SettingsScreen({
                   maxLength={3}
                   cursorColor={colors.primary}
                   selectionColor={colors.primary + '40'}
+                />
+              }
+              isLast
+            />
+          </GroupedCard>
+
+          <Text style={styles.sectionHeader}>Security</Text>
+          <GroupedCard>
+            <CardRow
+              icon="fingerprint"
+              title="Screen Lock"
+              right={
+                <Switch
+                  value={settings.screenLockEnabled}
+                  onValueChange={handleScreenLockToggle}
+                  trackColor={{
+                    false: colors.outline,
+                    true: colors.primaryLight,
+                  }}
+                  thumbColor={
+                    settings.screenLockEnabled
+                      ? colors.primary
+                      : colors.textSecondary
+                  }
                 />
               }
               isLast

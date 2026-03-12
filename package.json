@@ -25,6 +25,7 @@
     "expo-file-system": "~19.0.21",
     "expo-font": "~14.0.11",
     "expo-linear-gradient": "~15.0.8",
+    "expo-local-authentication": "~17.0.8",
     "expo-quick-actions": "^6.0.1",
     "expo-sharing": "~14.0.8",
     "expo-sqlite": "~16.0.10",
@@ -45,6 +46,7 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.4.6",
     "@types/react": "~19.1.0",
     "prettier": "^3.8.1",
     "typescript": "~5.9.2"

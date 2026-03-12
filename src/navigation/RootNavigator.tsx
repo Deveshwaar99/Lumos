@@ -1,5 +1,4 @@
 import React from 'react';
-import { Platform } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { colors } from '../theme';
 import type { RootStackParamList } from './types';
@@ -27,9 +26,6 @@ export default function RootNavigator() {
         headerTitleStyle: { fontWeight: '700' },
         headerShadowVisible: false,
         contentStyle: { backgroundColor: colors.background },
-        ...(Platform.OS === 'android'
-          ? { navigationBarColor: colors.background }
-          : {}),
       }}
     >
       <Stack.Screen

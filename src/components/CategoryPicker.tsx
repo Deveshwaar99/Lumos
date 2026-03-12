@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, Icon, Modal, Portal, Divider } from 'react-native-paper';
 import { colors, spacing, radius } from '../theme';
 import type { Category } from '../models/types';
@@ -29,35 +29,39 @@ export default function CategoryPicker({
         <Text variant="titleMedium" style={styles.title}>
           Select Category
         </Text>
-        <FlatList
-          data={categories}
-          keyExtractor={(item) => item.id}
-          ItemSeparatorComponent={Divider}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[styles.item, selectedId === item.id && styles.selected]}
-              onPress={() => {
-                onSelect(item);
-                onDismiss();
-              }}
-            >
-              <View
-                style={[
-                  styles.iconCircle,
-                  { backgroundColor: item.color + '20' },
-                ]}
+        <ScrollView>
+          {categories.map((item, index) => (
+            <React.Fragment key={item.id}>
+              {index > 0 && <Divider />}
+              <TouchableOpacity
+                style={[styles.item, selectedId === item.id && styles.selected]}
+                onPress={() => {
+                  onSelect(item);
+                  onDismiss();
+                }}
               >
-                <Icon source={item.icon as any} size={20} color={item.color} />
-              </View>
-              <Text variant="bodyLarge" style={styles.itemText}>
-                {item.name}
-              </Text>
-              {selectedId === item.id && (
-                <Icon source="check" size={20} color={colors.primary} />
-              )}
-            </TouchableOpacity>
-          )}
-        />
+                <View
+                  style={[
+                    styles.iconCircle,
+                    { backgroundColor: item.color + '20' },
+                  ]}
+                >
+                  <Icon
+                    source={item.icon as any}
+                    size={20}
+                    color={item.color}
+                  />
+                </View>
+                <Text variant="bodyLarge" style={styles.itemText}>
+                  {item.name}
+                </Text>
+                {selectedId === item.id && (
+                  <Icon source="check" size={20} color={colors.primary} />
+                )}
+              </TouchableOpacity>
+            </React.Fragment>
+          ))}
+        </ScrollView>
       </Modal>
     </Portal>
   );

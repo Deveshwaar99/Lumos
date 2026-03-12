@@ -5,4 +5,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
   currencySymbol: '$',
   lastBackupAt: null,
   username: '',
+  screenLockEnabled: false,
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, Icon, Modal, Portal, Divider } from 'react-native-paper';
 import { colors, spacing } from '../theme';
 import type { TimePeriod } from '../utils/dates';
@@ -36,37 +36,37 @@ export default function TimePeriodPicker({
         <Text variant="titleMedium" style={styles.title}>
           Time Period
         </Text>
-        <FlatList
-          data={OPTIONS}
-          keyExtractor={(item) => item.key}
-          ItemSeparatorComponent={Divider}
-          renderItem={({ item }) => {
+        <ScrollView>
+          {OPTIONS.map((item, index) => {
             const isSelected = selected === item.key;
             return (
-              <TouchableOpacity
-                style={[styles.item, isSelected && styles.selected]}
-                onPress={() => {
-                  onSelect(item.key);
-                  onDismiss();
-                }}
-              >
-                <View style={styles.iconCircle}>
-                  <Icon
-                    source={item.icon as any}
-                    size={20}
-                    color={colors.primary}
-                  />
-                </View>
-                <Text variant="bodyLarge" style={styles.itemText}>
-                  {item.label}
-                </Text>
-                {isSelected && (
-                  <Icon source="check" size={20} color={colors.primary} />
-                )}
-              </TouchableOpacity>
+              <React.Fragment key={item.key}>
+                {index > 0 && <Divider />}
+                <TouchableOpacity
+                  style={[styles.item, isSelected && styles.selected]}
+                  onPress={() => {
+                    onSelect(item.key);
+                    onDismiss();
+                  }}
+                >
+                  <View style={styles.iconCircle}>
+                    <Icon
+                      source={item.icon as any}
+                      size={20}
+                      color={colors.primary}
+                    />
+                  </View>
+                  <Text variant="bodyLarge" style={styles.itemText}>
+                    {item.label}
+                  </Text>
+                  {isSelected && (
+                    <Icon source="check" size={20} color={colors.primary} />
+                  )}
+                </TouchableOpacity>
+              </React.Fragment>
             );
-          }}
-        />
+          })}
+        </ScrollView>
       </Modal>
     </Portal>
   );

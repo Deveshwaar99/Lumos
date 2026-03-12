@@ -23,7 +23,6 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "navigationBarColor": "#1A1A2E",
       "navigationBarStyle": "light-content",
       "predictiveBackGestureEnabled": false,
       "softwareKeyboardLayoutMode": "pan"

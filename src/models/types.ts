@@ -54,6 +54,7 @@ export interface AppSettings {
   currencySymbol: string;
   lastBackupAt: string | null;
   username: string;
+  screenLockEnabled: boolean;
 }
 
 export interface TransactionFilter {
