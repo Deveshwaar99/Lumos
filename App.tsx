@@ -88,7 +88,7 @@ export default function App() {
         backgroundAtRef.current = Date.now();
       }
 
-      // User returns to the app 
+      // User returns to the app
       // Only re-lock if they were away for longer than the grace period (20s)
       if (
         appStateRef.current.match(/inactive|background/) &&

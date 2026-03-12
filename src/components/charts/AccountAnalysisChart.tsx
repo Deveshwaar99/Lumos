@@ -28,7 +28,7 @@ function formatCompactY(val: number, currencySymbol?: string): string {
   return `${sym}${abs.toFixed(0)}`;
 }
 
-export default function AccountAnalysisChart({
+function AccountAnalysisChart({
   data,
   currencySymbol,
 }: AccountAnalysisChartProps) {
@@ -212,8 +212,7 @@ export default function AccountAnalysisChart({
                   variant="labelSmall"
                   style={{ color: colors.expense, fontSize: 11 }}
                 >
-                  -
-                  {formatMoney(item.periodExpense, currencySymbol, 0)}
+                  -{formatMoney(item.periodExpense, currencySymbol, 0)}
                 </Text>
               </View>
             </View>
@@ -308,3 +307,5 @@ const styles = StyleSheet.create({
     gap: 4,
   },
 });
+
+export default React.memo(AccountAnalysisChart);

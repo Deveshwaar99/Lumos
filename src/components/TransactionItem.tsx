@@ -129,11 +129,7 @@ function TransactionItemComponent({
           style={{ color: amountColor, fontWeight: '600' }}
         >
           {prefix}
-          {formatMoney(
-            transaction.totalAmountCents,
-            currencySymbol,
-            2,
-          )}
+          {formatMoney(transaction.totalAmountCents, currencySymbol, 2)}
         </Text>
         <Text variant="bodySmall" style={styles.date}>
           {formatDateTimeShort(transaction.date)}

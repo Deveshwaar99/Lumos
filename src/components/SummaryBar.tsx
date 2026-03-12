@@ -11,7 +11,7 @@ interface SummaryBarProps {
   currencySymbol?: string;
 }
 
-export default function SummaryBar({
+function SummaryBar({
   income,
   expense,
   balance,
@@ -67,3 +67,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+export default React.memo(SummaryBar);

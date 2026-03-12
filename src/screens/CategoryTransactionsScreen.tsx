@@ -86,8 +86,7 @@ export default function CategoryTransactionsScreen({
     return { count, total };
   }, [transactions]);
 
-  const fmt = (cents: number) =>
-    formatMoney(cents, settings.currencySymbol, 2);
+  const fmt = (cents: number) => formatMoney(cents, settings.currencySymbol, 2);
 
   return (
     <View style={styles.container}>

@@ -9,7 +9,7 @@ interface EmptyStateProps {
   subtitle?: string;
 }
 
-export default function EmptyState({ icon, title, subtitle }: EmptyStateProps) {
+function EmptyState({ icon, title, subtitle }: EmptyStateProps) {
   return (
     <View style={styles.container}>
       <Icon source={icon as any} size={64} color={colors.textSecondary} />
@@ -43,3 +43,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
+export default React.memo(EmptyState);

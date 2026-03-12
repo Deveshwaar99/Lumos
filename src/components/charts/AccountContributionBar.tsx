@@ -19,7 +19,7 @@ interface AccountContributionBarProps {
   currencySymbol?: string;
 }
 
-export default function AccountContributionBar({
+function AccountContributionBar({
   data,
   currencySymbol,
 }: AccountContributionBarProps) {
@@ -84,3 +84,5 @@ const styles = StyleSheet.create({
   bar: { height: 20, borderRadius: 4 },
   value: { width: 80, textAlign: 'right', color: colors.text, fontSize: 12 },
 });
+
+export default React.memo(AccountContributionBar);

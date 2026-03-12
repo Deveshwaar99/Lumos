@@ -119,11 +119,7 @@ export default function BudgetsScreen({
                   },
                 ]}
               >
-                {formatMoney(
-                  totalRemaining,
-                  sym,
-                  2,
-                )}
+                {formatMoney(totalRemaining, sym, 2)}
               </Text>
             </View>
             <View style={styles.heroPctWrap}>
@@ -153,11 +149,7 @@ export default function BudgetsScreen({
                 <Text style={styles.statLabel}>Budgeted</Text>
               </View>
               <Text style={styles.statValue}>
-                {formatMoney(
-                  totalBudgeted,
-                  sym,
-                  2,
-                )}
+                {formatMoney(totalBudgeted, sym, 2)}
               </Text>
             </View>
 
@@ -263,17 +255,8 @@ export default function BudgetsScreen({
               <View>
                 <Text style={styles.budgetName}>{cat?.name ?? 'Unknown'}</Text>
                 <Text style={styles.budgetMeta}>
-                  {formatMoney(
-                    item.spent,
-                    sym,
-                    2,
-                  )}{' '}
-                  of{' '}
-                  {formatMoney(
-                    item.limitCents,
-                    sym,
-                    2,
-                  )}
+                  {formatMoney(item.spent, sym, 2)} of{' '}
+                  {formatMoney(item.limitCents, sym, 2)}
                 </Text>
               </View>
             </View>
@@ -286,11 +269,7 @@ export default function BudgetsScreen({
               >
                 {isOver
                   ? `−${formatMoney(Math.abs(item.remaining), sym, 2)}`
-                  : formatMoney(
-                      item.remaining,
-                      sym,
-                      2,
-                    )}
+                  : formatMoney(item.remaining, sym, 2)}
               </Text>
               <Text
                 style={[

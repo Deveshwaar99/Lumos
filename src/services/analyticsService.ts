@@ -14,16 +14,18 @@ export const analyticsService = {
     const db = await getDatabase();
     const { start, end } = getMonthRange(month);
 
-    const incomeResult = await db.getFirstAsync<{ total: number }>(
-      "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'income' AND date >= ? AND date < ?",
-      start,
-      end,
-    );
-    const expenseResult = await db.getFirstAsync<{ total: number }>(
-      "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'expense' AND date >= ? AND date < ?",
-      start,
-      end,
-    );
+    const [incomeResult, expenseResult] = await Promise.all([
+      db.getFirstAsync<{ total: number }>(
+        "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'income' AND date >= ? AND date < ?",
+        start,
+        end,
+      ),
+      db.getFirstAsync<{ total: number }>(
+        "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'expense' AND date >= ? AND date < ?",
+        start,
+        end,
+      ),
+    ]);
 
     const totalIncome = incomeResult?.total ?? 0;
     const totalExpense = expenseResult?.total ?? 0;
@@ -192,21 +194,12 @@ export const analyticsService = {
   ): Promise<NetWorthPoint[]> {
     const db = await getDatabase();
 
-    const openingBalanceResult = await db.getFirstAsync<{ total: number }>(
-      'SELECT COALESCE(SUM(opening_balance_cents), 0) as total FROM accounts',
-    );
-    const openingBalance = openingBalanceResult?.total ?? 0;
+    const [yearNum, monthNum] = currentMonth.split('-').map(Number);
 
-    const firstTxnResult = await db.getFirstAsync<{ min_date: string }>(
-      'SELECT MIN(date) as min_date FROM transactions',
-    );
-
-    const [yearStr, monthStr] = currentMonth.split('-').map(Number);
-    const points: NetWorthPoint[] = [];
-
+    const months: string[] = [];
     for (let i = monthsBack; i >= 0; i--) {
-      let m = monthStr - i;
-      let y = yearStr;
+      let m = monthNum - i;
+      let y = yearNum;
       while (m <= 0) {
         m += 12;
         y--;
@@ -215,23 +208,60 @@ export const analyticsService = {
         m -= 12;
         y++;
       }
-      const monthKey = `${y}-${String(m).padStart(2, '0')}`;
-      const { end } = getMonthRange(monthKey);
+      months.push(`${y}-${String(m).padStart(2, '0')}`);
+    }
 
-      const incomeResult = await db.getFirstAsync<{ total: number }>(
-        "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'income' AND date < ?",
-        end,
-      );
-      const expenseResult = await db.getFirstAsync<{ total: number }>(
-        "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'expense' AND date < ?",
-        end,
-      );
+    const lastMonth = months[months.length - 1];
+    const { end: cutoff } = getMonthRange(lastMonth);
 
-      const netWorth =
-        openingBalance +
-        (incomeResult?.total ?? 0) -
-        (expenseResult?.total ?? 0);
-      points.push({ month: monthKey, netWorth });
+    const [openingBalanceResult, monthlyRows] = await Promise.all([
+      db.getFirstAsync<{ total: number }>(
+        'SELECT COALESCE(SUM(opening_balance_cents), 0) as total FROM accounts',
+      ),
+      db.getAllAsync<{ month: string; income: number; expense: number }>(
+        `SELECT
+          substr(date, 1, 7) AS month,
+          COALESCE(SUM(CASE WHEN type = 'income' THEN total_amount_cents ELSE 0 END), 0) AS income,
+          COALESCE(SUM(CASE WHEN type = 'expense' THEN total_amount_cents ELSE 0 END), 0) AS expense
+        FROM transactions
+        WHERE date < ?
+        GROUP BY substr(date, 1, 7)
+        ORDER BY month ASC`,
+        cutoff,
+      ),
+    ]);
+
+    const openingBalance = openingBalanceResult?.total ?? 0;
+
+    const monthlyMap = new Map<string, { income: number; expense: number }>();
+    for (const row of monthlyRows) {
+      monthlyMap.set(row.month, { income: row.income, expense: row.expense });
+    }
+
+    let cumulativeIncome = 0;
+    let cumulativeExpense = 0;
+
+    const allMonthsSorted = Array.from(monthlyMap.keys()).sort();
+    const firstNeeded = months[0];
+
+    for (const m of allMonthsSorted) {
+      if (m >= firstNeeded) break;
+      const data = monthlyMap.get(m)!;
+      cumulativeIncome += data.income;
+      cumulativeExpense += data.expense;
+    }
+
+    const points: NetWorthPoint[] = [];
+    for (const monthKey of months) {
+      const data = monthlyMap.get(monthKey);
+      if (data) {
+        cumulativeIncome += data.income;
+        cumulativeExpense += data.expense;
+      }
+      points.push({
+        month: monthKey,
+        netWorth: openingBalance + cumulativeIncome - cumulativeExpense,
+      });
     }
 
     return points;
@@ -275,16 +305,18 @@ export const analyticsService = {
   async getSummaryForRange(start: string, end: string): Promise<MonthSummary> {
     const db = await getDatabase();
 
-    const incomeResult = await db.getFirstAsync<{ total: number }>(
-      "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'income' AND date >= ? AND date < ?",
-      start,
-      end,
-    );
-    const expenseResult = await db.getFirstAsync<{ total: number }>(
-      "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'expense' AND date >= ? AND date < ?",
-      start,
-      end,
-    );
+    const [incomeResult, expenseResult] = await Promise.all([
+      db.getFirstAsync<{ total: number }>(
+        "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'income' AND date >= ? AND date < ?",
+        start,
+        end,
+      ),
+      db.getFirstAsync<{ total: number }>(
+        "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'expense' AND date >= ? AND date < ?",
+        start,
+        end,
+      ),
+    ]);
 
     const totalIncome = incomeResult?.total ?? 0;
     const totalExpense = expenseResult?.total ?? 0;

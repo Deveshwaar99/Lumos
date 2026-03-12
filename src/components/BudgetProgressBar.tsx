@@ -12,7 +12,7 @@ interface BudgetProgressBarProps {
   showLabels?: boolean;
 }
 
-export default function BudgetProgressBar({
+function BudgetProgressBar({
   spent,
   limit,
   alertThreshold,
@@ -53,3 +53,5 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
 });
+
+export default React.memo(BudgetProgressBar);

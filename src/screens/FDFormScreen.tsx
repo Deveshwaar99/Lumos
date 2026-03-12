@@ -478,11 +478,7 @@ export default function FDFormScreen({
               <View style={styles.previewRow}>
                 <Text style={styles.previewLabel}>Gross Interest</Text>
                 <Text style={styles.previewValue}>
-                  {formatMoney(
-                    preview.grossInterest,
-                    sym,
-                    2,
-                  )}
+                  {formatMoney(preview.grossInterest, sym, 2)}
                 </Text>
               </View>
               <View style={styles.previewRow}>
@@ -490,12 +486,7 @@ export default function FDFormScreen({
                   TDS ({taxRateText || '0'}%)
                 </Text>
                 <Text style={[styles.previewValue, { color: colors.expense }]}>
-                  -
-                  {formatMoney(
-                    preview.tds,
-                    sym,
-                    2,
-                  )}
+                  -{formatMoney(preview.tds, sym, 2)}
                 </Text>
               </View>
               <View style={styles.previewDivider} />
@@ -507,11 +498,7 @@ export default function FDFormScreen({
                     { color: colors.income, fontWeight: '800' },
                   ]}
                 >
-                  {formatMoney(
-                    preview.netInterest,
-                    sym,
-                    2,
-                  )}
+                  {formatMoney(preview.netInterest, sym, 2)}
                 </Text>
               </View>
               <View style={styles.previewRow}>
@@ -522,11 +509,7 @@ export default function FDFormScreen({
                     { color: colors.primary, fontWeight: '800' },
                   ]}
                 >
-                  {formatMoney(
-                    preview.maturityValue,
-                    sym,
-                    2,
-                  )}
+                  {formatMoney(preview.maturityValue, sym, 2)}
                 </Text>
               </View>
             </View>

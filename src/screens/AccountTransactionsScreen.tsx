@@ -95,11 +95,7 @@ export default function AccountTransactionsScreen({
             balance < 0 && { color: colors.expense },
           ]}
         >
-          {formatMoney(
-            balance,
-            settings.currencySymbol,
-            2,
-          )}
+          {formatMoney(balance, settings.currencySymbol, 2)}
         </Text>
       </View>
 

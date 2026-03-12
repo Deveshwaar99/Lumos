@@ -32,7 +32,7 @@ function formatCompactY(val: number, currencySymbol?: string): string {
   return `${sign}${sym}${abs.toFixed(0)}`;
 }
 
-export default function FlowLineChart({
+function FlowLineChart({
   data,
   currencySymbol,
   valueKey,
@@ -203,3 +203,5 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+
+export default React.memo(FlowLineChart);

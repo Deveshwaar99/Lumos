@@ -11,10 +11,7 @@ interface CashFlowLineProps {
   currencySymbol?: string;
 }
 
-export default function CashFlowLine({
-  data,
-  currencySymbol,
-}: CashFlowLineProps) {
+function CashFlowLine({ data, currencySymbol }: CashFlowLineProps) {
   if (data.length === 0) {
     return (
       <View style={styles.container}>
@@ -64,12 +61,10 @@ export default function CashFlowLine({
       </ScrollView>
       <View style={styles.summary}>
         <Text variant="bodySmall" style={styles.summaryText}>
-          Best day:{' '}
-          {formatMoney(Math.max(...values), currencySymbol)}
+          Best day: {formatMoney(Math.max(...values), currencySymbol)}
         </Text>
         <Text variant="bodySmall" style={styles.summaryText}>
-          Worst day:{' '}
-          {formatMoney(Math.min(...values), currencySymbol)}
+          Worst day: {formatMoney(Math.min(...values), currencySymbol)}
         </Text>
       </View>
     </View>
@@ -86,3 +81,5 @@ const styles = StyleSheet.create({
   },
   summaryText: { color: colors.textSecondary },
 });
+
+export default React.memo(CashFlowLine);

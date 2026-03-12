@@ -197,11 +197,7 @@ export default function FDDetailScreen({
         <View style={styles.heroCard}>
           <Text style={styles.heroLabel}>Principal</Text>
           <Text style={styles.heroAmount}>
-            {formatMoney(
-              fd.principalCents,
-              sym,
-              2,
-            )}
+            {formatMoney(fd.principalCents, sym, 2)}
           </Text>
           <View style={styles.heroMeta}>
             <Text style={styles.heroRate}>{fd.annualInterestRate}% p.a.</Text>
@@ -336,18 +332,13 @@ export default function FDDetailScreen({
           <View style={styles.breakdownRow}>
             <Text style={styles.breakdownLabel}>Gross Interest</Text>
             <Text style={styles.breakdownValue}>
-              {formatMoney(
-                breakdown.gross,
-                sym,
-                2,
-              )}
+              {formatMoney(breakdown.gross, sym, 2)}
             </Text>
           </View>
           <View style={styles.breakdownRow}>
             <Text style={styles.breakdownLabel}>TDS ({fd.taxRate}%)</Text>
             <Text style={[styles.breakdownValue, { color: colors.expense }]}>
-              -
-              {formatMoney(breakdown.tds, sym, 2)}
+              -{formatMoney(breakdown.tds, sym, 2)}
             </Text>
           </View>
           <View style={styles.breakdownDivider} />
@@ -374,11 +365,7 @@ export default function FDDetailScreen({
                 { color: colors.primary, fontWeight: '800' },
               ]}
             >
-              {formatMoney(
-                breakdown.maturityValue,
-                sym,
-                2,
-              )}
+              {formatMoney(breakdown.maturityValue, sym, 2)}
             </Text>
           </View>
         </View>
@@ -419,11 +406,7 @@ export default function FDDetailScreen({
                   ]}
                 >
                   {txn.type === 'income' ? '+' : '-'}
-                  {formatMoney(
-                    txn.totalAmountCents,
-                    sym,
-                    2,
-                  )}
+                  {formatMoney(txn.totalAmountCents, sym, 2)}
                 </Text>
               </View>
             ))}

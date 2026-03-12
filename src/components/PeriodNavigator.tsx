@@ -11,7 +11,7 @@ interface PeriodNavigatorProps {
   compact?: boolean;
 }
 
-export default function PeriodNavigator({
+function PeriodNavigator({
   label,
   onPrev,
   onNext,
@@ -84,3 +84,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 });
+
+export default React.memo(PeriodNavigator);

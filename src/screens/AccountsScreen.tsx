@@ -159,11 +159,7 @@ export default function AccountsScreen({
           },
         ]}
       >
-        {formatMoney(
-          portfolioData.netBalance,
-          sym,
-          2,
-        )}
+        {formatMoney(portfolioData.netBalance, sym, 2)}
       </Text>
 
       <View style={styles.summaryRow}>
@@ -173,11 +169,7 @@ export default function AccountsScreen({
             <Text style={styles.summaryLabel}>Assets</Text>
           </View>
           <Text style={[styles.summaryAmount, { color: colors.income }]}>
-            {formatMoney(
-              portfolioData.totalAssets,
-              sym,
-              2,
-            )}
+            {formatMoney(portfolioData.totalAssets, sym, 2)}
           </Text>
         </View>
 
@@ -189,11 +181,7 @@ export default function AccountsScreen({
             <Text style={styles.summaryLabel}>Liabilities</Text>
           </View>
           <Text style={[styles.summaryAmount, { color: colors.warning }]}>
-            {formatMoney(
-              portfolioData.totalLiabilities,
-              sym,
-              2,
-            )}
+            {formatMoney(portfolioData.totalLiabilities, sym, 2)}
           </Text>
         </View>
       </View>
@@ -425,11 +413,7 @@ export default function AccountsScreen({
             <View style={styles.fdStat}>
               <Text style={styles.fdStatLabel}>Principal</Text>
               <Text style={styles.fdStatValue}>
-                {formatMoney(
-                  item.principalCents,
-                  sym,
-                  2,
-                )}
+                {formatMoney(item.principalCents, sym, 2)}
               </Text>
             </View>
             <View style={styles.fdStatDivider} />

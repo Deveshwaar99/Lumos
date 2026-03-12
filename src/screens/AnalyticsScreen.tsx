@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  useRef,
+} from 'react';
 import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, Icon, ActivityIndicator } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
@@ -87,50 +93,109 @@ export default function AnalyticsScreen({
   );
   const [netWorthHistory, setNetWorthHistory] = useState<NetWorthPoint[]>([]);
 
+  const loadedViewRef = useRef<{
+    view: AnalysisView;
+    start: string;
+    end: string;
+  } | null>(null);
 
-
-  const loadData = useCallback(async () => {
-    setLoading(true);
+  const loadSummary = useCallback(async () => {
     try {
-      const [s, eb, ib, ef, inf, ap, nw] = await Promise.all([
-        analyticsService.getSummaryForRange(range.start, range.end),
-        analyticsService.getCategoryBreakdownForRange(
-          range.start,
-          range.end,
-          'expense',
-        ),
-        analyticsService.getCategoryBreakdownForRange(
-          range.start,
-          range.end,
-          'income',
-        ),
-        analyticsService.getDailyExpenseFlowForRange(range.start, range.end),
-        analyticsService.getDailyIncomeFlowForRange(range.start, range.end),
-        analyticsService.getAccountPeriodBalancesForRange(
-          range.start,
-          range.end,
-        ),
-        analyticsService.getNetWorthHistory(monthKey, 12),
-      ]);
+      const s = await analyticsService.getSummaryForRange(
+        range.start,
+        range.end,
+      );
       setSummary(s);
-      setExpenseBreakdown(eb.sort((a, b) => b.total - a.total));
-      setIncomeBreakdown(ib.sort((a, b) => b.total - a.total));
-      setExpenseFlow(ef);
-      setIncomeFlow(inf);
-      setAccountPeriod(ap);
-      setNetWorthHistory(nw);
     } catch (e) {
-      console.error('Analytics load error:', e);
-    } finally {
-      setLoading(false);
+      console.error('Analytics summary load error:', e);
     }
-  }, [range.start, range.end, monthKey]);
+  }, [range.start, range.end]);
+
+  const loadViewData = useCallback(
+    async (view: AnalysisView) => {
+      const cacheKey = { view, start: range.start, end: range.end };
+      const prev = loadedViewRef.current;
+      if (
+        prev &&
+        prev.view === cacheKey.view &&
+        prev.start === cacheKey.start &&
+        prev.end === cacheKey.end
+      ) {
+        return;
+      }
+
+      setLoading(true);
+      try {
+        switch (view) {
+          case 'expense_overview': {
+            const eb = await analyticsService.getCategoryBreakdownForRange(
+              range.start,
+              range.end,
+              'expense',
+            );
+            setExpenseBreakdown(eb.sort((a, b) => b.total - a.total));
+            break;
+          }
+          case 'income_overview': {
+            const ib = await analyticsService.getCategoryBreakdownForRange(
+              range.start,
+              range.end,
+              'income',
+            );
+            setIncomeBreakdown(ib.sort((a, b) => b.total - a.total));
+            break;
+          }
+          case 'expense_flow': {
+            const ef = await analyticsService.getDailyExpenseFlowForRange(
+              range.start,
+              range.end,
+            );
+            setExpenseFlow(ef);
+            break;
+          }
+          case 'income_flow': {
+            const inf = await analyticsService.getDailyIncomeFlowForRange(
+              range.start,
+              range.end,
+            );
+            setIncomeFlow(inf);
+            break;
+          }
+          case 'account_analysis': {
+            const ap = await analyticsService.getAccountPeriodBalancesForRange(
+              range.start,
+              range.end,
+            );
+            setAccountPeriod(ap);
+            break;
+          }
+          case 'net_worth': {
+            const nw = await analyticsService.getNetWorthHistory(monthKey, 12);
+            setNetWorthHistory(nw);
+            break;
+          }
+        }
+        loadedViewRef.current = cacheKey;
+      } catch (e) {
+        console.error('Analytics view load error:', e);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [range.start, range.end, monthKey],
+  );
 
   useFocusEffect(
     useCallback(() => {
-      loadData();
-    }, [loadData]),
+      loadedViewRef.current = null;
+      loadSummary();
+      loadViewData(activeView);
+    }, [loadSummary, loadViewData, activeView]),
   );
+
+  useEffect(() => {
+    loadViewData(activeView);
+  }, [activeView, loadViewData]);
 
   const totalExpenseForBar = expenseBreakdown.reduce((s, c) => s + c.total, 0);
   const totalIncomeForBar = incomeBreakdown.reduce((s, c) => s + c.total, 0);
@@ -178,11 +243,7 @@ export default function AnalyticsScreen({
                     }}
                   >
                     {isExpense ? '-' : ''}
-                    {formatMoney(
-                      cat.total,
-                      settings.currencySymbol,
-                      2,
-                    )}
+                    {formatMoney(cat.total, settings.currencySymbol, 2)}
                   </Text>
                 </View>
                 <View style={styles.barRow}>
@@ -323,22 +384,14 @@ export default function AnalyticsScreen({
         <View style={styles.summaryRow}>
           <View style={styles.summaryItem}>
             <Text style={[styles.summaryValue, { color: colors.income }]}>
-              {formatMoney(
-                summary.totalIncome,
-                settings.currencySymbol,
-                0,
-              )}
+              {formatMoney(summary.totalIncome, settings.currencySymbol, 0)}
             </Text>
             <Text style={styles.summaryLabel}>Income</Text>
           </View>
           <View style={styles.summaryDivider} />
           <View style={styles.summaryItem}>
             <Text style={[styles.summaryValue, { color: colors.expense }]}>
-              {formatMoney(
-                summary.totalExpense,
-                settings.currencySymbol,
-                0,
-              )}
+              {formatMoney(summary.totalExpense, settings.currencySymbol, 0)}
             </Text>
             <Text style={styles.summaryLabel}>Spent</Text>
           </View>

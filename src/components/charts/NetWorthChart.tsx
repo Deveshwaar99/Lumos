@@ -30,10 +30,7 @@ function formatCompactY(val: number, currencySymbol?: string): string {
   return `${sign}${sym}${abs.toFixed(0)}`;
 }
 
-export default function NetWorthChart({
-  data,
-  currencySymbol,
-}: NetWorthChartProps) {
+function NetWorthChart({ data, currencySymbol }: NetWorthChartProps) {
   if (data.length === 0) {
     return (
       <View style={styles.container}>
@@ -323,3 +320,5 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+
+export default React.memo(NetWorthChart);

@@ -8,7 +8,7 @@ interface DateHeaderProps {
   dateStr: string;
 }
 
-export default function DateHeader({ dateStr }: DateHeaderProps) {
+function DateHeader({ dateStr }: DateHeaderProps) {
   const date = dateStr.includes('T') ? parseISO(dateStr) : new Date(dateStr);
   const label = format(date, 'EEE, dd MMM');
   const relative = isToday(date)
@@ -46,3 +46,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
   },
 });
+
+export default React.memo(DateHeader);

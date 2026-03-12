@@ -207,6 +207,41 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
   const displaySections =
     searchActive && searchQuery.trim() ? searchSections : sections;
 
+  const handleItemPress = useCallback(
+    (transactionId: string) => {
+      navigation.navigate('TransactionDetail', { transactionId });
+    },
+    [navigation],
+  );
+
+  const renderSectionHeader = useCallback(
+    ({ section }: { section: TransactionSection }) => (
+      <DateHeader dateStr={section.title} />
+    ),
+    [],
+  );
+
+  const renderItem = useCallback(
+    ({ item, index }: { item: TransactionWithSplits; index: number }) => (
+      <>
+        {index > 0 && <View style={styles.itemDivider} />}
+        <TransactionItem
+          transaction={item}
+          category={item.categoryId ? categoryMap[item.categoryId] : undefined}
+          accountMap={accountMap}
+          currencySymbol={settings.currencySymbol}
+          onPress={() => handleItemPress(item.id)}
+        />
+      </>
+    ),
+    [categoryMap, accountMap, settings.currencySymbol, handleItemPress],
+  );
+
+  const keyExtractor = useCallback(
+    (item: TransactionWithSplits) => item.id,
+    [],
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.headerSection}>
@@ -271,28 +306,9 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
 
       <SectionList
         sections={displaySections}
-        keyExtractor={(item) => item.id}
-        renderSectionHeader={({ section }) => (
-          <DateHeader dateStr={section.title} />
-        )}
-        renderItem={({ item, index }) => (
-          <>
-            {index > 0 && <View style={styles.itemDivider} />}
-            <TransactionItem
-              transaction={item}
-              category={
-                item.categoryId ? categoryMap[item.categoryId] : undefined
-              }
-              accountMap={accountMap}
-              currencySymbol={settings.currencySymbol}
-              onPress={() =>
-                navigation.navigate('TransactionDetail', {
-                  transactionId: item.id,
-                })
-              }
-            />
-          </>
-        )}
+        keyExtractor={keyExtractor}
+        renderSectionHeader={renderSectionHeader}
+        renderItem={renderItem}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIconWrap}>

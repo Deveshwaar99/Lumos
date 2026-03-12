@@ -17,10 +17,7 @@ interface CategoryDonutChartProps {
   centerLabel: string;
 }
 
-export default function CategoryDonutChart({
-  data,
-  centerLabel,
-}: CategoryDonutChartProps) {
+function CategoryDonutChart({ data, centerLabel }: CategoryDonutChartProps) {
   if (data.length === 0) {
     return (
       <View style={styles.container}>
@@ -154,3 +151,5 @@ const styles = StyleSheet.create({
   legendText: { color: colors.text, fontSize: 11, flex: 1 },
   legendPct: { color: colors.textSecondary, fontSize: 10 },
 });
+
+export default React.memo(CategoryDonutChart);

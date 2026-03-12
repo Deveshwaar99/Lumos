@@ -22,7 +22,7 @@ function formatCompact(cents: number): string {
   return `${sign}${abs.toFixed(abs < 10 ? 1 : 0)}`;
 }
 
-export default function CalendarGrid({
+function CalendarGrid({
   month,
   data,
   valueKey,
@@ -161,3 +161,5 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
 });
+
+export default React.memo(CalendarGrid);

@@ -11,7 +11,7 @@ interface IncomeExpensePieProps {
   currencySymbol?: string;
 }
 
-export default function IncomeExpensePie({
+function IncomeExpensePie({
   income,
   expense,
   currencySymbol,
@@ -87,3 +87,5 @@ const styles = StyleSheet.create({
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dot: { width: 10, height: 10, borderRadius: 5 },
 });
+
+export default React.memo(IncomeExpensePie);
