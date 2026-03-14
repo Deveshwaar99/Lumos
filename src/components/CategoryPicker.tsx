@@ -29,6 +29,9 @@ export default function CategoryPicker({
         <Text variant="titleMedium" style={styles.title}>
           Select Category
         </Text>
+        {categories.length === 0 && (
+          <Text style={styles.emptyText}>No categories available</Text>
+        )}
         <ScrollView>
           {categories.map((item, index) => (
             <React.Fragment key={item.id}>
@@ -39,6 +42,7 @@ export default function CategoryPicker({
                   onSelect(item);
                   onDismiss();
                 }}
+                activeOpacity={0.7}
               >
                 <View
                   style={[
@@ -70,18 +74,23 @@ export default function CategoryPicker({
 const styles = StyleSheet.create({
   modal: {
     backgroundColor: colors.surface,
-    margin: 20,
-    borderRadius: 12,
+    margin: spacing.lg,
+    borderRadius: radius.md,
     maxHeight: '70%',
-    padding: 16,
+    padding: spacing.cardInset,
   },
   title: { marginBottom: 12, textAlign: 'center' },
+  emptyText: {
+    color: colors.textSecondary,
+    textAlign: 'center',
+    paddingVertical: spacing.xl,
+  },
   item: { flexDirection: 'row', alignItems: 'center', padding: 12 },
   selected: { backgroundColor: colors.primary + '10' },
   iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,

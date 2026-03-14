@@ -21,19 +21,19 @@ function SummaryBar({
     <View style={styles.container}>
       <View style={[styles.item, { backgroundColor: colors.expense + '14' }]}>
         <Text style={styles.label}>EXPENSE</Text>
-        <Text style={[styles.amount, { color: colors.expense }]}>
+        <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.amount, { color: colors.expense }]}>
           {formatMoney(expense, currencySymbol)}
         </Text>
       </View>
       <View style={[styles.item, { backgroundColor: colors.income + '14' }]}>
         <Text style={styles.label}>INCOME</Text>
-        <Text style={[styles.amount, { color: colors.income }]}>
+        <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.amount, { color: colors.income }]}>
           {formatMoney(income, currencySymbol)}
         </Text>
       </View>
       <View style={[styles.item, { backgroundColor: colors.surfaceVariant }]}>
         <Text style={styles.label}>BALANCE</Text>
-        <Text style={styles.amount}>
+        <Text numberOfLines={1} adjustsFontSizeToFit style={styles.amount}>
           {formatMoney(balance, currencySymbol)}
         </Text>
       </View>

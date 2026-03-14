@@ -4,6 +4,7 @@ import {
   FlatList,
   StyleSheet,
   Alert,
+  RefreshControl,
   TouchableOpacity,
 } from 'react-native';
 import { FAB, Snackbar, Icon, Text, Menu } from 'react-native-paper';
@@ -24,7 +25,14 @@ export default function CategoriesScreen({
   );
   const [snackbar, setSnackbar] = useState('');
   const [menuVisible, setMenuVisible] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const insets = useSafeAreaInsets();
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadCategories();
+    setRefreshing(false);
+  }, [loadCategories]);
 
   useFocusEffect(
     useCallback(() => {
@@ -77,12 +85,12 @@ export default function CategoriesScreen({
   const renderSegmentedControl = () => (
     <View style={styles.segmentContainer}>
       <TouchableOpacity
+        activeOpacity={0.7}
         style={[
           styles.segmentTab,
           selectedType === 'expense' && styles.segmentTabActive,
         ]}
         onPress={() => setSelectedType('expense')}
-        activeOpacity={0.8}
       >
         <Icon
           source="arrow-down-bold-circle-outline"
@@ -118,12 +126,12 @@ export default function CategoriesScreen({
         )}
       </TouchableOpacity>
       <TouchableOpacity
+        activeOpacity={0.7}
         style={[
           styles.segmentTab,
           selectedType === 'income' && styles.segmentTabActive,
         ]}
         onPress={() => setSelectedType('income')}
-        activeOpacity={0.8}
       >
         <Icon
           source="arrow-up-bold-circle-outline"
@@ -164,14 +172,14 @@ export default function CategoriesScreen({
   const renderItem = ({ item }: { item: Category }) => (
     <View style={styles.categoryCard}>
       <View style={[styles.categoryAccent, { backgroundColor: item.color }]} />
-      <TouchableOpacity
+        <TouchableOpacity
+        activeOpacity={0.7}
         style={styles.categoryContent}
         onPress={() =>
           (navigation as any).navigate('CategoryTransactions', {
             categoryId: item.id,
           })
         }
-        activeOpacity={0.7}
       >
         <View
           style={[styles.categoryIcon, { backgroundColor: item.color + '1A' }]}
@@ -191,6 +199,7 @@ export default function CategoriesScreen({
           onDismiss={() => setMenuVisible(null)}
           anchor={
             <TouchableOpacity
+              activeOpacity={0.7}
               onPress={() => setMenuVisible(item.id)}
               hitSlop={12}
               style={styles.menuTrigger}
@@ -239,6 +248,14 @@ export default function CategoriesScreen({
           renderItem={renderItem}
           ListHeaderComponent={ListHeader}
           contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
         />
       )}
       <FAB
@@ -247,12 +264,14 @@ export default function CategoriesScreen({
         onPress={() =>
           navigation.navigate('CategoryForm', { categoryType: selectedType })
         }
-        color="#fff"
+        color={colors.onPrimary}
+        accessibilityLabel="Add category"
       />
       <Snackbar
         visible={!!snackbar}
         onDismiss={() => setSnackbar('')}
         duration={3000}
+        style={{ marginBottom: 72 }}
       >
         {snackbar}
       </Snackbar>
@@ -365,7 +384,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   menuTrigger: {
-    padding: spacing.xxs,
+    padding: spacing.sm,
   },
   menuContent: {
     backgroundColor: colors.surfaceVariant,
@@ -376,7 +395,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.lg,
     backgroundColor: colors.primary,
-    opacity: 0.6,
     ...elevation.lg,
   },
 });

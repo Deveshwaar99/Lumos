@@ -13,7 +13,7 @@ import {
   Animated,
   TextInput as RNTextInput,
 } from 'react-native';
-import { Text, FAB, Icon } from 'react-native-paper';
+import { Text, FAB, Icon, Snackbar } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { TouchableOpacity } from 'react-native';
@@ -61,6 +61,7 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
     net: 0,
   });
   const [refreshing, setRefreshing] = useState(false);
+  const [snackbar, setSnackbar] = useState('');
 
   const range = useMemo(
     () => getTimePeriodRange(anchor, period),
@@ -129,27 +130,31 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
   }, [searchQuery]);
 
   const loadData = useCallback(async () => {
-    await Promise.all([
-      loadCategories(),
-      loadAccounts(),
-      loadBudgets(),
-      loadSettings(),
-    ]);
-    const [txns, rangeSummary] = await Promise.all([
-      transactionService.getAll(
-        {
-          dateFrom: range.start,
-          dateTo: range.end,
-          type: null,
-          accountId: null,
-          categoryId: null,
-        },
-        500,
-      ),
-      analyticsService.getSummaryForRange(range.start, range.end),
-    ]);
-    setTransactions(txns);
-    setSummary(rangeSummary);
+    try {
+      await Promise.all([
+        loadCategories(),
+        loadAccounts(),
+        loadBudgets(),
+        loadSettings(),
+      ]);
+      const [txns, rangeSummary] = await Promise.all([
+        transactionService.getAll(
+          {
+            dateFrom: range.start,
+            dateTo: range.end,
+            type: null,
+            accountId: null,
+            categoryId: null,
+          },
+          500,
+        ),
+        analyticsService.getSummaryForRange(range.start, range.end),
+      ]);
+      setTransactions(txns);
+      setSummary(rangeSummary);
+    } catch {
+      setSnackbar('Failed to load data');
+    }
   }, [range.start, range.end]);
 
   useFocusEffect(
@@ -278,8 +283,10 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
               style={[styles.topBar, { paddingTop: insets.top + spacing.md }]}
             >
               <TouchableOpacity
-                hitSlop={12}
+                hitSlop={8}
                 onPress={() => navigation.navigate('Settings' as any)}
+                accessibilityLabel="Open settings"
+                accessibilityRole="button"
               >
                 <Icon source="cog" size={24} color={colors.text} />
               </TouchableOpacity>
@@ -289,7 +296,12 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
                 onNext={handleNext}
                 onFilterPress={() => setFilterVisible(true)}
               />
-              <TouchableOpacity hitSlop={12} onPress={openSearch}>
+              <TouchableOpacity
+                hitSlop={8}
+                onPress={openSearch}
+                accessibilityLabel="Search transactions"
+                accessibilityRole="button"
+              >
                 <Icon source="magnify" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
@@ -354,7 +366,8 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
           icon="plus"
           style={[styles.fab, { bottom: insets.bottom + 16 }]}
           onPress={() => navigation.navigate('AddTransaction')}
-          color="#fff"
+          color={colors.onPrimary}
+          accessibilityLabel="Add transaction"
         />
       )}
 
@@ -367,6 +380,15 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
           setAnchor(new Date());
         }}
       />
+
+      <Snackbar
+        visible={!!snackbar}
+        onDismiss={() => setSnackbar('')}
+        duration={3000}
+        style={{ marginBottom: 72 }}
+      >
+        {snackbar}
+      </Snackbar>
     </View>
   );
 }
@@ -423,7 +445,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.lg,
     backgroundColor: colors.primary,
-    opacity: 0.6,
     ...elevation.lg,
   },
   searchBar: {

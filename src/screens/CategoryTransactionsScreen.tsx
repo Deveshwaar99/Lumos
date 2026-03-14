@@ -8,6 +8,7 @@ import { useCategoryStore } from '../stores/useCategoryStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { transactionService } from '../services/transactionService';
 import TransactionItem from '../components/TransactionItem';
+import DateHeader from '../components/DateHeader';
 import { colors, spacing, radius } from '../theme';
 import { formatMoney } from '../utils/money';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -102,7 +103,13 @@ export default function CategoryTransactionsScreen({
           <Text style={styles.headerName} numberOfLines={1}>
             {category?.name ?? 'Category'}
           </Text>
-          <Text style={styles.headerTotal}>{fmt(stats.total)}</Text>
+          <Text
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            style={styles.headerTotal}
+          >
+            {fmt(stats.total)}
+          </Text>
         </View>
         <View style={styles.headerBadge}>
           <Text style={styles.headerBadgeText}>
@@ -115,9 +122,7 @@ export default function CategoryTransactionsScreen({
         sections={sections}
         keyExtractor={(item) => item.id}
         renderSectionHeader={({ section }) => (
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionHeaderText}>{section.title}</Text>
-          </View>
+          <DateHeader dateStr={section.title} />
         )}
         renderItem={({ item, index }) => (
           <>
@@ -161,7 +166,8 @@ export default function CategoryTransactionsScreen({
         icon="plus"
         style={[styles.fab, { bottom: insets.bottom + 16 }]}
         onPress={() => navigation.navigate('AddTransaction')}
-        color="#fff"
+        color={colors.onPrimary}
+        accessibilityLabel="Add transaction"
       />
     </View>
   );
@@ -223,7 +229,7 @@ const styles = StyleSheet.create({
   },
 
   listContent: { paddingBottom: 100 },
-  itemDivider: { backgroundColor: colors.border, marginLeft: 76 },
+  itemDivider: { backgroundColor: colors.border, marginLeft: 74 },
 
   emptyContainer: {
     alignItems: 'center',
@@ -236,6 +242,5 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.lg,
     backgroundColor: colors.primary,
-    opacity: 0.6,
   },
 });

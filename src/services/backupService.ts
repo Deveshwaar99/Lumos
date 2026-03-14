@@ -48,7 +48,7 @@ export const backupService = {
 
     await db.runAsync(
       "INSERT OR REPLACE INTO settings (key, value) VALUES ('lastBackupAt', ?)",
-      new Date().toISOString(),
+      [new Date().toISOString()],
     );
 
     return file.uri;
@@ -115,11 +115,7 @@ export const backupService = {
       const c = cat as any;
       await db.runAsync(
         'INSERT INTO categories (id, name, type, icon, color) VALUES (?, ?, ?, ?, ?)',
-        c.id,
-        c.name,
-        c.type,
-        c.icon,
-        c.color,
+        [c.id, c.name, c.type, c.icon, c.color],
       );
     }
 
@@ -127,12 +123,7 @@ export const backupService = {
       const a = acc as any;
       await db.runAsync(
         'INSERT INTO accounts (id, name, type, icon, opening_balance_cents, currency) VALUES (?, ?, ?, ?, ?, ?)',
-        a.id,
-        a.name,
-        a.type,
-        a.icon,
-        a.opening_balance_cents ?? a.openingBalanceCents ?? 0,
-        a.currency ?? 'USD',
+        [a.id, a.name, a.type, a.icon, a.opening_balance_cents ?? a.openingBalanceCents ?? 0, a.currency ?? 'USD'],
       );
     }
 
@@ -141,20 +132,19 @@ export const backupService = {
       await db.runAsync(
         `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, note, date, linked_transaction_id, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        t.id,
-        t.type,
-        t.total_amount_cents ??
-          t.totalAmountCents ??
-          t.amount_cents ??
-          t.amountCents,
-        t.currency,
-        t.category_id ?? t.categoryId,
-        t.account_id ?? t.accountId ?? '',
-        t.note,
-        t.date,
-        t.linked_transaction_id ?? t.linkedTransactionId ?? null,
-        t.created_at ?? t.createdAt,
-        t.updated_at ?? t.updatedAt,
+        [
+          t.id,
+          t.type,
+          t.total_amount_cents ?? t.totalAmountCents ?? t.amount_cents ?? t.amountCents,
+          t.currency,
+          t.category_id ?? t.categoryId,
+          t.account_id ?? t.accountId ?? '',
+          t.note,
+          t.date,
+          t.linked_transaction_id ?? t.linkedTransactionId ?? null,
+          t.created_at ?? t.createdAt,
+          t.updated_at ?? t.updatedAt,
+        ],
       );
     }
 
@@ -163,10 +153,7 @@ export const backupService = {
       const s = sp as any;
       await db.runAsync(
         'INSERT INTO transaction_splits (id, transaction_id, account_id, amount_cents) VALUES (?, ?, ?, ?)',
-        s.id,
-        s.transaction_id ?? s.transactionId,
-        s.account_id ?? s.accountId,
-        s.amount_cents ?? s.amountCents,
+        [s.id, s.transaction_id ?? s.transactionId, s.account_id ?? s.accountId, s.amount_cents ?? s.amountCents],
       );
     }
 
@@ -177,10 +164,7 @@ export const backupService = {
       for (const row of txnRows) {
         await db.runAsync(
           'INSERT INTO transaction_splits (id, transaction_id, account_id, amount_cents) VALUES (?, ?, ?, ?)',
-          row.id + '_s0',
-          row.id,
-          row.account_id,
-          row.total_amount_cents,
+          [row.id + '_s0', row.id, row.account_id, row.total_amount_cents],
         );
       }
     }
@@ -189,12 +173,7 @@ export const backupService = {
       const b = bud as any;
       await db.runAsync(
         'INSERT INTO budgets (id, month, category_id, limit_cents, alert_threshold_pct, enabled) VALUES (?, ?, ?, ?, ?, ?)',
-        b.id,
-        b.month,
-        b.category_id ?? b.categoryId,
-        b.limit_cents ?? b.limitCents,
-        b.alert_threshold_pct ?? b.alertThresholdPct ?? 80,
-        b.enabled !== undefined ? (b.enabled ? 1 : 0) : 1,
+        [b.id, b.month, b.category_id ?? b.categoryId, b.limit_cents ?? b.limitCents, b.alert_threshold_pct ?? b.alertThresholdPct ?? 80, b.enabled !== undefined ? (b.enabled ? 1 : 0) : 1],
       );
     }
 
@@ -205,21 +184,23 @@ export const backupService = {
         await db.runAsync(
           `INSERT INTO fixed_deposits (id, fd_account_id, source_account_id, credit_account_id, interest_category_id, principal_cents, annual_interest_rate, start_date, maturity_date, tax_rate, currency, note, status, created_at, updated_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          f.id,
-          f.fd_account_id ?? f.fdAccountId,
-          f.source_account_id ?? f.sourceAccountId,
-          f.credit_account_id ?? f.creditAccountId,
-          f.interest_category_id ?? f.interestCategoryId ?? null,
-          f.principal_cents ?? f.principalCents,
-          f.annual_interest_rate ?? f.annualInterestRate,
-          f.start_date ?? f.startDate,
-          f.maturity_date ?? f.maturityDate,
-          f.tax_rate ?? f.taxRate ?? 0,
-          f.currency ?? 'USD',
-          f.note ?? null,
-          f.status ?? 'active',
-          f.created_at ?? f.createdAt,
-          f.updated_at ?? f.updatedAt,
+          [
+            f.id,
+            f.fd_account_id ?? f.fdAccountId,
+            f.source_account_id ?? f.sourceAccountId,
+            f.credit_account_id ?? f.creditAccountId,
+            f.interest_category_id ?? f.interestCategoryId ?? null,
+            f.principal_cents ?? f.principalCents,
+            f.annual_interest_rate ?? f.annualInterestRate,
+            f.start_date ?? f.startDate,
+            f.maturity_date ?? f.maturityDate,
+            f.tax_rate ?? f.taxRate ?? 0,
+            f.currency ?? 'USD',
+            f.note ?? null,
+            f.status ?? 'active',
+            f.created_at ?? f.createdAt,
+            f.updated_at ?? f.updatedAt,
+          ],
         );
       } catch {
         // skip if table doesn't exist
@@ -229,8 +210,7 @@ export const backupService = {
     for (const [key, value] of Object.entries(backup.settings)) {
       await db.runAsync(
         'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
-        key,
-        value,
+        [key, value],
       );
     }
   },

@@ -9,16 +9,13 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { View, StyleSheet, AppState } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import {
-  useFonts,
-  PlayfairDisplay_700Bold,
-} from '@expo-google-fonts/playfair-display';
 import * as QuickActions from 'expo-quick-actions';
 import { colors, paperTheme } from './src/theme';
 import { getDatabase } from './src/db/database';
 import { seedDatabase } from './src/db/seed';
 import { useSettingsStore } from './src/stores/useSettingsStore';
 import { useFDStore } from './src/stores/useFDStore';
+import { useRecurringStore } from './src/stores/useRecurringStore';
 import RootNavigator from './src/navigation/RootNavigator';
 import LockScreen from './src/components/LockScreen';
 import type { RootStackParamList } from './src/navigation/types';
@@ -33,8 +30,6 @@ export default function App() {
     useRef<NavigationContainerRef<RootStackParamList>>(null);
   const appStateRef = useRef(AppState.currentState);
   const backgroundAtRef = useRef<number | null>(null);
-  const [fontsLoaded] = useFonts({ PlayfairDisplay_700Bold });
-
   useEffect(() => {
     (async () => {
       const db = await getDatabase();
@@ -50,6 +45,13 @@ export default function App() {
 
       const { processMaturedDeposits } = useFDStore.getState();
       await processMaturedDeposits();
+
+      try {
+        const { processDue } = useRecurringStore.getState();
+        await processDue();
+      } catch (e) {
+        console.error('[Recurring] processDue failed:', e);
+      }
 
       try {
         QuickActions.setItems([
@@ -77,7 +79,7 @@ export default function App() {
   useEffect(() => {
     if (!screenLockEnabled) return;
 
-    const LOCK_GRACE_MS = 20_000;
+    const LOCK_GRACE_MS = 10_000;
     const subscription = AppState.addEventListener('change', (nextState) => {
       // User leaves the app (e.g. presses home, switches apps, pulls notification shade)
       // Record the timestamp so we can measure how long the app was in the background
@@ -89,7 +91,9 @@ export default function App() {
       }
 
       // User returns to the app
-      // Only re-lock if they were away for longer than the grace period (20s)
+      // Only re-lock if they were away for longer than the grace period (10s)
+      // User returns to the app
+      // Only re-lock if they were away for longer than the grace period (10s)
       if (
         appStateRef.current.match(/inactive|background/) &&
         nextState === 'active'
@@ -130,7 +134,7 @@ export default function App() {
     return () => sub.remove();
   }, [ready]);
 
-  if (!ready || !fontsLoaded) {
+  if (!ready) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={colors.primary} />

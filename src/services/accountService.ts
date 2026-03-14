@@ -25,7 +25,7 @@ export const accountService = {
     const db = await getDatabase();
     const row = await db.getFirstAsync<any>(
       'SELECT * FROM accounts WHERE id = ?',
-      id,
+      [id],
     );
     return row ? mapRow(row) : null;
   },
@@ -35,12 +35,7 @@ export const accountService = {
     const id = generateId();
     await db.runAsync(
       'INSERT INTO accounts (id, name, type, icon, opening_balance_cents, currency) VALUES (?, ?, ?, ?, ?, ?)',
-      id,
-      data.name,
-      data.type,
-      data.icon,
-      data.openingBalanceCents,
-      'USD',
+      [id, data.name, data.type, data.icon, data.openingBalanceCents, 'USD'],
     );
     return { id, ...data };
   },
@@ -69,7 +64,7 @@ export const accountService = {
     values.push(id);
     await db.runAsync(
       `UPDATE accounts SET ${fields.join(', ')} WHERE id = ?`,
-      ...values,
+      values,
     );
   },
 
@@ -77,7 +72,7 @@ export const accountService = {
     const db = await getDatabase();
     const usage = await db.getFirstAsync<{ count: number }>(
       'SELECT COUNT(*) as count FROM transaction_splits WHERE account_id = ?',
-      id,
+      [id],
     );
     if (usage && usage.count > 0) {
       return {
@@ -85,7 +80,7 @@ export const accountService = {
         message: `Account is used by ${usage.count} transaction split(s). Please reassign or delete them first.`,
       };
     }
-    await db.runAsync('DELETE FROM accounts WHERE id = ?', id);
+    await db.runAsync('DELETE FROM accounts WHERE id = ?', [id]);
     return { success: true };
   },
 
@@ -102,7 +97,7 @@ export const accountService = {
           WHERE s.account_id = a.id AND t.type = 'expense'), 0)
         as balance
       FROM accounts a WHERE a.id = ?`,
-      id,
+      [id],
     );
     return result?.balance ?? 0;
   },

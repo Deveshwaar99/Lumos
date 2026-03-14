@@ -67,8 +67,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
           : String(value);
     await db.runAsync(
       'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
-      key,
-      strValue,
+      [key, strValue],
     );
     set((state) => ({
       settings: { ...state.settings, [key]: value },

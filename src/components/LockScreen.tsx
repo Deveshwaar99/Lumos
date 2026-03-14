@@ -2,7 +2,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, Icon, Button } from 'react-native-paper';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { colors, spacing } from '../theme';
+import { colors, spacing, radius } from '../theme';
+
+const { AuthenticationType } = LocalAuthentication;
+
+type BiometricType = 'face' | 'fingerprint' | 'generic';
 
 interface LockScreenProps {
   onUnlock: () => void;
@@ -10,6 +14,19 @@ interface LockScreenProps {
 
 export default function LockScreen({ onUnlock }: LockScreenProps) {
   const [failed, setFailed] = useState(false);
+  const [biometricType, setBiometricType] = useState<BiometricType>('generic');
+
+  useEffect(() => {
+    LocalAuthentication.supportedAuthenticationTypesAsync().then((types) => {
+      if (types.includes(AuthenticationType.FACIAL_RECOGNITION)) {
+        setBiometricType('face');
+      } else if (types.includes(AuthenticationType.FINGERPRINT)) {
+        setBiometricType('fingerprint');
+      } else {
+        setBiometricType('generic');
+      }
+    });
+  }, []);
 
   const authenticate = useCallback(async () => {
     setFailed(false);
@@ -28,17 +45,31 @@ export default function LockScreen({ onUnlock }: LockScreenProps) {
     authenticate();
   }, [authenticate]);
 
+  const iconName =
+    biometricType === 'face'
+      ? 'face-recognition'
+      : biometricType === 'fingerprint'
+        ? 'fingerprint'
+        : 'lock';
+
+  const subtitle =
+    biometricType === 'face'
+      ? 'Use Face ID to continue'
+      : biometricType === 'fingerprint'
+        ? 'Use your fingerprint to continue'
+        : 'Use biometrics to continue';
+
   return (
     <View style={styles.container}>
       <View style={styles.content}>
         <View style={styles.iconContainer}>
-          <Icon source="fingerprint" size={72} color={colors.primary} />
+          <Icon source={iconName} size={72} color={colors.primary} />
         </View>
         <Text variant="headlineSmall" style={styles.title}>
           Unlock Lumos
         </Text>
         <Text variant="bodyMedium" style={styles.subtitle}>
-          Use your fingerprint to continue
+          {subtitle}
         </Text>
         {failed && (
           <Button
@@ -46,6 +77,7 @@ export default function LockScreen({ onUnlock }: LockScreenProps) {
             onPress={authenticate}
             style={styles.retryButton}
             labelStyle={styles.retryLabel}
+            accessibilityLabel="Try again"
           >
             Try Again
           </Button>
@@ -88,7 +120,7 @@ const styles = StyleSheet.create({
   retryButton: {
     marginTop: spacing.xl,
     backgroundColor: colors.primary,
-    borderRadius: 12,
+    borderRadius: radius.md,
     paddingHorizontal: spacing.lg,
   },
   retryLabel: {

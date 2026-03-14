@@ -5,7 +5,12 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
 import { Text, Icon, ActivityIndicator } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -217,8 +222,14 @@ export default function AnalyticsScreen({
         {data.map((cat, idx) => {
           const pct = total > 0 ? (cat.total / total) * 100 : 0;
           return (
-            <View
+            <TouchableOpacity
               key={cat.categoryId}
+              activeOpacity={0.7}
+              onPress={() =>
+                navigation.navigate('CategoryTransactions', {
+                  categoryId: cat.categoryId,
+                })
+              }
               style={[
                 styles.breakdownRow,
                 idx < data.length - 1 && styles.breakdownRowBorder,
@@ -263,7 +274,7 @@ export default function AnalyticsScreen({
                   </Text>
                 </View>
               </View>
-            </View>
+            </TouchableOpacity>
           );
         })}
       </View>
@@ -422,9 +433,9 @@ export default function AnalyticsScreen({
               return (
                 <TouchableOpacity
                   key={opt.key}
+                  activeOpacity={0.7}
                   style={[styles.chip, isActive && styles.chipActive]}
                   onPress={() => setActiveView(opt.key)}
-                  activeOpacity={0.7}
                 >
                   <Icon
                     source={opt.icon as any}

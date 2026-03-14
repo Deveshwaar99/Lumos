@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 async function createSchema(db: SQLiteDatabase): Promise<void> {
   await db.execAsync(`
@@ -98,6 +98,34 @@ async function migrateV3(db: SQLiteDatabase): Promise<void> {
   `);
 }
 
+async function migrateV4(db: SQLiteDatabase): Promise<void> {
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS recurring_transactions (
+      id TEXT PRIMARY KEY,
+      type TEXT NOT NULL,
+      total_amount_cents INTEGER NOT NULL,
+      currency TEXT NOT NULL,
+      category_id TEXT,
+      note TEXT,
+      account_id TEXT NOT NULL,
+      to_account_id TEXT,
+      frequency TEXT NOT NULL,
+      start_date TEXT NOT NULL,
+      end_date TEXT,
+      next_due_date TEXT NOT NULL,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+  `);
+  await db.execAsync(
+    'CREATE INDEX IF NOT EXISTS idx_recurring_next_due ON recurring_transactions(next_due_date);',
+  );
+  await db.execAsync(
+    'CREATE INDEX IF NOT EXISTS idx_recurring_active ON recurring_transactions(is_active);',
+  );
+}
+
 export async function runMigrations(db: SQLiteDatabase): Promise<void> {
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS schema_version (
@@ -118,6 +146,9 @@ export async function runMigrations(db: SQLiteDatabase): Promise<void> {
   }
   if (currentVersion < 3) {
     await migrateV3(db);
+  }
+  if (currentVersion < 4) {
+    await migrateV4(db);
   }
   if (currentVersion < SCHEMA_VERSION) {
     await db.runAsync(

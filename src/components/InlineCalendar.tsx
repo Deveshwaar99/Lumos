@@ -8,26 +8,49 @@ interface InlineCalendarProps {
   selectedDate: string;
   onDateSelect: (date: string) => void;
   onDone: () => void;
+  onDismiss?: () => void;
+  onClear?: () => void;
 }
 
 export default function InlineCalendar({
   selectedDate,
   onDateSelect,
   onDone,
+  onDismiss,
+  onClear,
 }: InlineCalendarProps) {
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onDone}>
-          <Text style={styles.cancelText}>Cancel</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>Choose date</Text>
-        <TouchableOpacity onPress={onDone}>
-          <Text style={styles.doneText}>Done</Text>
-        </TouchableOpacity>
-      </View>
+  const handleDismiss = onDismiss ?? onDone;
 
-      <Calendar
+  return (
+    <View style={styles.wrapper}>
+      <TouchableOpacity
+        style={styles.backdrop}
+        onPress={handleDismiss}
+        activeOpacity={1}
+      />
+      <View style={styles.container}>
+        <View style={styles.header}>
+          {onClear ? (
+            <TouchableOpacity
+              onPress={() => {
+                onClear();
+                onDone();
+              }}
+            >
+              <Text style={styles.clearText}>Clear</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={onDone}>
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          )}
+          <Text style={styles.title}>Choose date</Text>
+          <TouchableOpacity onPress={onDone}>
+            <Text style={styles.doneText}>Done</Text>
+          </TouchableOpacity>
+        </View>
+
+        <Calendar
         current={selectedDate}
         onDayPress={(day: DateData) => onDateSelect(day.dateString)}
         markedDates={{
@@ -56,11 +79,19 @@ export default function InlineCalendar({
         }}
         style={styles.calendar}
       />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    flexDirection: 'column',
+  },
+  backdrop: {
+    flex: 1,
+  },
   container: {
     backgroundColor: colors.surface,
     borderTopLeftRadius: 20,
@@ -80,6 +111,11 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: 15,
     fontWeight: '500',
+  },
+  clearText: {
+    color: '#EF5350',
+    fontSize: 15,
+    fontWeight: '600',
   },
   title: {
     color: colors.text,

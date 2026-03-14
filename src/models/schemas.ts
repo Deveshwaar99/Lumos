@@ -74,6 +74,66 @@ export const budgetSchema = z.object({
   enabled: z.boolean(),
 });
 
+export const recurringTransactionSchema = z
+  .object({
+    type: z.enum(['income', 'expense', 'transfer']),
+    totalAmountCents: z.number().int().positive(),
+    currency: z.string().min(1),
+    categoryId: z.string().nullable(),
+    note: z.string().optional().nullable(),
+    accountId: z.string().min(1),
+    toAccountId: z.string().optional().nullable(),
+    frequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']),
+    startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    endDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional()
+      .nullable(),
+  })
+  .refine(
+    (data) => {
+      if (data.type === 'transfer') {
+        return data.toAccountId != null && data.toAccountId.length > 0;
+      }
+      return true;
+    },
+    { message: 'To Account is required for transfers', path: ['toAccountId'] },
+  )
+  .refine(
+    (data) => {
+      if (data.type === 'transfer') {
+        return data.accountId !== data.toAccountId;
+      }
+      return true;
+    },
+    {
+      message: 'From and To accounts must be different',
+      path: ['toAccountId'],
+    },
+  )
+  .refine(
+    (data) => {
+      if (data.type !== 'transfer') {
+        return data.categoryId != null && data.categoryId.length > 0;
+      }
+      return true;
+    },
+    {
+      message: 'Category is required for income/expense',
+      path: ['categoryId'],
+    },
+  )
+  .refine(
+    (data) => {
+      if (data.endDate) {
+        return data.endDate >= data.startDate;
+      }
+      return true;
+    },
+    { message: 'End date must be on or after start date', path: ['endDate'] },
+  );
+
 export const fdSchema = z
   .object({
     label: z.string().min(1).max(100),

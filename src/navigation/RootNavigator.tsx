@@ -12,6 +12,7 @@ import CategoryTransactionsScreen from '../screens/CategoryTransactionsScreen';
 import BudgetFormScreen from '../screens/BudgetFormScreen';
 import FDFormScreen from '../screens/FDFormScreen';
 import FDDetailScreen from '../screens/FDDetailScreen';
+import RecurringTransactionFormScreen from '../screens/RecurringTransactionFormScreen';
 import BackupRestoreScreen from '../screens/BackupRestoreScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 
@@ -26,6 +27,8 @@ export default function RootNavigator() {
         headerTitleStyle: { fontWeight: '700' },
         headerShadowVisible: false,
         contentStyle: { backgroundColor: colors.background },
+        animation: 'slide_from_right',
+        animationDuration: 250,
       }}
     >
       <Stack.Screen
@@ -40,6 +43,8 @@ export default function RootNavigator() {
           title: 'Add Transaction',
           headerShown: false,
           presentation: 'modal',
+          animation: 'slide_from_bottom',
+          animationDuration: 300,
         }}
       />
       <Stack.Screen
@@ -81,6 +86,11 @@ export default function RootNavigator() {
         name="FDDetail"
         component={FDDetailScreen}
         options={{ title: 'FD Details' }}
+      />
+      <Stack.Screen
+        name="RecurringTransactionForm"
+        component={RecurringTransactionFormScreen}
+        options={{ title: 'Recurring Transaction', headerShown: false, presentation: 'modal', animation: 'slide_from_bottom', animationDuration: 300 }}
       />
       <Stack.Screen
         name="BackupRestore"

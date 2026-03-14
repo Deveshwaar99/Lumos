@@ -9,7 +9,11 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
     db = await SQLite.openDatabaseAsync('mymoney.db');
     await db.execAsync('PRAGMA journal_mode = WAL;');
     await db.execAsync('PRAGMA foreign_keys = ON;');
-    await runMigrations(db);
+    try {
+      await runMigrations(db);
+    } catch (e) {
+      console.error('[DB] Migration failed:', e);
+    }
   }
   return db;
 }

@@ -88,42 +88,28 @@ export async function seedDatabase(db: SQLiteDatabase): Promise<void> {
   for (const [key, value] of Object.entries(DEFAULT_SETTINGS)) {
     await db.runAsync(
       'INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)',
-      key,
-      value,
+      [key, value],
     );
   }
 
   for (const cat of EXPENSE_CATEGORIES) {
     await db.runAsync(
       'INSERT OR IGNORE INTO categories (id, name, type, icon, color) VALUES (?, ?, ?, ?, ?)',
-      cat.id,
-      cat.name,
-      'expense',
-      cat.icon,
-      cat.color,
+      [cat.id, cat.name, 'expense', cat.icon, cat.color],
     );
   }
 
   for (const cat of INCOME_CATEGORIES) {
     await db.runAsync(
       'INSERT OR IGNORE INTO categories (id, name, type, icon, color) VALUES (?, ?, ?, ?, ?)',
-      cat.id,
-      cat.name,
-      'income',
-      cat.icon,
-      cat.color,
+      [cat.id, cat.name, 'income', cat.icon, cat.color],
     );
   }
 
   for (const acc of DEFAULT_ACCOUNTS) {
     await db.runAsync(
       'INSERT OR IGNORE INTO accounts (id, name, type, icon, opening_balance_cents, currency) VALUES (?, ?, ?, ?, ?, ?)',
-      acc.id,
-      acc.name,
-      acc.type,
-      acc.icon,
-      acc.openingBalanceCents,
-      'USD',
+      [acc.id, acc.name, acc.type, acc.icon, acc.openingBalanceCents, 'USD'],
     );
   }
 
@@ -213,26 +199,25 @@ export async function seedDemoTransactions(db: SQLiteDatabase): Promise<void> {
         id, type, total_amount_cents, currency, category_id, account_id,
         note, date, linked_transaction_id, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      txnId,
-      isIncome ? 'income' : 'expense',
-      amountCents,
-      'USD',
-      cat.id,
-      accountId,
-      sample.note,
-      dateStr,
-      null,
-      nowStr,
-      nowStr,
+      [
+        txnId,
+        isIncome ? 'income' : 'expense',
+        amountCents,
+        'USD',
+        cat.id,
+        accountId,
+        sample.note,
+        dateStr,
+        null,
+        nowStr,
+        nowStr,
+      ],
     );
 
     const splitId1 = generateId();
     await db.runAsync(
       'INSERT OR IGNORE INTO transaction_splits (id, transaction_id, account_id, amount_cents) VALUES (?, ?, ?, ?)',
-      splitId1,
-      txnId,
-      accountId,
-      split1Amount,
+      [splitId1, txnId, accountId, split1Amount],
     );
 
     if (isSplitDemo) {
@@ -240,10 +225,7 @@ export async function seedDemoTransactions(db: SQLiteDatabase): Promise<void> {
       const splitId2 = generateId();
       await db.runAsync(
         'INSERT OR IGNORE INTO transaction_splits (id, transaction_id, account_id, amount_cents) VALUES (?, ?, ?, ?)',
-        splitId2,
-        txnId,
-        secondAccountId,
-        split2Amount,
+        [splitId2, txnId, secondAccountId, split2Amount],
       );
     }
   }

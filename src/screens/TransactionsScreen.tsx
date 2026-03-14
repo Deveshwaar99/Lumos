@@ -71,13 +71,14 @@ export default function TransactionsScreen({
         onLoadMore={loadMore}
         onRefresh={() => loadTransactions(true)}
         onItemPress={handleItemPress}
-        contentContainerStyle={{ paddingBottom: 80 }}
+        contentContainerStyle={styles.listContent}
       />
       <FAB
         icon="plus"
         style={[styles.fab, { bottom: insets.bottom + 16 }]}
         onPress={() => navigation.navigate('AddTransaction')}
-        color="#fff"
+        color={colors.onPrimary}
+        accessibilityLabel="Add transaction"
       />
     </View>
   );
@@ -94,10 +95,10 @@ const styles = StyleSheet.create({
   },
   title: { color: colors.text },
   count: { color: colors.textSecondary },
+  listContent: { paddingBottom: 100 },
   fab: {
     position: 'absolute',
     right: spacing.lg,
     backgroundColor: colors.primary,
-    opacity: 0.6,
   },
 });

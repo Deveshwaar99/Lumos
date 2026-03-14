@@ -5,14 +5,16 @@ import {
   StyleSheet,
   Alert,
   TouchableOpacity,
+  RefreshControl,
 } from 'react-native';
-import { FAB, Snackbar, Icon, Text, Menu } from 'react-native-paper';
+import { FAB, Snackbar, Icon, Text, Menu, Switch } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { format } from 'date-fns';
 import { useAccountStore } from '../stores/useAccountStore';
 import { useFDStore } from '../stores/useFDStore';
+import { useRecurringStore } from '../stores/useRecurringStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { colors, spacing, radius, elevation } from '../theme';
 import { formatMoney } from '../utils/money';
@@ -23,7 +25,7 @@ import {
 } from '../utils/fdCalculator';
 import EmptyState from '../components/EmptyState';
 import type { TabScreenProps } from '../navigation/types';
-import type { Account, FixedDeposit } from '../models/types';
+import type { Account, FixedDeposit, RecurringTransaction } from '../models/types';
 
 const ACCOUNT_TYPE_COLORS: Record<Account['type'], string> = {
   cash: '#4CAF50',
@@ -41,7 +43,26 @@ const ACCOUNT_TYPE_LABELS: Record<Account['type'], string> = {
   other: 'Other',
 };
 
-type Tab = 'accounts' | 'investments';
+type Tab = 'accounts' | 'investments' | 'recurring';
+
+const FREQUENCY_LABELS: Record<string, string> = {
+  daily: 'Daily',
+  weekly: 'Weekly',
+  monthly: 'Monthly',
+  yearly: 'Yearly',
+};
+
+const TYPE_COLORS: Record<string, string> = {
+  income: colors.income,
+  expense: colors.expense,
+  transfer: colors.transfer,
+};
+
+const TYPE_ICONS: Record<string, string> = {
+  income: 'arrow-bottom-left',
+  expense: 'arrow-top-right',
+  transfer: 'swap-horizontal',
+};
 
 const STATUS_COLORS: Record<string, string> = {
   active: colors.income,
@@ -54,17 +75,27 @@ export default function AccountsScreen({
 }: TabScreenProps<'Accounts'>) {
   const { accounts, balances, loadAccounts, removeAccount } = useAccountStore();
   const { deposits, fdAccountIds, loadDeposits } = useFDStore();
+  const { recurringTransactions, loadRecurring, removeRecurring, toggleRecurring } =
+    useRecurringStore();
   const { settings } = useSettingsStore();
   const [snackbar, setSnackbar] = useState('');
   const [menuVisible, setMenuVisible] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('accounts');
+  const [refreshing, setRefreshing] = useState(false);
   const insets = useSafeAreaInsets();
   const sym = settings.currencySymbol;
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([loadAccounts(), loadDeposits(), loadRecurring()]);
+    setRefreshing(false);
+  }, [loadAccounts, loadDeposits, loadRecurring]);
 
   useFocusEffect(
     useCallback(() => {
       loadAccounts();
       loadDeposits();
+      loadRecurring();
     }, []),
   );
 
@@ -166,7 +197,7 @@ export default function AccountsScreen({
         <View style={styles.summaryItem}>
           <View style={styles.summaryHeader}>
             <Icon source="arrow-up-circle" size={16} color={colors.income} />
-            <Text style={styles.summaryLabel}>Assets</Text>
+          <Text style={styles.summaryLabel}>Assets</Text>
           </View>
           <Text style={[styles.summaryAmount, { color: colors.income }]}>
             {formatMoney(portfolioData.totalAssets, sym, 2)}
@@ -188,92 +219,56 @@ export default function AccountsScreen({
     </LinearGradient>
   );
 
+  const segmentTabs: { tab: Tab; label: string; icon: string; count: number }[] = [
+    { tab: 'accounts', label: 'Accounts', icon: 'wallet', count: userAccounts.length },
+    { tab: 'investments', label: 'Invest', icon: 'lock', count: deposits.length },
+    { tab: 'recurring', label: 'Recurring', icon: 'autorenew', count: recurringTransactions.length },
+  ];
+
   const renderSegmentedControl = () => (
     <View style={styles.segmentContainer}>
-      <TouchableOpacity
-        style={[
-          styles.segmentTab,
-          activeTab === 'accounts' && styles.segmentTabActive,
-        ]}
-        onPress={() => setActiveTab('accounts')}
-        activeOpacity={0.8}
-      >
-        <Icon
-          source="wallet"
-          size={18}
-          color={
-            activeTab === 'accounts' ? colors.onPrimary : colors.textSecondary
-          }
-        />
-        <Text
-          style={[
-            styles.segmentText,
-            activeTab === 'accounts' && styles.segmentTextActive,
-          ]}
-        >
-          Accounts
-        </Text>
-        {userAccounts.length > 0 && (
-          <View
-            style={[
-              styles.segmentBadge,
-              activeTab === 'accounts' && styles.segmentBadgeActive,
-            ]}
+      {segmentTabs.map(({ tab, label, icon, count }) => {
+        const isActive = activeTab === tab;
+        return (
+          <TouchableOpacity
+            key={tab}
+            style={[styles.segmentTab, isActive && styles.segmentTabActive]}
+            onPress={() => setActiveTab(tab)}
+            activeOpacity={0.7}
           >
+            <View style={styles.segmentIconWrap}>
+              <Icon
+                source={icon}
+                size={18}
+                color={isActive ? colors.onPrimary : colors.textSecondary}
+              />
+              {count > 0 && (
+                <View
+                  style={[
+                    styles.segmentBadge,
+                    isActive && styles.segmentBadgeActive,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.segmentBadgeText,
+                      isActive && styles.segmentBadgeTextActive,
+                    ]}
+                  >
+                    {count}
+                  </Text>
+                </View>
+              )}
+            </View>
             <Text
-              style={[
-                styles.segmentBadgeText,
-                activeTab === 'accounts' && styles.segmentBadgeTextActive,
-              ]}
+              style={[styles.segmentText, isActive && styles.segmentTextActive]}
+              numberOfLines={1}
             >
-              {userAccounts.length}
+              {label}
             </Text>
-          </View>
-        )}
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[
-          styles.segmentTab,
-          activeTab === 'investments' && styles.segmentTabActive,
-        ]}
-        onPress={() => setActiveTab('investments')}
-        activeOpacity={0.8}
-      >
-        <Icon
-          source="lock"
-          size={18}
-          color={
-            activeTab === 'investments'
-              ? colors.onPrimary
-              : colors.textSecondary
-          }
-        />
-        <Text
-          style={[
-            styles.segmentText,
-            activeTab === 'investments' && styles.segmentTextActive,
-          ]}
-        >
-          Investments
-        </Text>
-        {deposits.length > 0 && (
-          <View
-            style={[
-              styles.segmentBadge,
-              activeTab === 'investments' && styles.segmentBadgeActive,
-            ]}
-          >
-            <Text
-              style={[
-                styles.segmentBadgeText,
-                activeTab === 'investments' && styles.segmentBadgeTextActive,
-              ]}
-            >
-              {deposits.length}
-            </Text>
-          </View>
-        )}
-      </TouchableOpacity>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 
@@ -460,6 +455,118 @@ export default function AccountsScreen({
     );
   };
 
+  const handleDeleteRecurring = useCallback(
+    (rec: RecurringTransaction) => {
+      Alert.alert('Delete Recurring Transaction', 'Stop all future occurrences?', [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            await removeRecurring(rec.id);
+            setSnackbar('Recurring transaction deleted');
+          },
+        },
+      ]);
+    },
+    [removeRecurring],
+  );
+
+  const renderRecurringItem = ({ item }: { item: RecurringTransaction }) => {
+    const accentColor = TYPE_COLORS[item.type] ?? colors.primary;
+    const account = accounts.find((a) => a.id === item.accountId);
+    const nextDueLabel = format(
+      new Date(item.nextDueDate + 'T00:00:00'),
+      'MMM d, yyyy',
+    );
+
+    return (
+      <View style={styles.recurringCard}>
+        <View style={[styles.accountAccent, { backgroundColor: accentColor }]} />
+        <TouchableOpacity
+          style={styles.recurringContent}
+          onPress={() =>
+            (navigation as any).navigate('RecurringTransactionForm', {
+              recurringId: item.id,
+            })
+          }
+          onLongPress={() => handleDeleteRecurring(item)}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.recurringIcon, { backgroundColor: accentColor + '1A' }]}>
+            <Icon
+              source={TYPE_ICONS[item.type] ?? 'autorenew'}
+              size={22}
+              color={accentColor}
+            />
+          </View>
+          <View style={styles.recurringDetails}>
+            <View style={styles.recurringTopRow}>
+              <Text style={styles.recurringAmount} numberOfLines={1}>
+                {formatMoney(item.totalAmountCents, sym, 2)}
+              </Text>
+              <View style={[styles.frequencyBadge, { backgroundColor: accentColor + '18' }]}>
+                <Text style={[styles.frequencyBadgeText, { color: accentColor }]}>
+                  {FREQUENCY_LABELS[item.frequency]}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.recurringNote} numberOfLines={1}>
+              {item.note || account?.name || item.type}
+            </Text>
+            <View style={styles.recurringFooter}>
+              <Icon source="calendar-clock" size={13} color={colors.textTertiary} />
+              <Text style={styles.recurringFooterText}>Next: {nextDueLabel}</Text>
+            </View>
+          </View>
+          <Switch
+            value={item.isActive}
+            onValueChange={(val) => toggleRecurring(item.id, val)}
+            color={colors.primary}
+            style={styles.recurringSwitch}
+          />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const renderRecurringList = () => (
+    <>
+      {recurringTransactions.length === 0 ? (
+        <View style={styles.emptyInvestments}>
+          {renderPortfolioCard()}
+          {renderSegmentedControl()}
+          <EmptyState
+            icon="autorenew"
+            title="No Recurring Transactions"
+            subtitle="Set up transactions that repeat automatically"
+          />
+        </View>
+      ) : (
+        <FlatList
+          data={recurringTransactions}
+          keyExtractor={(item) => item.id}
+          renderItem={renderRecurringItem}
+          ListHeaderComponent={
+            <>
+              {renderPortfolioCard()}
+              {renderSegmentedControl()}
+            </>
+          }
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
+        />
+      )}
+    </>
+  );
+
   const renderAccountsList = () => (
     <>
       {userAccounts.length === 0 ? (
@@ -480,6 +587,14 @@ export default function AccountsScreen({
             </>
           }
           contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
         />
       )}
     </>
@@ -509,6 +624,14 @@ export default function AccountsScreen({
             </>
           }
           contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
         />
       )}
     </>
@@ -518,18 +641,29 @@ export default function AccountsScreen({
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {activeTab === 'accounts'
         ? renderAccountsList()
-        : renderInvestmentsList()}
+        : activeTab === 'investments'
+          ? renderInvestmentsList()
+          : renderRecurringList()}
       <FAB
         icon="plus"
         style={[styles.fab, { bottom: insets.bottom + 16 }]}
         onPress={() => {
           if (activeTab === 'investments') {
             (navigation as any).navigate('FDForm');
+          } else if (activeTab === 'recurring') {
+            (navigation as any).navigate('RecurringTransactionForm');
           } else {
             navigation.navigate('AccountForm');
           }
         }}
-        color="#fff"
+        color={colors.onPrimary}
+        accessibilityLabel={
+          activeTab === 'investments'
+            ? 'Add fixed deposit'
+            : activeTab === 'recurring'
+              ? 'Add recurring transaction'
+              : 'Add account'
+        }
       />
       <Snackbar
         visible={!!snackbar}
@@ -554,50 +688,56 @@ const styles = StyleSheet.create({
   /* ── Segmented Control ── */
   segmentContainer: {
     flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: radius.lg,
     padding: 4,
     marginBottom: spacing.lg,
-    ...elevation.sm,
   },
   segmentTab: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.md,
-    borderRadius: radius.xl - 3,
-    gap: spacing.xs + 2,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    borderRadius: radius.lg - 2,
+    gap: 4,
   },
   segmentTabActive: {
     backgroundColor: colors.primary,
-    ...elevation.md,
+    ...elevation.sm,
+  },
+  segmentIconWrap: {
+    position: 'relative',
   },
   segmentText: {
-    fontSize: 14,
+    fontSize: 11,
     fontWeight: '600',
     color: colors.textSecondary,
+    letterSpacing: 0.2,
   },
   segmentTextActive: {
     color: colors.onPrimary,
     fontWeight: '700',
   },
   segmentBadge: {
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: colors.surfaceVariant,
+    position: 'absolute',
+    top: -6,
+    right: -10,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: colors.primary + '90',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 5,
+    paddingHorizontal: 3,
   },
   segmentBadgeActive: {
     backgroundColor: 'rgba(255,255,255,0.25)',
   },
   segmentBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.textSecondary,
+    fontSize: 9,
+    fontWeight: '800',
+    color: colors.onPrimary,
   },
   segmentBadgeTextActive: {
     color: colors.onPrimary,
@@ -834,11 +974,82 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
+  /* ── Recurring Cards ── */
+  recurringCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    marginBottom: spacing.md,
+    overflow: 'hidden',
+    flexDirection: 'row',
+    ...elevation.sm,
+  },
+  recurringContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    gap: spacing.md,
+  },
+  recurringIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  recurringDetails: {
+    flex: 1,
+  },
+  recurringTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+  recurringAmount: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+    flex: 1,
+  },
+  frequencyBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+    borderRadius: radius.capsule,
+    marginLeft: spacing.sm,
+  },
+  frequencyBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+  },
+  recurringNote: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  recurringFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  recurringFooterText: {
+    color: colors.textTertiary,
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  recurringSwitch: {
+    marginLeft: spacing.xs,
+  },
+
   fab: {
     position: 'absolute',
     right: spacing.lg,
     backgroundColor: colors.primary,
-    opacity: 0.6,
     ...elevation.lg,
   },
 });

@@ -141,6 +141,39 @@ export interface CreateTransactionInput {
   splits: SplitInput[];
 }
 
+export type RecurrenceFrequency = 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+export interface RecurringTransaction {
+  id: string;
+  type: TransactionType;
+  totalAmountCents: number;
+  currency: string;
+  categoryId: string | null;
+  note: string | null;
+  accountId: string;
+  toAccountId: string | null;
+  frequency: RecurrenceFrequency;
+  startDate: string;
+  endDate: string | null;
+  nextDueDate: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateRecurringTransactionInput {
+  type: TransactionType;
+  totalAmountCents: number;
+  currency: string;
+  categoryId: string | null;
+  note?: string | null;
+  accountId: string;
+  toAccountId?: string | null;
+  frequency: RecurrenceFrequency;
+  startDate: string;
+  endDate?: string | null;
+}
+
 export type FDStatus = 'active' | 'matured' | 'closed';
 
 export interface FixedDeposit {

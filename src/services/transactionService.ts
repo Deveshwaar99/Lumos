@@ -80,7 +80,7 @@ export const transactionService = {
     const db = await getDatabase();
     const { sql, params } = buildWhereClause(filter);
     const query = `SELECT t.* FROM transactions t${sql} ORDER BY t.date DESC, t.created_at DESC LIMIT ? OFFSET ?`;
-    const rows = await db.getAllAsync<any>(query, ...params, limit, offset);
+    const rows = await db.getAllAsync<any>(query, [...params, limit, offset]);
     const txns = rows.map(mapRow);
     return this._attachSplits(txns);
   },
@@ -89,13 +89,13 @@ export const transactionService = {
     const db = await getDatabase();
     const row = await db.getFirstAsync<any>(
       'SELECT * FROM transactions WHERE id = ?',
-      id,
+      [id],
     );
     if (!row) return null;
     const txn = mapRow(row);
     const splits = await db.getAllAsync<any>(
       'SELECT * FROM transaction_splits WHERE transaction_id = ?',
-      id,
+      [id],
     );
     return { ...txn, splits: splits.map(mapSplitRow) };
   },
@@ -107,17 +107,19 @@ export const transactionService = {
     await db.runAsync(
       `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, note, date, linked_transaction_id, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      id,
-      data.type,
-      data.totalAmountCents,
-      data.currency,
-      data.categoryId ?? null,
-      data.splits[0].accountId,
-      data.note ?? null,
-      data.date,
-      null,
-      now,
-      now,
+      [
+        id,
+        data.type,
+        data.totalAmountCents,
+        data.currency,
+        data.categoryId ?? null,
+        data.splits[0].accountId,
+        data.note ?? null,
+        data.date,
+        null,
+        now,
+        now,
+      ],
     );
 
     const splits: TransactionSplit[] = [];
@@ -125,10 +127,7 @@ export const transactionService = {
       const splitId = generateId();
       await db.runAsync(
         'INSERT INTO transaction_splits (id, transaction_id, account_id, amount_cents) VALUES (?, ?, ?, ?)',
-        splitId,
-        id,
-        sp.accountId,
-        sp.amountCents,
+        [splitId, id, sp.accountId, sp.amountCents],
       );
       splits.push({
         id: splitId,
@@ -191,22 +190,19 @@ export const transactionService = {
     values.push(id);
     await db.runAsync(
       `UPDATE transactions SET ${fields.join(', ')} WHERE id = ?`,
-      ...values,
+      values,
     );
 
     if (data.splits) {
       await db.runAsync(
         'DELETE FROM transaction_splits WHERE transaction_id = ?',
-        id,
+        [id],
       );
       for (const sp of data.splits) {
         const splitId = generateId();
         await db.runAsync(
           'INSERT INTO transaction_splits (id, transaction_id, account_id, amount_cents) VALUES (?, ?, ?, ?)',
-          splitId,
-          id,
-          sp.accountId,
-          sp.amountCents,
+          [splitId, id, sp.accountId, sp.amountCents],
         );
       }
     }
@@ -216,23 +212,23 @@ export const transactionService = {
     const db = await getDatabase();
     const txn = await db.getFirstAsync<any>(
       'SELECT linked_transaction_id FROM transactions WHERE id = ?',
-      id,
+      [id],
     );
     if (txn?.linked_transaction_id) {
       await db.runAsync(
         'DELETE FROM transaction_splits WHERE transaction_id = ?',
-        txn.linked_transaction_id,
+        [txn.linked_transaction_id],
       );
       await db.runAsync(
         'DELETE FROM transactions WHERE id = ?',
-        txn.linked_transaction_id,
+        [txn.linked_transaction_id],
       );
     }
     await db.runAsync(
       'DELETE FROM transaction_splits WHERE transaction_id = ?',
-      id,
+      [id],
     );
-    await db.runAsync('DELETE FROM transactions WHERE id = ?', id);
+    await db.runAsync('DELETE FROM transactions WHERE id = ?', [id]);
   },
 
   async getCount(filter: TransactionFilter): Promise<number> {
@@ -240,7 +236,7 @@ export const transactionService = {
     const { sql, params } = buildWhereClause(filter);
     const result = await db.getFirstAsync<{ count: number }>(
       `SELECT COUNT(*) as count FROM transactions t${sql}`,
-      ...params,
+      params,
     );
     return result?.count ?? 0;
   },
@@ -249,7 +245,7 @@ export const transactionService = {
     const db = await getDatabase();
     const rows = await db.getAllAsync<any>(
       'SELECT * FROM transactions ORDER BY date DESC, created_at DESC LIMIT ?',
-      limit,
+      [limit],
     );
     const txns = rows.map(mapRow);
     return this._attachSplits(txns);
@@ -269,9 +265,7 @@ export const transactionService = {
        WHERE s.account_id = ?
        ORDER BY t.date DESC, t.created_at DESC
        LIMIT ? OFFSET ?`,
-      accountId,
-      limit,
-      offset,
+      [accountId, limit, offset],
     );
     return rows.map((r: any) => ({
       ...mapSplitRow(r),
@@ -307,49 +301,47 @@ export const transactionService = {
     await db.runAsync(
       `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, note, date, linked_transaction_id, fd_id, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      expenseId,
-      'expense',
-      amountCents,
-      currency,
-      null,
-      fromAccountId,
-      note,
-      date,
-      incomeId,
-      fdId ?? null,
-      now,
-      now,
+      [
+        expenseId,
+        'expense',
+        amountCents,
+        currency,
+        null,
+        fromAccountId,
+        note,
+        date,
+        incomeId,
+        fdId ?? null,
+        now,
+        now,
+      ],
     );
     await db.runAsync(
       'INSERT INTO transaction_splits (id, transaction_id, account_id, amount_cents) VALUES (?, ?, ?, ?)',
-      generateId(),
-      expenseId,
-      fromAccountId,
-      amountCents,
+      [generateId(), expenseId, fromAccountId, amountCents],
     );
 
     await db.runAsync(
       `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, note, date, linked_transaction_id, fd_id, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      incomeId,
-      'income',
-      amountCents,
-      currency,
-      null,
-      toAccountId,
-      note,
-      date,
-      expenseId,
-      fdId ?? null,
-      now,
-      now,
+      [
+        incomeId,
+        'income',
+        amountCents,
+        currency,
+        null,
+        toAccountId,
+        note,
+        date,
+        expenseId,
+        fdId ?? null,
+        now,
+        now,
+      ],
     );
     await db.runAsync(
       'INSERT INTO transaction_splits (id, transaction_id, account_id, amount_cents) VALUES (?, ?, ?, ?)',
-      generateId(),
-      incomeId,
-      toAccountId,
-      amountCents,
+      [generateId(), incomeId, toAccountId, amountCents],
     );
 
     return { expenseId, incomeId };
@@ -365,18 +357,20 @@ export const transactionService = {
     await db.runAsync(
       `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, note, date, linked_transaction_id, fd_id, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      id,
-      data.type,
-      data.totalAmountCents,
-      data.currency,
-      data.categoryId ?? null,
-      data.splits[0].accountId,
-      data.note ?? null,
-      data.date,
-      null,
-      fdId,
-      now,
-      now,
+      [
+        id,
+        data.type,
+        data.totalAmountCents,
+        data.currency,
+        data.categoryId ?? null,
+        data.splits[0].accountId,
+        data.note ?? null,
+        data.date,
+        null,
+        fdId,
+        now,
+        now,
+      ],
     );
 
     const splits: TransactionSplit[] = [];
@@ -384,10 +378,7 @@ export const transactionService = {
       const splitId = generateId();
       await db.runAsync(
         'INSERT INTO transaction_splits (id, transaction_id, account_id, amount_cents) VALUES (?, ?, ?, ?)',
-        splitId,
-        id,
-        sp.accountId,
-        sp.amountCents,
+        [splitId, id, sp.accountId, sp.amountCents],
       );
       splits.push({
         id: splitId,
@@ -416,7 +407,7 @@ export const transactionService = {
     const db = await getDatabase();
     const rows = await db.getAllAsync<any>(
       'SELECT * FROM transactions WHERE fd_id = ? ORDER BY date ASC',
-      fdId,
+      [fdId],
     );
     return rows.map(mapRow);
   },
@@ -428,7 +419,7 @@ export const transactionService = {
     const placeholders = ids.map(() => '?').join(',');
     const splitRows = await db.getAllAsync<any>(
       `SELECT * FROM transaction_splits WHERE transaction_id IN (${placeholders})`,
-      ...ids,
+      ids,
     );
     const splitMap = new Map<string, TransactionSplit[]>();
     for (const row of splitRows) {

@@ -25,7 +25,7 @@ export const categoryService = {
     const db = await getDatabase();
     const rows = await db.getAllAsync<any>(
       'SELECT * FROM categories WHERE type = ? ORDER BY name',
-      type,
+      [type],
     );
     return rows.map(mapRow);
   },
@@ -34,7 +34,7 @@ export const categoryService = {
     const db = await getDatabase();
     const row = await db.getFirstAsync<any>(
       'SELECT * FROM categories WHERE id = ?',
-      id,
+      [id],
     );
     return row ? mapRow(row) : null;
   },
@@ -44,11 +44,7 @@ export const categoryService = {
     const id = generateId();
     await db.runAsync(
       'INSERT INTO categories (id, name, type, icon, color) VALUES (?, ?, ?, ?, ?)',
-      id,
-      data.name,
-      data.type,
-      data.icon,
-      data.color,
+      [id, data.name, data.type, data.icon, data.color],
     );
     return { id, ...data };
   },
@@ -77,7 +73,7 @@ export const categoryService = {
     values.push(id);
     await db.runAsync(
       `UPDATE categories SET ${fields.join(', ')} WHERE id = ?`,
-      ...values,
+      values,
     );
   },
 
@@ -85,7 +81,7 @@ export const categoryService = {
     const db = await getDatabase();
     const usage = await db.getFirstAsync<{ count: number }>(
       'SELECT COUNT(*) as count FROM transactions WHERE category_id = ?',
-      id,
+      [id],
     );
     if (usage && usage.count > 0) {
       return {
@@ -93,7 +89,7 @@ export const categoryService = {
         message: `Category is used by ${usage.count} transaction(s). Please reassign them first.`,
       };
     }
-    await db.runAsync('DELETE FROM categories WHERE id = ?', id);
+    await db.runAsync('DELETE FROM categories WHERE id = ?', [id]);
     return { success: true };
   },
 
@@ -101,7 +97,7 @@ export const categoryService = {
     const db = await getDatabase();
     const result = await db.getFirstAsync<{ count: number }>(
       'SELECT COUNT(*) as count FROM transactions WHERE category_id = ?',
-      id,
+      [id],
     );
     return result?.count ?? 0;
   },

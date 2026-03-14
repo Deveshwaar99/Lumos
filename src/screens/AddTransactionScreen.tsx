@@ -19,7 +19,14 @@ import {
   TextInput as RNTextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TextInput, Text, Icon, Snackbar, Switch } from 'react-native-paper';
+import {
+  TextInput,
+  Text,
+  Icon,
+  Snackbar,
+  Switch,
+  ActivityIndicator,
+} from 'react-native-paper';
 import { format, parseISO } from 'date-fns';
 import { useTransactionStore } from '../stores/useTransactionStore';
 import { useCategoryStore } from '../stores/useCategoryStore';
@@ -365,7 +372,18 @@ export default function AddTransactionScreen({
     ]);
   };
 
-  if (!loaded) return null;
+  if (!loaded) {
+    return (
+      <View
+        style={[
+          styles.container,
+          { justifyContent: 'center', alignItems: 'center' },
+        ]}
+      >
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   const amountColor =
     type === 'income'
@@ -429,7 +447,7 @@ export default function AddTransactionScreen({
           <Icon
             source="arrow-top-right"
             size={16}
-            color={type === 'expense' ? '#fff' : colors.textSecondary}
+            color={type === 'expense' ? colors.onPrimary : colors.textSecondary}
           />
           <Text
             style={[
@@ -454,7 +472,7 @@ export default function AddTransactionScreen({
           <Icon
             source="arrow-bottom-left"
             size={16}
-            color={type === 'income' ? '#fff' : colors.textSecondary}
+            color={type === 'income' ? colors.onPrimary : colors.textSecondary}
           />
           <Text
             style={[
@@ -479,7 +497,7 @@ export default function AddTransactionScreen({
           <Icon
             source="swap-horizontal"
             size={16}
-            color={type === 'transfer' ? '#fff' : colors.textSecondary}
+            color={type === 'transfer' ? colors.onPrimary : colors.textSecondary}
           />
           <Text
             style={[
@@ -704,6 +722,8 @@ export default function AddTransactionScreen({
               textColor={colors.text}
               cursorColor={colors.primary}
               selectionColor={colors.primary + '40'}
+              multiline
+              maxLength={200}
             />
           </View>
 
@@ -921,7 +941,6 @@ export default function AddTransactionScreen({
                         textColor={colors.text}
                         cursorColor={colors.primary}
                         selectionColor={colors.primary + '40'}
-                        dense
                       />
                     </View>
                   </View>
@@ -977,7 +996,6 @@ export default function AddTransactionScreen({
                         textColor={colors.text}
                         cursorColor={colors.primary}
                         selectionColor={colors.primary + '40'}
-                        dense
                       />
                     </View>
                   </View>
@@ -1247,7 +1265,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   typeTabTextActive: {
-    color: '#fff',
+    color: colors.onPrimary,
     fontWeight: '700',
   },
 
@@ -1306,7 +1324,7 @@ const styles = StyleSheet.create({
   calcTrigger: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: radius.xl,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
@@ -1339,7 +1357,7 @@ const styles = StyleSheet.create({
   selectorIconWrap: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: radius.lg + 4,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1382,7 +1400,7 @@ const styles = StyleSheet.create({
   noteIconWrap: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: radius.lg,
     backgroundColor: colors.surfaceVariant,
     justifyContent: 'center',
     alignItems: 'center',
@@ -1391,7 +1409,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
     fontSize: 15,
-    height: 50,
+    minHeight: 50,
     paddingHorizontal: 0,
   },
 
@@ -1576,7 +1594,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     fontSize: 20,
     fontWeight: '700',
-    height: 40,
+    height: 48,
     paddingHorizontal: 0,
   },
   splitConnector: {

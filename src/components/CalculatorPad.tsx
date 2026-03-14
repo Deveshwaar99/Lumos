@@ -45,7 +45,7 @@ export default function CalculatorPad({
         key={key}
         style={[styles.key, isOp && styles.opKey]}
         onPress={() => handlePress(key)}
-        activeOpacity={0.6}
+        activeOpacity={0.7}
       >
         {isBackspace ? (
           <Icon source="backspace-outline" size={24} color={colors.text} />
@@ -72,7 +72,7 @@ export default function CalculatorPad({
         <TouchableOpacity
           style={[styles.key, styles.clearKey]}
           onPress={onClear}
-          activeOpacity={0.6}
+          activeOpacity={0.7}
         >
           <Text variant="titleMedium" style={styles.clearKeyText}>
             C
@@ -81,7 +81,7 @@ export default function CalculatorPad({
         <TouchableOpacity
           style={[styles.key, styles.equalsKey, { flex: 3 }]}
           onPress={onEquals}
-          activeOpacity={0.6}
+          activeOpacity={0.7}
         >
           <Text variant="headlineSmall" style={styles.equalsKeyText}>
             =
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   equalsKeyText: {
-    color: '#FFFFFF',
+    color: colors.onPrimary,
     fontWeight: '700',
   },
 });

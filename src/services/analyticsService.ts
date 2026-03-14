@@ -17,13 +17,11 @@ export const analyticsService = {
     const [incomeResult, expenseResult] = await Promise.all([
       db.getFirstAsync<{ total: number }>(
         "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'income' AND date >= ? AND date < ?",
-        start,
-        end,
+        [start, end],
       ),
       db.getFirstAsync<{ total: number }>(
         "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'expense' AND date >= ? AND date < ?",
-        start,
-        end,
+        [start, end],
       ),
     ]);
 
@@ -50,9 +48,7 @@ export const analyticsService = {
       LEFT JOIN categories c ON t.category_id = c.id
       WHERE t.type = ? AND t.date >= ? AND t.date < ?
       GROUP BY t.category_id`,
-      type,
-      start,
-      end,
+      [type, start, end],
     );
 
     return rows.map((r: any) => ({
@@ -76,8 +72,7 @@ export const analyticsService = {
       FROM transactions t
       WHERE t.date >= ? AND t.date < ?
       GROUP BY substr(t.date, 1, 10)`,
-      start,
-      end,
+      [start, end],
     );
 
     const byDate = new Map<string, { income: number; expense: number }>();
@@ -146,8 +141,7 @@ export const analyticsService = {
       FROM transactions t
       WHERE t.type = 'income' AND t.date >= ? AND t.date < ?
       GROUP BY substr(t.date, 1, 10)`,
-      start,
-      end,
+      [start, end],
     );
 
     const byDate = new Map<string, number>();
@@ -172,8 +166,7 @@ export const analyticsService = {
       FROM transactions t
       WHERE t.type = 'expense' AND t.date >= ? AND t.date < ?
       GROUP BY substr(t.date, 1, 10)`,
-      start,
-      end,
+      [start, end],
     );
 
     const byDate = new Map<string, number>();
@@ -227,7 +220,7 @@ export const analyticsService = {
         WHERE date < ?
         GROUP BY substr(date, 1, 7)
         ORDER BY month ASC`,
-        cutoff,
+        [cutoff],
       ),
     ]);
 
@@ -284,10 +277,7 @@ export const analyticsService = {
             WHERE s.account_id = a.id AND t.type = 'expense'
               AND t.date >= ? AND t.date < ?), 0) as periodExpense
       FROM accounts a ORDER BY a.name`,
-      start,
-      end,
-      start,
-      end,
+      [start, end, start, end],
     );
 
     return rows.map((r: any) => ({
@@ -308,13 +298,11 @@ export const analyticsService = {
     const [incomeResult, expenseResult] = await Promise.all([
       db.getFirstAsync<{ total: number }>(
         "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'income' AND date >= ? AND date < ?",
-        start,
-        end,
+        [start, end],
       ),
       db.getFirstAsync<{ total: number }>(
         "SELECT COALESCE(SUM(total_amount_cents), 0) as total FROM transactions WHERE type = 'expense' AND date >= ? AND date < ?",
-        start,
-        end,
+        [start, end],
       ),
     ]);
 
@@ -337,9 +325,7 @@ export const analyticsService = {
       LEFT JOIN categories c ON t.category_id = c.id
       WHERE t.type = ? AND t.date >= ? AND t.date < ?
       GROUP BY t.category_id`,
-      type,
-      start,
-      end,
+      [type, start, end],
     );
 
     return rows.map((r: any) => ({
@@ -363,8 +349,7 @@ export const analyticsService = {
       FROM transactions t
       WHERE t.type = 'expense' AND t.date >= ? AND t.date < ?
       GROUP BY substr(t.date, 1, 10)`,
-      start,
-      end,
+      [start, end],
     );
 
     const byDate = new Map<string, number>();
@@ -391,8 +376,7 @@ export const analyticsService = {
       FROM transactions t
       WHERE t.type = 'income' AND t.date >= ? AND t.date < ?
       GROUP BY substr(t.date, 1, 10)`,
-      start,
-      end,
+      [start, end],
     );
 
     const byDate = new Map<string, number>();
@@ -424,10 +408,7 @@ export const analyticsService = {
             WHERE s.account_id = a.id AND t.type = 'expense'
               AND t.date >= ? AND t.date < ?), 0) as periodExpense
       FROM accounts a ORDER BY a.name`,
-      start,
-      end,
-      start,
-      end,
+      [start, end, start, end],
     );
 
     return rows.map((r: any) => ({

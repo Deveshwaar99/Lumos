@@ -194,7 +194,10 @@ export default function SettingsScreen({
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
           <Text style={styles.sectionHeader}>Profile</Text>
           <GroupedCard>
             <CardRow
@@ -297,40 +300,26 @@ export default function SettingsScreen({
             />
           </GroupedCard>
 
-          <Text style={styles.sectionHeader}>Privacy</Text>
-          <GroupedCard>
-            <View style={styles.privacyInner}>
-              <Text variant="bodyMedium" style={styles.privacyText}>
-                Lumos stores all your data locally on your device. No data is
-                sent to any server. No internet connection is required. Your
-                financial data stays private and secure on your device.
+          <View style={styles.footerDivider} />
+
+          <View style={styles.footerArea}>
+            <View style={styles.privacyBadge}>
+              <Icon
+                source="shield-check-outline"
+                size={16}
+                color={colors.tertiary}
+              />
+              <Text style={styles.privacyBadgeText}>
+                100% offline — your data never leaves this device
               </Text>
             </View>
-          </GroupedCard>
 
-          <Text style={styles.sectionHeader}>About</Text>
-          <GroupedCard>
-            <CardRow
-              icon="information-outline"
-              title="Version"
-              right={<Text style={styles.cardRowValue}>1.0.0</Text>}
-            />
-            <CardRow
-              icon="heart-outline"
-              title="Lumos"
-              right={<Text style={styles.cardRowValue}>Finance Manager</Text>}
-            />
-            <CardRow
-              icon="code-tags"
-              title="Built by"
-              right={<Text style={styles.cardRowValue}>Devesh</Text>}
-              isLast
-            />
-          </GroupedCard>
-
-          <Text style={styles.copyright}>
-            {'\u00A9'} 2026 Devesh. All rights reserved.
-          </Text>
+            <Text style={styles.appName}>Lumos</Text>
+            <Text style={styles.appMeta}>v1.0.1 · Built by Devesh</Text>
+            <Text style={styles.copyright}>
+              {'\u00A9'} 2026 Devesh. All rights reserved.
+            </Text>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
       <Snackbar
@@ -366,9 +355,9 @@ const styles = StyleSheet.create({
   cardRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 15,
+    paddingVertical: spacing.cardInset,
     paddingHorizontal: spacing.cardInset,
-    gap: 12,
+    gap: spacing.md,
   },
   cardRowTitle: { flex: 1, color: colors.text, fontWeight: '500' },
   cardRowRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
@@ -384,14 +373,14 @@ const styles = StyleSheet.create({
   },
   nameInput: {
     backgroundColor: 'transparent',
-    height: 36,
+    height: 44,
     maxWidth: 160,
     textAlign: 'right',
   },
   inlineInput: {
     backgroundColor: 'transparent',
-    height: 36,
-    width: 60,
+    height: 44,
+    width: 72,
     textAlign: 'right',
   },
   inlineInputContent: {
@@ -403,13 +392,50 @@ const styles = StyleSheet.create({
   inlineInputUnderline: {
     display: 'none',
   },
-  privacyInner: { padding: spacing.cardInset },
-  privacyText: { color: colors.textSecondary, lineHeight: 22 },
+  footerDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginHorizontal: spacing.xxl,
+    marginTop: spacing.section,
+    opacity: 0.5,
+  },
+  footerArea: {
+    alignItems: 'center',
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xxl,
+    paddingHorizontal: spacing.lg,
+  },
+  privacyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surfaceVariant,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.capsule,
+    marginBottom: spacing.xl,
+  },
+  privacyBadgeText: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  appName: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.primaryLight,
+    letterSpacing: 1,
+    marginBottom: spacing.xs,
+  },
+  appMeta: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '500',
+    marginBottom: spacing.md,
+  },
   copyright: {
     color: colors.textTertiary,
-    fontSize: 12,
+    fontSize: 11,
     textAlign: 'center',
-    marginTop: spacing.xl,
-    marginBottom: spacing.lg,
   },
 });

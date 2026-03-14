@@ -43,7 +43,7 @@ export const fdService = {
     const db = await getDatabase();
     const row = await db.getFirstAsync<any>(
       'SELECT * FROM fixed_deposits WHERE id = ?',
-      id,
+      [id],
     );
     return row ? mapRow(row) : null;
   },
@@ -79,21 +79,23 @@ export const fdService = {
     await db.runAsync(
       `INSERT INTO fixed_deposits (id, fd_account_id, source_account_id, credit_account_id, interest_category_id, principal_cents, annual_interest_rate, start_date, maturity_date, tax_rate, currency, note, status, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      id,
-      fdAccount.id,
-      data.sourceAccountId,
-      data.creditAccountId,
-      data.interestCategoryId,
-      data.principalCents,
-      data.annualInterestRate,
-      data.startDate,
-      data.maturityDate,
-      data.taxRate,
-      data.currency,
-      data.note ?? null,
-      'active',
-      now,
-      now,
+      [
+        id,
+        fdAccount.id,
+        data.sourceAccountId,
+        data.creditAccountId,
+        data.interestCategoryId,
+        data.principalCents,
+        data.annualInterestRate,
+        data.startDate,
+        data.maturityDate,
+        data.taxRate,
+        data.currency,
+        data.note ?? null,
+        'active',
+        now,
+        now,
+      ],
     );
 
     await transactionService.transfer(
@@ -166,7 +168,7 @@ export const fdService = {
     values.push(id);
     await db.runAsync(
       `UPDATE fixed_deposits SET ${fields.join(', ')} WHERE id = ?`,
-      ...values,
+      values,
     );
   },
 
@@ -219,8 +221,7 @@ export const fdService = {
     const db = await getDatabase();
     await db.runAsync(
       "UPDATE fixed_deposits SET status = 'matured', updated_at = ? WHERE id = ?",
-      new Date().toISOString(),
-      id,
+      [new Date().toISOString(), id],
     );
 
     return true;
@@ -245,8 +246,7 @@ export const fdService = {
     const db = await getDatabase();
     await db.runAsync(
       "UPDATE fixed_deposits SET status = 'closed', updated_at = ? WHERE id = ?",
-      new Date().toISOString(),
-      id,
+      [new Date().toISOString(), id],
     );
 
     return true;
@@ -261,10 +261,10 @@ export const fdService = {
       await transactionService.delete(txn.id);
     }
 
-    await db.runAsync('DELETE FROM fixed_deposits WHERE id = ?', id);
+    await db.runAsync('DELETE FROM fixed_deposits WHERE id = ?', [id]);
 
     if (fd) {
-      await db.runAsync('DELETE FROM accounts WHERE id = ?', fd.fdAccountId);
+      await db.runAsync('DELETE FROM accounts WHERE id = ?', [fd.fdAccountId]);
     }
   },
 
@@ -273,7 +273,7 @@ export const fdService = {
     const db = await getDatabase();
     const rows = await db.getAllAsync<any>(
       "SELECT * FROM fixed_deposits WHERE status = 'active' AND maturity_date <= ?",
-      today,
+      [today],
     );
     const activeFDs = rows.map(mapRow);
 

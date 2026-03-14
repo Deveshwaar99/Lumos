@@ -48,6 +48,8 @@ export default function FilterBar({
             selected={!!filter.type}
             style={styles.chip}
             icon="filter-variant"
+            accessibilityLabel="Filter by type"
+            accessibilityRole="button"
           >
             {typeLabel}
           </Chip>
@@ -84,6 +86,8 @@ export default function FilterBar({
             onPress={() => setPeriodMenuVisible(true)}
             style={styles.chip}
             icon="calendar"
+            accessibilityLabel="Filter by period"
+            accessibilityRole="button"
           >
             {filter.dateFrom ? 'Filtered' : 'All Time'}
           </Chip>

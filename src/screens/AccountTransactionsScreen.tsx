@@ -1,13 +1,15 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, SectionList, StyleSheet, RefreshControl } from 'react-native';
-import { Text, Icon, Divider, FAB } from 'react-native-paper';
+import { Text, Icon, Divider, FAB, Snackbar } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAccountStore } from '../stores/useAccountStore';
 import { useCategoryStore } from '../stores/useCategoryStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { transactionService } from '../services/transactionService';
+
 import TransactionItem from '../components/TransactionItem';
+import DateHeader from '../components/DateHeader';
 import { colors, spacing, radius } from '../theme';
 import { formatMoney } from '../utils/money';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -30,17 +32,22 @@ export default function AccountTransactionsScreen({
 
   const [transactions, setTransactions] = useState<TransactionWithSplits[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [snackbar, setSnackbar] = useState('');
 
   const account = accounts.find((a) => a.id === accountId);
   const balance = balances[accountId] ?? account?.openingBalanceCents ?? 0;
 
   const loadData = useCallback(async () => {
-    const txns = await transactionService.getAll(
-      { dateFrom: null, dateTo: null, type: null, accountId, categoryId: null },
-      200,
-      0,
-    );
-    setTransactions(txns);
+    try {
+      const txns = await transactionService.getAll(
+        { dateFrom: null, dateTo: null, type: null, accountId, categoryId: null },
+        200,
+        0,
+      );
+      setTransactions(txns);
+    } catch {
+      setSnackbar('Failed to load transactions');
+    }
   }, [accountId]);
 
   useFocusEffect(
@@ -88,12 +95,14 @@ export default function AccountTransactionsScreen({
             color={colors.primary}
           />
         </View>
-        <Text style={styles.headerName}>{account?.name ?? 'Account'}</Text>
+        <Text style={styles.headerName} numberOfLines={1} ellipsizeMode="tail">{account?.name ?? 'Account'}</Text>
         <Text
           style={[
             styles.headerBalance,
             balance < 0 && { color: colors.expense },
           ]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
         >
           {formatMoney(balance, settings.currencySymbol, 2)}
         </Text>
@@ -103,9 +112,7 @@ export default function AccountTransactionsScreen({
         sections={sections}
         keyExtractor={(item) => item.id}
         renderSectionHeader={({ section }) => (
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionHeaderText}>{section.title}</Text>
-          </View>
+          <DateHeader dateStr={section.title} />
         )}
         renderItem={({ item, index }) => (
           <>
@@ -149,8 +156,18 @@ export default function AccountTransactionsScreen({
         icon="plus"
         style={[styles.fab, { bottom: insets.bottom + 16 }]}
         onPress={() => navigation.navigate('AddTransaction')}
-        color="#fff"
+        color={colors.onPrimary}
+        accessibilityLabel="Add transaction"
       />
+
+      <Snackbar
+        visible={!!snackbar}
+        onDismiss={() => setSnackbar('')}
+        duration={3000}
+        style={{ marginBottom: 72 }}
+      >
+        {snackbar}
+      </Snackbar>
     </View>
   );
 }
@@ -160,8 +177,9 @@ const styles = StyleSheet.create({
 
   headerCard: {
     alignItems: 'center',
-    paddingVertical: spacing.xl,
+    paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
+    gap: spacing.md,
     backgroundColor: colors.surface,
     borderBottomLeftRadius: radius.lg,
     borderBottomRightRadius: radius.lg,
@@ -173,7 +191,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryContainer,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.md,
   },
   headerName: {
     color: colors.text,
@@ -199,7 +216,7 @@ const styles = StyleSheet.create({
   },
 
   listContent: { paddingBottom: 100 },
-  itemDivider: { backgroundColor: colors.border, marginLeft: 76 },
+  itemDivider: { backgroundColor: colors.border, marginLeft: 74 },
 
   emptyContainer: {
     alignItems: 'center',
@@ -212,6 +229,5 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.lg,
     backgroundColor: colors.primary,
-    opacity: 0.6,
   },
 });

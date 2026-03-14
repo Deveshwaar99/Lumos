@@ -22,7 +22,13 @@ function PeriodNavigator({
 
   return (
     <View style={compact ? styles.containerCompact : styles.container}>
-      <TouchableOpacity onPress={onPrev} hitSlop={12}>
+      <TouchableOpacity
+        onPress={onPrev}
+        hitSlop={12}
+        style={styles.arrowBtn}
+        accessibilityLabel="Previous period"
+        accessibilityRole="button"
+      >
         <Icon source="chevron-left" size={chevronSize} color={colors.text} />
       </TouchableOpacity>
       <TouchableOpacity
@@ -33,6 +39,7 @@ function PeriodNavigator({
         <Text
           variant={compact ? 'bodyMedium' : 'titleMedium'}
           style={compact ? styles.labelCompact : styles.label}
+          accessibilityRole="header"
         >
           {label}
         </Text>
@@ -42,7 +49,13 @@ function PeriodNavigator({
           color={colors.textSecondary}
         />
       </TouchableOpacity>
-      <TouchableOpacity onPress={onNext} hitSlop={12}>
+      <TouchableOpacity
+        onPress={onNext}
+        hitSlop={12}
+        style={styles.arrowBtn}
+        accessibilityLabel="Next period"
+        accessibilityRole="button"
+      >
         <Icon source="chevron-right" size={chevronSize} color={colors.text} />
       </TouchableOpacity>
     </View>
@@ -50,6 +63,12 @@ function PeriodNavigator({
 }
 
 const styles = StyleSheet.create({
+  arrowBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   container: {
     flexDirection: 'row',
     justifyContent: 'center',

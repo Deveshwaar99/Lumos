@@ -90,7 +90,7 @@ export default function BudgetsScreen({
 
   const renderSummaryCard = () => (
     <LinearGradient
-      colors={['#2E2660', '#1E1545', '#252540']}
+      colors={[...colors.cardGradient]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.summaryCard}
@@ -112,6 +112,8 @@ export default function BudgetsScreen({
             <View style={{ flex: 1 }}>
               <Text style={styles.heroCaption}>Remaining</Text>
               <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
                 style={[
                   styles.heroAmount,
                   {
@@ -148,7 +150,11 @@ export default function BudgetsScreen({
                 <Icon source="target" size={14} color={colors.primaryLight} />
                 <Text style={styles.statLabel}>Budgeted</Text>
               </View>
-              <Text style={styles.statValue}>
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                style={styles.statValue}
+              >
                 {formatMoney(totalBudgeted, sym, 2)}
               </Text>
             </View>
@@ -161,6 +167,8 @@ export default function BudgetsScreen({
                 <Text style={styles.statLabel}>Spent</Text>
               </View>
               <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
                 style={[
                   styles.statValue,
                   totalSpent > totalBudgeted && { color: colors.expense },
@@ -187,9 +195,9 @@ export default function BudgetsScreen({
   const renderMonthSelector = () => (
     <View style={styles.monthSelector}>
       <TouchableOpacity
+        activeOpacity={0.7}
         onPress={handlePrevMonth}
         style={styles.monthArrow}
-        activeOpacity={0.7}
       >
         <Icon source="chevron-left" size={24} color={colors.text} />
       </TouchableOpacity>
@@ -198,9 +206,9 @@ export default function BudgetsScreen({
         <Text style={styles.monthLabel}>{getMonthLabel(month)}</Text>
       </View>
       <TouchableOpacity
+        activeOpacity={0.7}
         onPress={handleNextMonth}
         style={styles.monthArrow}
-        activeOpacity={0.7}
       >
         <Icon source="chevron-right" size={24} color={colors.text} />
       </TouchableOpacity>
@@ -229,6 +237,7 @@ export default function BudgetsScreen({
     const isOver = item.remaining < 0;
     return (
       <TouchableOpacity
+        activeOpacity={0.7}
         style={styles.budgetCard}
         onPress={() =>
           navigation.navigate('BudgetForm', {
@@ -236,7 +245,6 @@ export default function BudgetsScreen({
             month: item.month,
           })
         }
-        activeOpacity={0.7}
       >
         <View style={[styles.budgetAccent, { backgroundColor: barColor }]} />
         <View style={styles.budgetInner}>
@@ -253,8 +261,18 @@ export default function BudgetsScreen({
                 </View>
               )}
               <View>
-                <Text style={styles.budgetName}>{cat?.name ?? 'Unknown'}</Text>
-                <Text style={styles.budgetMeta}>
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={styles.budgetName}
+                >
+                  {cat?.name ?? 'Unknown'}
+                </Text>
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={styles.budgetMeta}
+                >
                   {formatMoney(item.spent, sym, 2)} of{' '}
                   {formatMoney(item.limitCents, sym, 2)}
                 </Text>
@@ -262,6 +280,7 @@ export default function BudgetsScreen({
             </View>
             <View style={styles.budgetRight}>
               <Text
+                numberOfLines={1}
                 style={[
                   styles.remainingAmount,
                   { color: isOver ? colors.expense : colors.income },
@@ -308,14 +327,20 @@ export default function BudgetsScreen({
           >
             <Icon source={cat.icon as any} size={20} color={cat.color} />
           </View>
-          <Text style={styles.unbudgetedName}>{cat.name}</Text>
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={[styles.unbudgetedName, { flex: 1 }]}
+          >
+            {cat.name}
+          </Text>
         </View>
         <TouchableOpacity
+          activeOpacity={0.7}
           style={styles.setBudgetBtn}
           onPress={() => navigation.navigate('BudgetForm', { month })}
-          activeOpacity={0.7}
         >
-          <Icon source="plus" size={14} color="#fff" />
+          <Icon source="plus" size={14} color={colors.onPrimary} />
           <Text style={styles.setBudgetText}>Budget</Text>
         </TouchableOpacity>
       </View>
@@ -392,7 +417,8 @@ export default function BudgetsScreen({
         icon="plus"
         style={[styles.fab, { bottom: insets.bottom + 16 }]}
         onPress={() => navigation.navigate('BudgetForm', { month })}
-        color="#fff"
+        color={colors.onPrimary}
+        accessibilityLabel="Add budget"
       />
       <Snackbar
         visible={!!snackbar}
@@ -719,7 +745,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   setBudgetText: {
-    color: '#fff',
+    color: colors.onPrimary,
     fontWeight: '700',
     fontSize: 12,
     letterSpacing: 0.3,
@@ -758,7 +784,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.lg,
     backgroundColor: colors.primary,
-    opacity: 0.6,
     ...elevation.lg,
   },
 });

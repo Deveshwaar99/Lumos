@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, Icon, Modal, Portal, Divider } from 'react-native-paper';
-import { colors, spacing } from '../theme';
+import { colors, spacing, radius } from '../theme';
 import type { TimePeriod } from '../utils/dates';
 
 interface TimePeriodPickerProps {
@@ -48,6 +48,7 @@ export default function TimePeriodPicker({
                     onSelect(item.key);
                     onDismiss();
                   }}
+                  activeOpacity={0.7}
                 >
                   <View style={styles.iconCircle}>
                     <Icon
@@ -75,18 +76,18 @@ export default function TimePeriodPicker({
 const styles = StyleSheet.create({
   modal: {
     backgroundColor: colors.surface,
-    margin: 20,
-    borderRadius: 12,
+    margin: spacing.lg,
+    borderRadius: radius.md,
     maxHeight: '70%',
-    padding: 16,
+    padding: spacing.cardInset,
   },
   title: { marginBottom: 12, textAlign: 'center' },
   item: { flexDirection: 'row', alignItems: 'center', padding: 12 },
   selected: { backgroundColor: colors.primary + '10' },
   iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.primary + '15',

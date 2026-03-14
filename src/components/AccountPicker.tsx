@@ -31,6 +31,9 @@ export default function AccountPicker({
         <Text variant="titleMedium" style={styles.title}>
           {title ?? 'Select Account'}
         </Text>
+        {accounts.length === 0 && (
+          <Text style={styles.emptyText}>No accounts available</Text>
+        )}
         <ScrollView>
           {accounts.map((item, index) => (
             <React.Fragment key={item.id}>
@@ -41,6 +44,7 @@ export default function AccountPicker({
                   onSelect(item);
                   onDismiss();
                 }}
+                activeOpacity={0.7}
               >
                 <View style={styles.iconCircle}>
                   <Icon
@@ -67,18 +71,23 @@ export default function AccountPicker({
 const styles = StyleSheet.create({
   modal: {
     backgroundColor: colors.surface,
-    margin: 20,
-    borderRadius: 12,
+    margin: spacing.lg,
+    borderRadius: radius.md,
     maxHeight: '70%',
-    padding: 16,
+    padding: spacing.cardInset,
   },
   title: { marginBottom: 12, textAlign: 'center' },
+  emptyText: {
+    color: colors.textSecondary,
+    textAlign: 'center',
+    paddingVertical: spacing.xl,
+  },
   item: { flexDirection: 'row', alignItems: 'center', padding: 12 },
   selected: { backgroundColor: colors.primary + '10' },
   iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.primary + '15',

@@ -72,17 +72,26 @@ function TransactionItemComponent({
       ? accountMap[transaction.splits[1].accountId]
       : null;
 
+  const amountStr = formatMoney(
+    transaction.totalAmountCents,
+    currencySymbol,
+    2,
+  );
+  const accessibilityLabel = `${titleText}, ${prefix}${amountStr}`;
+
   return (
     <TouchableOpacity
       style={styles.container}
       onPress={onPress}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
     >
       <View style={[styles.iconCircle, { backgroundColor: iconBg }]}>
         <Icon source={iconSource as any} size={20} color={iconColor} />
       </View>
       <View style={styles.details}>
-        <Text variant="bodyLarge" numberOfLines={1} style={styles.title}>
+        <Text variant="bodyLarge" numberOfLines={1} ellipsizeMode="tail" style={styles.title}>
           {titleText}
         </Text>
         {isTransfer ? (
@@ -93,7 +102,7 @@ function TransactionItemComponent({
                 { backgroundColor: colors.transfer + '22' },
               ]}
             >
-              <Text style={[styles.badgeText, { color: colors.transfer }]}>
+              <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.badgeText, { color: colors.transfer }]}>
                 {fromAcc?.name ?? '?'} → {toAcc?.name ?? '?'}
               </Text>
             </View>
@@ -109,7 +118,7 @@ function TransactionItemComponent({
                   key={s.id}
                   style={[styles.badge, { backgroundColor: badgeColor + '22' }]}
                 >
-                  <Text style={[styles.badgeText, { color: badgeColor }]}>
+                  <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.badgeText, { color: badgeColor }]}>
                     {name}
                   </Text>
                 </View>
@@ -118,7 +127,7 @@ function TransactionItemComponent({
           </View>
         )}
         {transaction.note ? (
-          <Text variant="bodySmall" style={styles.note} numberOfLines={1}>
+          <Text variant="bodySmall" style={styles.note} numberOfLines={1} ellipsizeMode="tail">
             {transaction.note}
           </Text>
         ) : null}
@@ -126,6 +135,7 @@ function TransactionItemComponent({
       <View style={styles.right}>
         <Text
           variant="titleSmall"
+          numberOfLines={1}
           style={{ color: amountColor, fontWeight: '600' }}
         >
           {prefix}
@@ -145,7 +155,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: 10,
     paddingHorizontal: spacing.lg,
     backgroundColor: colors.background,
   },
@@ -174,6 +184,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   note: { color: colors.textSecondary, marginTop: 2 },
-  right: { alignItems: 'flex-end', marginLeft: 8 },
+  right: { alignItems: 'flex-end', marginLeft: 8, flexShrink: 0 },
   date: { color: colors.textTertiary, marginTop: 2 },
 });

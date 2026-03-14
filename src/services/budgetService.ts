@@ -25,9 +25,7 @@ export const budgetService = {
           WHERE t.category_id = b.category_id AND t.type = 'expense'
           AND t.date >= ? AND t.date < ?), 0) as spent
       FROM budgets b WHERE b.month = ? AND b.enabled = 1`,
-      start,
-      end,
-      month,
+      [start, end, month],
     );
 
     return rows.map((row) => {
@@ -45,12 +43,7 @@ export const budgetService = {
     const id = generateId();
     await db.runAsync(
       'INSERT INTO budgets (id, month, category_id, limit_cents, alert_threshold_pct, enabled) VALUES (?, ?, ?, ?, ?, ?)',
-      id,
-      data.month,
-      data.categoryId,
-      data.limitCents,
-      data.alertThresholdPct,
-      data.enabled ? 1 : 0,
+      [id, data.month, data.categoryId, data.limitCents, data.alertThresholdPct, data.enabled ? 1 : 0],
     );
     return { id, ...data };
   },
@@ -83,13 +76,13 @@ export const budgetService = {
     values.push(id);
     await db.runAsync(
       `UPDATE budgets SET ${fields.join(', ')} WHERE id = ?`,
-      ...values,
+      values,
     );
   },
 
   async delete(id: string): Promise<void> {
     const db = await getDatabase();
-    await db.runAsync('DELETE FROM budgets WHERE id = ?', id);
+    await db.runAsync('DELETE FROM budgets WHERE id = ?', [id]);
   },
 
   async getAlerts(month: string): Promise<BudgetWithSpent[]> {
@@ -101,7 +94,7 @@ export const budgetService = {
     const db = await getDatabase();
     const result = await db.getFirstAsync<{ count: number }>(
       'SELECT COUNT(*) as count FROM budgets WHERE month = ? AND enabled = 1',
-      month,
+      [month],
     );
     return result?.count ?? 0;
   },

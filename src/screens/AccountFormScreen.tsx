@@ -3,10 +3,10 @@ import {
   View,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   TextInput as RNTextInput,
+  TouchableOpacity,
 } from 'react-native';
 import { Button, Text, Icon, Chip, Snackbar } from 'react-native-paper';
 import { useForm, Controller, useWatch } from 'react-hook-form';
@@ -28,25 +28,27 @@ const ACCOUNT_TYPES = [
 ] as const;
 
 const ACCOUNT_ICONS = [
-  // Cards
-  'credit-card',
-  'credit-card-chip',
-  'credit-card-wireless',
-  'credit-card-multiple',
-  'contactless-payment',
-  'credit-card-fast',
-  // Banking & savings
-  'bank',
-  'bank-transfer',
-  'piggy-bank',
-  'safe',
-  // Cash & wallet
+  // Cash
   'wallet',
   'cash',
   'cash-multiple',
   'hand-coin',
-  'cash-register',
-  // Currencies & crypto
+  // Bank accounts
+  'bank',
+  'bank-outline',
+  'bank-transfer',
+  'bank-check',
+  // Cards
+  'credit-card',
+  'credit-card-chip',
+  'credit-card-wireless',
+  'contactless-payment',
+  // Savings
+  'piggy-bank',
+  'safe',
+  'lock',
+  'gold',
+  // Currencies
   'currency-usd',
   'currency-eur',
   'currency-gbp',
@@ -54,22 +56,19 @@ const ACCOUNT_ICONS = [
   'currency-btc',
   'bitcoin',
   'ethereum',
-  // Investments & charts
-  'chart-line',
-  'chart-donut',
-  'gold',
+  // Investments & funds
+  'finance',
   'briefcase',
-  // Lifestyle & spending
-  'store',
-  'storefront',
-  'shopping',
-  'food',
-  'car',
-  'home',
-  'cellphone',
-  'medical-bag',
-  'school',
-  'airplane',
+  'sack',
+  'sack-percent',
+  'cash-100',
+  'account-cash',
+  'sprout',
+  'diamond-stone',
+  'scale-balance',
+  // Loans & property
+  'home-city',
+  'umbrella',
 ];
 
 type FormData = z.infer<typeof accountSchema>;
@@ -124,6 +123,7 @@ const IconPicker = React.memo(function IconPicker({
         {ACCOUNT_ICONS.map((icon) => (
           <TouchableOpacity
             key={icon}
+            activeOpacity={0.7}
             style={[
               styles.iconOption,
               selectedIcon === icon && {

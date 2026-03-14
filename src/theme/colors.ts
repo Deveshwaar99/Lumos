@@ -56,6 +56,7 @@ export const colors = {
 
   scrim: 'rgba(0, 0, 0, 0.6)',
   backdrop: 'rgba(0, 0, 0, 0.7)',
+  cardGradient: ['#2E2660', '#1E1545', '#252540'] as const,
 } as const;
 
 export const CATEGORY_COLORS = [
