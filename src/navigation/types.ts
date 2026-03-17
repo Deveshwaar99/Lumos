@@ -17,7 +17,7 @@ export type TabParamList = {
 export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabParamList>;
   AddTransaction:
-    | { type?: TransactionType; transactionId?: string }
+    | { type?: TransactionType; transactionId?: string; accountId?: string }
     | undefined;
   TransactionDetail: { transactionId: string };
   CategoryForm:

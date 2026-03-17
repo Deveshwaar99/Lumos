@@ -67,8 +67,12 @@ export default function AddTransactionScreen({
 }: RootStackScreenProps<'AddTransaction'>) {
   const insets = useSafeAreaInsets();
   const params = route.params;
-  const transactionId = params?.transactionId;
-  const initialType = params?.type ?? 'expense';
+
+  const {
+    transactionId,
+    accountId,
+    type: initialType = 'expense',
+  } = params ?? {};
 
   const { addTransaction, updateTransaction, removeTransaction } =
     useTransactionStore();
@@ -86,7 +90,7 @@ export default function AddTransactionScreen({
   const [type, setType] = useState<TransactionType>(initialType);
   const [expression, setExpression] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  const [account1Id, setAccount1Id] = useState('');
+  const [account1Id, setAccount1Id] = useState(accountId ?? '');
   const [account2Id, setAccount2Id] = useState('');
   const [note, setNote] = useState('');
   const [dateStr, setDateStr] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -497,7 +501,9 @@ export default function AddTransactionScreen({
           <Icon
             source="swap-horizontal"
             size={16}
-            color={type === 'transfer' ? colors.onPrimary : colors.textSecondary}
+            color={
+              type === 'transfer' ? colors.onPrimary : colors.textSecondary
+            }
           />
           <Text
             style={[

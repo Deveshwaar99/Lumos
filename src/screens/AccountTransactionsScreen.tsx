@@ -40,7 +40,13 @@ export default function AccountTransactionsScreen({
   const loadData = useCallback(async () => {
     try {
       const txns = await transactionService.getAll(
-        { dateFrom: null, dateTo: null, type: null, accountId, categoryId: null },
+        {
+          dateFrom: null,
+          dateTo: null,
+          type: null,
+          accountId,
+          categoryId: null,
+        },
         200,
         0,
       );
@@ -95,7 +101,9 @@ export default function AccountTransactionsScreen({
             color={colors.primary}
           />
         </View>
-        <Text style={styles.headerName} numberOfLines={1} ellipsizeMode="tail">{account?.name ?? 'Account'}</Text>
+        <Text style={styles.headerName} numberOfLines={1} ellipsizeMode="tail">
+          {account?.name ?? 'Account'}
+        </Text>
         <Text
           style={[
             styles.headerBalance,
@@ -155,7 +163,11 @@ export default function AccountTransactionsScreen({
       <FAB
         icon="plus"
         style={[styles.fab, { bottom: insets.bottom + 16 }]}
-        onPress={() => navigation.navigate('AddTransaction')}
+        onPress={() =>
+          navigation.navigate('AddTransaction', {
+            accountId,
+          })
+        }
         color={colors.onPrimary}
         accessibilityLabel="Add transaction"
       />
