@@ -70,7 +70,8 @@ export default function AddTransactionScreen({
 
   const {
     transactionId,
-    accountId,
+    accountId: initialAccountId = '',
+    categoryId: initialCategoryId = '',
     type: initialType = 'expense',
   } = params ?? {};
 
@@ -89,8 +90,8 @@ export default function AddTransactionScreen({
   const isTransfer = (t: TransactionType) => t === 'transfer';
   const [type, setType] = useState<TransactionType>(initialType);
   const [expression, setExpression] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [account1Id, setAccount1Id] = useState(accountId ?? '');
+  const [categoryId, setCategoryId] = useState(initialCategoryId);
+  const [account1Id, setAccount1Id] = useState(initialAccountId);
   const [account2Id, setAccount2Id] = useState('');
   const [note, setNote] = useState('');
   const [dateStr, setDateStr] = useState(format(new Date(), 'yyyy-MM-dd'));

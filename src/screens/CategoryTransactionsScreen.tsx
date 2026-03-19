@@ -165,7 +165,7 @@ export default function CategoryTransactionsScreen({
       <FAB
         icon="plus"
         style={[styles.fab, { bottom: insets.bottom + 16 }]}
-        onPress={() => navigation.navigate('AddTransaction')}
+        onPress={() => navigation.navigate('AddTransaction', { categoryId })}
         color={colors.onPrimary}
         accessibilityLabel="Add transaction"
       />
