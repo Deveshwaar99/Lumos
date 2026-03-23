@@ -331,6 +331,7 @@ export default function FDFormScreen({
 
           {calendarTarget !== 'none' && (
             <InlineCalendar
+              variant="sheet"
               selectedDate={
                 calendarTarget === 'start'
                   ? startDate

@@ -10,6 +10,12 @@ interface InlineCalendarProps {
   onDone: () => void;
   onDismiss?: () => void;
   onClear?: () => void;
+  /**
+   * `fullscreen` — parent must have a bounded height (e.g. StyleSheet.absoluteFill).
+   * Backdrop fills space above the sheet; tap dismisses.
+   * `sheet` — intrinsic height only; use inside toolbars / scroll content without a fixed-height parent.
+   */
+  variant?: 'fullscreen' | 'sheet';
 }
 
 export default function InlineCalendar({
@@ -18,39 +24,35 @@ export default function InlineCalendar({
   onDone,
   onDismiss,
   onClear,
+  variant = 'fullscreen',
 }: InlineCalendarProps) {
   const handleDismiss = onDismiss ?? onDone;
+  const isSheet = variant === 'sheet';
 
-  return (
-    <View style={styles.wrapper}>
-      <TouchableOpacity
-        style={styles.backdrop}
-        onPress={handleDismiss}
-        activeOpacity={1}
-      />
-      <View style={styles.container}>
-        <View style={styles.header}>
-          {onClear ? (
-            <TouchableOpacity
-              onPress={() => {
-                onClear();
-                onDone();
-              }}
-            >
-              <Text style={styles.clearText}>Clear</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity onPress={onDone}>
-              <Text style={styles.cancelText}>Cancel</Text>
-            </TouchableOpacity>
-          )}
-          <Text style={styles.title}>Choose date</Text>
-          <TouchableOpacity onPress={onDone}>
-            <Text style={styles.doneText}>Done</Text>
+  const body = (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        {onClear ? (
+          <TouchableOpacity
+            onPress={() => {
+              onClear();
+              onDone();
+            }}
+          >
+            <Text style={styles.clearText}>Clear</Text>
           </TouchableOpacity>
-        </View>
+        ) : (
+          <TouchableOpacity onPress={onDone}>
+            <Text style={styles.cancelText}>Cancel</Text>
+          </TouchableOpacity>
+        )}
+        <Text style={styles.title}>Choose date</Text>
+        <TouchableOpacity onPress={onDone}>
+          <Text style={styles.doneText}>Done</Text>
+        </TouchableOpacity>
+      </View>
 
-        <Calendar
+      <Calendar
         current={selectedDate}
         onDayPress={(day: DateData) => onDateSelect(day.dateString)}
         markedDates={{
@@ -79,7 +81,21 @@ export default function InlineCalendar({
         }}
         style={styles.calendar}
       />
-      </View>
+    </View>
+  );
+
+  if (isSheet) {
+    return <View style={styles.wrapperSheet}>{body}</View>;
+  }
+
+  return (
+    <View style={styles.wrapper}>
+      <TouchableOpacity
+        style={styles.backdrop}
+        onPress={handleDismiss}
+        activeOpacity={1}
+      />
+      {body}
     </View>
   );
 }
@@ -88,6 +104,10 @@ const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
     flexDirection: 'column',
+  },
+  /** Intrinsic height; avoids flex collapse when parent has no bounded height. */
+  wrapperSheet: {
+    width: '100%',
   },
   backdrop: {
     flex: 1,

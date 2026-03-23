@@ -123,12 +123,12 @@ export default function AddTransactionScreen({
     loadCategories();
     loadAccounts();
   }, []);
-
+  //Set default account when there is no account
   useEffect(() => {
     if (accounts.length > 0 && !account1Id) {
       setAccount1Id(accounts[0].id);
     }
-  }, [accounts]);
+  }, [accounts, account1Id]);
 
   useEffect(() => {
     if (transactionId) {
@@ -396,7 +396,7 @@ export default function AddTransactionScreen({
       : type === 'expense'
         ? colors.expense
         : colors.transfer;
-  const dateLabel = format(new Date(dateStr + 'T00:00:00'), 'MMM d, yyyy');
+  const dateLabel = format(new Date(`${dateStr}T00:00:00`), 'MMM d, yyyy');
   const [hh, mm] = timeStr.split(':').map(Number);
   const timeLabel = format(new Date(2000, 0, 1, hh, mm), 'h:mm a');
   const totalForSplit = evalExpression(expression);
@@ -404,9 +404,9 @@ export default function AddTransactionScreen({
   const typeSwitcherBg = typeAnim.interpolate({
     inputRange: [0, 1, 2],
     outputRange: [
-      colors.income + '20',
-      colors.expense + '20',
-      colors.transfer + '20',
+      `${colors.income}20`,
+      `${colors.expense}20`,
+      `${colors.transfer}20`,
     ],
   });
 
@@ -530,7 +530,7 @@ export default function AddTransactionScreen({
         >
           {/* ── Amount Hero ── */}
           <View
-            style={[styles.amountHero, { borderColor: amountColor + '30' }]}
+            style={[styles.amountHero, { borderColor: `${amountColor}30` }]}
           >
             <View
               style={[styles.amountAccent, { backgroundColor: amountColor }]}
@@ -552,7 +552,7 @@ export default function AddTransactionScreen({
                   activeUnderlineColor="transparent"
                   textColor={amountColor}
                   cursorColor={amountColor}
-                  selectionColor={amountColor + '40'}
+                  selectionColor={`${amountColor}40`}
                   keyboardType="decimal-pad"
                   returnKeyType="done"
                 />
@@ -561,7 +561,7 @@ export default function AddTransactionScreen({
             <TouchableOpacity
               style={[
                 styles.calcTrigger,
-                { backgroundColor: amountColor + '18' },
+                { backgroundColor: `${amountColor}18` },
               ]}
               onPress={() => togglePanel('calculator')}
               activeOpacity={0.7}
@@ -1074,6 +1074,7 @@ export default function AddTransactionScreen({
           )}
           {activePanel === 'calendar' && (
             <InlineCalendar
+              variant="sheet"
               selectedDate={dateStr}
               onDateSelect={(d) => setDateStr(d)}
               onDone={closePanel}
