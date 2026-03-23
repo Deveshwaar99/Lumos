@@ -1,10 +1,10 @@
+import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import * as DocumentPicker from 'expo-document-picker';
 import { getDatabase } from '../db/database';
 import type { BackupData } from '../models/types';
 
-const BACKUP_VERSION = 4;
+const BACKUP_VERSION = 5;
 
 export const backupService = {
   async createBackup(): Promise<string> {
@@ -19,6 +19,14 @@ export const backupService = {
     let fixedDeposits: any[] = [];
     try {
       fixedDeposits = await db.getAllAsync('SELECT * FROM fixed_deposits');
+    } catch {
+      // table may not exist on older schemas
+    }
+    let recurringTransactions: any[] = [];
+    try {
+      recurringTransactions = await db.getAllAsync(
+        'SELECT * FROM recurring_transactions',
+      );
     } catch {
       // table may not exist on older schemas
     }
@@ -39,6 +47,7 @@ export const backupService = {
       transactionSplits: transactionSplits as any,
       budgets: budgets as any,
       fixedDeposits: fixedDeposits as any,
+      recurringTransactions: recurringTransactions as any,
       settings,
     };
 
@@ -85,8 +94,12 @@ export const backupService = {
       return { success: false, message: 'Invalid backup file format.' };
     }
 
-    if (!backup.version || backup.version > BACKUP_VERSION) {
-      return { success: false, message: 'Incompatible backup version.' };
+    if (backup.version !== BACKUP_VERSION) {
+      return {
+        success: false,
+        message:
+          'This backup is not from the current app version. Create a new backup in Backup & Restore, then restore that file.',
+      };
     }
 
     return {
@@ -106,6 +119,11 @@ export const backupService = {
     }
     await db.execAsync('DELETE FROM transaction_splits');
     await db.execAsync('DELETE FROM transactions');
+    try {
+      await db.execAsync('DELETE FROM recurring_transactions');
+    } catch {
+      /* may not exist */
+    }
     await db.execAsync('DELETE FROM budgets');
     await db.execAsync('DELETE FROM categories');
     await db.execAsync('DELETE FROM accounts');
@@ -123,25 +141,36 @@ export const backupService = {
       const a = acc as any;
       await db.runAsync(
         'INSERT INTO accounts (id, name, type, icon, opening_balance_cents, currency) VALUES (?, ?, ?, ?, ?, ?)',
-        [a.id, a.name, a.type, a.icon, a.opening_balance_cents ?? a.openingBalanceCents ?? 0, a.currency ?? 'USD'],
+        [
+          a.id,
+          a.name,
+          a.type,
+          a.icon,
+          a.opening_balance_cents ?? a.openingBalanceCents ?? 0,
+          a.currency ?? 'USD',
+        ],
       );
     }
 
     for (const txn of backup.transactions) {
       const t = txn as any;
       await db.runAsync(
-        `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, note, date, linked_transaction_id, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, note, date, linked_transaction_id, fd_id, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           t.id,
           t.type,
-          t.total_amount_cents ?? t.totalAmountCents ?? t.amount_cents ?? t.amountCents,
+          t.total_amount_cents ??
+            t.totalAmountCents ??
+            t.amount_cents ??
+            t.amountCents,
           t.currency,
           t.category_id ?? t.categoryId,
           t.account_id ?? t.accountId ?? '',
           t.note,
           t.date,
           t.linked_transaction_id ?? t.linkedTransactionId ?? null,
+          t.fd_id ?? t.fdId ?? null,
           t.created_at ?? t.createdAt,
           t.updated_at ?? t.updatedAt,
         ],
@@ -153,7 +182,12 @@ export const backupService = {
       const s = sp as any;
       await db.runAsync(
         'INSERT INTO transaction_splits (id, transaction_id, account_id, amount_cents) VALUES (?, ?, ?, ?)',
-        [s.id, s.transaction_id ?? s.transactionId, s.account_id ?? s.accountId, s.amount_cents ?? s.amountCents],
+        [
+          s.id,
+          s.transaction_id ?? s.transactionId,
+          s.account_id ?? s.accountId,
+          s.amount_cents ?? s.amountCents,
+        ],
       );
     }
 
@@ -173,7 +207,14 @@ export const backupService = {
       const b = bud as any;
       await db.runAsync(
         'INSERT INTO budgets (id, month, category_id, limit_cents, alert_threshold_pct, enabled) VALUES (?, ?, ?, ?, ?, ?)',
-        [b.id, b.month, b.category_id ?? b.categoryId, b.limit_cents ?? b.limitCents, b.alert_threshold_pct ?? b.alertThresholdPct ?? 80, b.enabled !== undefined ? (b.enabled ? 1 : 0) : 1],
+        [
+          b.id,
+          b.month,
+          b.category_id ?? b.categoryId,
+          b.limit_cents ?? b.limitCents,
+          b.alert_threshold_pct ?? b.alertThresholdPct ?? 80,
+          b.enabled !== undefined ? (b.enabled ? 1 : 0) : 1,
+        ],
       );
     }
 
@@ -200,6 +241,49 @@ export const backupService = {
             f.status ?? 'active',
             f.created_at ?? f.createdAt,
             f.updated_at ?? f.updatedAt,
+          ],
+        );
+      } catch {
+        // skip if table doesn't exist
+      }
+    }
+
+    const recurring = backup.recurringTransactions ?? [];
+    for (const rec of recurring) {
+      const r = rec as any;
+
+      let isActiveRaw: unknown;
+      if (r.is_active !== undefined) {
+        isActiveRaw = r.is_active;
+      } else if (r.isActive !== undefined) {
+        isActiveRaw = r.isActive;
+      } else {
+        isActiveRaw = 1;
+      }
+      const isActive = isActiveRaw === true || isActiveRaw === 1 ? 1 : 0;
+
+      try {
+        await db.runAsync(
+          `INSERT INTO recurring_transactions
+           (id, type, total_amount_cents, currency, category_id, note, account_id, to_account_id,
+            frequency, start_date, end_date, next_due_date, is_active, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            r.id,
+            r.type,
+            r.total_amount_cents ?? r.totalAmountCents,
+            r.currency,
+            r.category_id ?? r.categoryId ?? null,
+            r.note ?? null,
+            r.account_id ?? r.accountId,
+            r.to_account_id ?? r.toAccountId ?? null,
+            r.frequency,
+            r.start_date ?? r.startDate,
+            r.end_date ?? r.endDate ?? null,
+            r.next_due_date ?? r.nextDueDate,
+            isActive,
+            r.created_at ?? r.createdAt,
+            r.updated_at ?? r.updatedAt,
           ],
         );
       } catch {

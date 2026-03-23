@@ -15,6 +15,8 @@ import { useTransactionStore } from '../stores/useTransactionStore';
 import { useCategoryStore } from '../stores/useCategoryStore';
 import { useAccountStore } from '../stores/useAccountStore';
 import { useBudgetStore } from '../stores/useBudgetStore';
+import { useFDStore } from '../stores/useFDStore';
+import { useRecurringStore } from '../stores/useRecurringStore';
 import { colors, spacing, radius } from '../theme';
 import type { RootStackScreenProps } from '../navigation/types';
 import type { BackupData } from '../models/types';
@@ -22,11 +24,13 @@ import type { BackupData } from '../models/types';
 export default function BackupRestoreScreen({
   navigation,
 }: RootStackScreenProps<'BackupRestore'>) {
-  const { settings } = useSettingsStore();
+  const { settings, loadSettings } = useSettingsStore();
   const { loadTransactions } = useTransactionStore();
   const { loadCategories } = useCategoryStore();
   const { loadAccounts } = useAccountStore();
   const { loadBudgets } = useBudgetStore();
+  const { loadDeposits } = useFDStore();
+  const { loadRecurring } = useRecurringStore();
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState('');
 
@@ -66,10 +70,13 @@ export default function BackupRestoreScreen({
               try {
                 await backupService.restoreFromData(backupData);
                 await Promise.all([
+                  loadSettings(),
                   loadCategories(),
                   loadAccounts(),
                   loadTransactions(true),
                   loadBudgets(),
+                  loadDeposits(),
+                  loadRecurring(),
                 ]);
                 navigation.navigate('Tabs' as any);
               } catch (e: any) {
@@ -116,7 +123,8 @@ export default function BackupRestoreScreen({
             </Text>
             <Text variant="bodyMedium" style={styles.description}>
               Create a full backup of your data (categories, accounts,
-              transactions, budgets, and settings) as a JSON file.
+              transactions, splits, budgets, fixed deposits, recurring rules, and
+              settings) as a JSON file.
             </Text>
             {settings.lastBackupAt && (
               <Text variant="bodySmall" style={styles.lastBackup}>

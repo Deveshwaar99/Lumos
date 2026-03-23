@@ -123,6 +123,7 @@ export interface BackupData {
   transactionSplits: TransactionSplit[];
   budgets: Budget[];
   fixedDeposits?: FixedDeposit[];
+  recurringTransactions?: RecurringTransaction[];
   settings: Record<string, string>;
 }
 

@@ -26,4 +26,10 @@ export const CATEGORY_ICONS: { name: string; label: string }[] = [
   { name: 'bus', label: 'Transit' },
   { name: 'train', label: 'Transport' },
   { name: 'tshirt-crew', label: 'Clothing' },
+  { name: 'finance', label: 'Dividends' },
+  { name: 'percent-outline', label: 'Interest' },
+  { name: 'gamepad-variant', label: 'Games' },
+  { name: 'account-group', label: 'Family' },
+  { name: 'receipt-text', label: 'Tax' },
+  { name: 'wifi', label: 'Network' },
 ];
