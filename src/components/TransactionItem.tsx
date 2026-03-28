@@ -58,19 +58,15 @@ function TransactionItemComponent({
     ? colors.transfer
     : (category?.color ?? colors.textSecondary);
   const iconBg = isTransfer
-    ? colors.transfer + '18'
-    : (category?.color ?? colors.textSecondary) + '18';
+    ? `${colors.transfer}18`
+    : `${category?.color ?? colors.textSecondary}18`;
 
   const titleText = isTransfer ? 'Transfer' : (category?.name ?? 'Unknown');
 
+const { accountId: fromAid, account2Id: toAid } = transaction;
   const fromAcc =
-    isTransfer && transaction.splits[0]
-      ? accountMap[transaction.splits[0].accountId]
-      : null;
-  const toAcc =
-    isTransfer && transaction.splits[1]
-      ? accountMap[transaction.splits[1].accountId]
-      : null;
+    isTransfer && fromAid ? accountMap[fromAid] ?? null : null;
+  const toAcc = isTransfer && toAid ? accountMap[toAid] ?? null : null;
 
   const amountStr = formatMoney(
     transaction.totalAmountCents,
@@ -99,7 +95,7 @@ function TransactionItemComponent({
             <View
               style={[
                 styles.badge,
-                { backgroundColor: colors.transfer + '22' },
+                { backgroundColor: `${colors.transfer}22` },
               ]}
             >
               <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.badgeText, { color: colors.transfer }]}>
@@ -116,7 +112,7 @@ function TransactionItemComponent({
               return (
                 <View
                   key={s.id}
-                  style={[styles.badge, { backgroundColor: badgeColor + '22' }]}
+                  style={[styles.badge, { backgroundColor: `${badgeColor}22` }]}
                 >
                   <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.badgeText, { color: badgeColor }]}>
                     {name}

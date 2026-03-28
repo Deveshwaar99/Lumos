@@ -128,14 +128,10 @@ export default function TransactionDetailScreen({
       ? colors.income
       : colors.expense;
 
+  const { accountId: fromAid, account2Id: toAid } = transaction;
   const fromAcc =
-    isTransfer && transaction.splits[0]
-      ? accountMap[transaction.splits[0].accountId]
-      : null;
-  const toAcc =
-    isTransfer && transaction.splits[1]
-      ? accountMap[transaction.splits[1].accountId]
-      : null;
+    isTransfer && fromAid ? accountMap[fromAid] ?? null : null;
+  const toAcc = isTransfer && toAid ? accountMap[toAid] ?? null : null;
 
   const hasNote = !!transaction.note;
 

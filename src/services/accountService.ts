@@ -1,5 +1,5 @@
 import { getDatabase } from '../db/database';
-import { Account } from '../models/types';
+import type { Account } from '../models/types';
 import { generateId } from '../utils/uuid';
 
 function mapRow(row: any): Account {
@@ -94,7 +94,13 @@ export const accountService = {
           WHERE s.account_id = a.id AND t.type = 'income'), 0) -
         COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
           JOIN transactions t ON s.transaction_id = t.id
-          WHERE s.account_id = a.id AND t.type = 'expense'), 0)
+          WHERE s.account_id = a.id AND t.type = 'expense'), 0) - 
+        COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
+          JOIN transactions t ON s.transaction_id = t.id
+          WHERE s.account_id = a.id AND t.type = 'transfer'), 0) +
+        COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
+          JOIN transactions t ON s.transaction_id = t.id
+          WHERE s.account2_id = a.id AND t.type = 'transfer'), 0)
         as balance
       FROM accounts a WHERE a.id = ?`,
       [id],
@@ -112,7 +118,13 @@ export const accountService = {
           WHERE s.account_id = a.id AND t.type = 'income'), 0) -
         COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
           JOIN transactions t ON s.transaction_id = t.id
-          WHERE s.account_id = a.id AND t.type = 'expense'), 0)
+          WHERE s.account_id = a.id AND t.type = 'expense'), 0) -
+        COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
+          JOIN transactions t ON s.transaction_id = t.id
+          WHERE s.account_id = a.id AND t.type = 'transfer'), 0) +
+        COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
+          JOIN transactions t ON s.transaction_id = t.id
+          WHERE s.account2_id = a.id AND t.type = 'transfer'), 0)
         as balance
       FROM accounts a ORDER BY a.name`,
     );

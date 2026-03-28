@@ -196,9 +196,9 @@ export async function seedDemoTransactions(db: SQLiteDatabase): Promise<void> {
 
     await db.runAsync(
       `INSERT OR IGNORE INTO transactions (
-        id, type, total_amount_cents, currency, category_id, account_id,
-        note, date, linked_transaction_id, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        id, type, total_amount_cents, currency, category_id, account_id, account2_id,
+        note, date, linked_transaction_id, fd_id, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         txnId,
         isIncome ? 'income' : 'expense',
@@ -206,8 +206,10 @@ export async function seedDemoTransactions(db: SQLiteDatabase): Promise<void> {
         'USD',
         cat.id,
         accountId,
+        null,
         sample.note,
         dateStr,
+        null,
         null,
         nowStr,
         nowStr,

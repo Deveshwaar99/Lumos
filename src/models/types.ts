@@ -6,6 +6,10 @@ export interface Transaction {
   totalAmountCents: number;
   currency: string;
   categoryId: string | null;
+  /** Primary account (from account for transfers). */
+  accountId: string | null;
+  /** Counterparty account for transfers; null for income/expense. */
+  account2Id: string | null;
   note: string | null;
   date: string;
   linkedTransactionId: string | null;

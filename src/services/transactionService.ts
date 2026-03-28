@@ -1,10 +1,10 @@
 import { getDatabase } from '../db/database';
-import {
+import type {
+  CreateTransactionInput,
   Transaction,
+  TransactionFilter,
   TransactionSplit,
   TransactionWithSplits,
-  TransactionFilter,
-  CreateTransactionInput,
 } from '../models/types';
 import { generateId } from '../utils/uuid';
 
@@ -15,6 +15,8 @@ function mapRow(row: any): Transaction {
     totalAmountCents: row.total_amount_cents,
     currency: row.currency,
     categoryId: row.category_id,
+    accountId: row.account_id ?? null,
+    account2Id: row.account2_id ?? null,
     note: row.note,
     date: row.date,
     linkedTransactionId: row.linked_transaction_id,
@@ -56,9 +58,9 @@ function buildWhereClause(filter: TransactionFilter): {
   }
   if (filter.accountId) {
     conditions.push(
-      't.id IN (SELECT transaction_id FROM transaction_splits WHERE account_id = ?)',
+      '(t.account_id = ? OR t.account2_id = ? OR t.id IN (SELECT transaction_id FROM transaction_splits WHERE account_id = ?))',
     );
-    params.push(filter.accountId);
+    params.push(filter.accountId, filter.accountId, filter.accountId);
   }
   if (filter.searchQuery) {
     const q = `%${filter.searchQuery}%`;
@@ -67,7 +69,7 @@ function buildWhereClause(filter: TransactionFilter): {
     );
     params.push(q, q, q);
   }
-  const sql = conditions.length > 0 ? ' WHERE ' + conditions.join(' AND ') : '';
+  const sql = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
   return { sql, params };
 }
 
@@ -104,9 +106,12 @@ export const transactionService = {
     const db = await getDatabase();
     const id = generateId();
     const now = new Date().toISOString();
+
+    const account2Id =
+      data.type === 'transfer' ? (data.splits[1]?.accountId ?? null) : null;
     await db.runAsync(
-      `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, note, date, linked_transaction_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, account2_id, note, date, linked_transaction_id, fd_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         data.type,
@@ -114,8 +119,10 @@ export const transactionService = {
         data.currency,
         data.categoryId ?? null,
         data.splits[0].accountId,
+        account2Id,
         data.note ?? null,
         data.date,
+        null,
         null,
         now,
         now,
@@ -143,6 +150,8 @@ export const transactionService = {
       totalAmountCents: data.totalAmountCents,
       currency: data.currency,
       categoryId: data.categoryId ?? null,
+      accountId: data.splits[0].accountId,
+      account2Id,
       note: data.note ?? null,
       date: data.date,
       linkedTransactionId: null,
@@ -185,7 +194,9 @@ export const transactionService = {
     }
     if (data.splits !== undefined && data.splits.length > 0) {
       fields.push('account_id = ?');
+      fields.push('account2_id = ?');
       values.push(data.splits[0].accountId);
+      values.push(data.splits[1]?.accountId ?? null);
     }
     values.push(id);
     await db.runAsync(
@@ -219,10 +230,9 @@ export const transactionService = {
         'DELETE FROM transaction_splits WHERE transaction_id = ?',
         [txn.linked_transaction_id],
       );
-      await db.runAsync(
-        'DELETE FROM transactions WHERE id = ?',
-        [txn.linked_transaction_id],
-      );
+      await db.runAsync('DELETE FROM transactions WHERE id = ?', [
+        txn.linked_transaction_id,
+      ]);
     }
     await db.runAsync(
       'DELETE FROM transaction_splits WHERE transaction_id = ?',
@@ -258,8 +268,8 @@ export const transactionService = {
   ): Promise<Array<TransactionSplit & { transaction: Transaction }>> {
     const db = await getDatabase();
     const rows = await db.getAllAsync<any>(
-      `SELECT s.*, t.type, t.total_amount_cents, t.currency, t.category_id, t.note, t.date,
-              t.linked_transaction_id, t.created_at, t.updated_at
+      `SELECT s.*, t.type, t.total_amount_cents, t.currency, t.category_id, t.account_id, t.account2_id,
+              t.note, t.date, t.linked_transaction_id, t.created_at, t.updated_at
        FROM transaction_splits s
        JOIN transactions t ON s.transaction_id = t.id
        WHERE s.account_id = ?
@@ -275,6 +285,8 @@ export const transactionService = {
         totalAmountCents: r.total_amount_cents,
         currency: r.currency,
         categoryId: r.category_id,
+        accountId: r.account_id ?? null,
+        account2Id: r.account2_id ?? null,
         note: r.note,
         date: r.date,
         linkedTransactionId: r.linked_transaction_id,
@@ -299,8 +311,8 @@ export const transactionService = {
     const incomeId = generateId();
 
     await db.runAsync(
-      `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, note, date, linked_transaction_id, fd_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, account2_id, note, date, linked_transaction_id, fd_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         expenseId,
         'expense',
@@ -308,6 +320,7 @@ export const transactionService = {
         currency,
         null,
         fromAccountId,
+        null,
         note,
         date,
         incomeId,
@@ -322,8 +335,8 @@ export const transactionService = {
     );
 
     await db.runAsync(
-      `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, note, date, linked_transaction_id, fd_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, account2_id, note, date, linked_transaction_id, fd_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         incomeId,
         'income',
@@ -331,6 +344,7 @@ export const transactionService = {
         currency,
         null,
         toAccountId,
+        null,
         note,
         date,
         expenseId,
@@ -354,9 +368,11 @@ export const transactionService = {
     const db = await getDatabase();
     const id = generateId();
     const now = new Date().toISOString();
+    const account2IdFd =
+      data.type === 'transfer' ? (data.splits[1]?.accountId ?? null) : null;
     await db.runAsync(
-      `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, note, date, linked_transaction_id, fd_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, account2_id, note, date, linked_transaction_id, fd_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         data.type,
@@ -364,6 +380,7 @@ export const transactionService = {
         data.currency,
         data.categoryId ?? null,
         data.splits[0].accountId,
+        account2IdFd,
         data.note ?? null,
         data.date,
         null,
@@ -394,6 +411,8 @@ export const transactionService = {
       totalAmountCents: data.totalAmountCents,
       currency: data.currency,
       categoryId: data.categoryId ?? null,
+      accountId: data.splits[0].accountId,
+      account2Id: account2IdFd,
       note: data.note ?? null,
       date: data.date,
       linkedTransactionId: null,

@@ -32,9 +32,9 @@ export const exportService = {
     }
     if (filter?.accountId) {
       conditions.push(
-        't.id IN (SELECT transaction_id FROM transaction_splits WHERE account_id = ?)',
+        '(t.account_id = ? OR t.account2_id = ? OR t.id IN (SELECT transaction_id FROM transaction_splits WHERE account_id = ?))',
       );
-      params.push(filter.accountId);
+      params.push(filter.accountId, filter.accountId, filter.accountId);
     }
     if (filter?.categoryId) {
       conditions.push('t.category_id = ?');

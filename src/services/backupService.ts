@@ -155,8 +155,8 @@ export const backupService = {
     for (const txn of backup.transactions) {
       const t = txn as any;
       await db.runAsync(
-        `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, note, date, linked_transaction_id, fd_id, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, account2_id, note, date, linked_transaction_id, fd_id, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           t.id,
           t.type,
@@ -167,6 +167,7 @@ export const backupService = {
           t.currency,
           t.category_id ?? t.categoryId,
           t.account_id ?? t.accountId ?? '',
+          t.account2_id ?? t.account2Id ?? null,
           t.note,
           t.date,
           t.linked_transaction_id ?? t.linkedTransactionId ?? null,

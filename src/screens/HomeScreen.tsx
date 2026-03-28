@@ -1,43 +1,42 @@
-import React, {
-  useEffect,
-  useState,
+import { useFocusEffect } from '@react-navigation/native';
+import {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
+  useState,
 } from 'react';
 import {
-  View,
+  Animated,
+  RefreshControl,
+  TextInput as RNTextInput,
   SectionList,
   StyleSheet,
-  RefreshControl,
-  Animated,
-  TextInput as RNTextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Text, FAB, Icon, Snackbar } from 'react-native-paper';
+import { FAB, Icon, Snackbar, Text } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
-import { TouchableOpacity } from 'react-native';
-import { useTransactionStore } from '../stores/useTransactionStore';
-import { useCategoryStore } from '../stores/useCategoryStore';
+import DateHeader from '../components/DateHeader';
+import PeriodNavigator from '../components/PeriodNavigator';
+import SummaryBar from '../components/SummaryBar';
+import TimePeriodPicker from '../components/TimePeriodPicker';
+import TransactionItem from '../components/TransactionItem';
+import type { MonthSummary, TransactionWithSplits } from '../models/types';
+import type { TabScreenProps } from '../navigation/types';
+import { analyticsService } from '../services/analyticsService';
+import { transactionService } from '../services/transactionService';
 import { useAccountStore } from '../stores/useAccountStore';
 import { useBudgetStore } from '../stores/useBudgetStore';
+import { useCategoryStore } from '../stores/useCategoryStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
-import { analyticsService } from '../services/analyticsService';
-import TransactionItem from '../components/TransactionItem';
-import PeriodNavigator from '../components/PeriodNavigator';
-import TimePeriodPicker from '../components/TimePeriodPicker';
-import SummaryBar from '../components/SummaryBar';
-import DateHeader from '../components/DateHeader';
-import { colors, spacing, radius, elevation } from '../theme';
+import { colors, elevation, radius, spacing } from '../theme';
 import {
-  getTimePeriodRange,
   getTimePeriodLabel,
+  getTimePeriodRange,
   stepAnchor,
   type TimePeriod,
 } from '../utils/dates';
-import { transactionService } from '../services/transactionService';
-import type { TabScreenProps } from '../navigation/types';
-import type { TransactionWithSplits, MonthSummary } from '../models/types';
 
 interface TransactionSection {
   title: string;

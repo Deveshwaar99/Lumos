@@ -40,7 +40,7 @@ import InlineCalendar from '../components/InlineCalendar';
 import { colors, spacing, radius } from '../theme';
 import { dollarsToCents, formatMoney } from '../utils/money';
 import type { RootStackScreenProps } from '../navigation/types';
-import type { TransactionType } from '../models/types';
+import type { SplitInput, TransactionType } from '../models/types';
 
 type PanelType = 'none' | 'calculator' | 'calendar';
 
@@ -296,7 +296,8 @@ export default function AddTransactionScreen({
       return;
     }
 
-    let splits;
+    let splits: SplitInput[];
+
     if (isTransfer(type)) {
       if (!account2Id) {
         setSnackbar('Select a To account');

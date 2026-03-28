@@ -1,6 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
+import { create } from 'zustand';
 
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 async function createSchema(db: SQLiteDatabase): Promise<void> {
   await db.execAsync(`
@@ -28,6 +29,7 @@ async function createSchema(db: SQLiteDatabase): Promise<void> {
       currency TEXT NOT NULL,
       category_id TEXT,
       account_id TEXT,
+      account2_id TEXT,
       note TEXT,
       date TEXT NOT NULL,
       linked_transaction_id TEXT,
@@ -125,6 +127,82 @@ async function migrateV4(db: SQLiteDatabase): Promise<void> {
     'CREATE INDEX IF NOT EXISTS idx_recurring_active ON recurring_transactions(is_active);',
   );
 }
+async function migrateV5(db: SQLiteDatabase): Promise<void> {
+  await db.execAsync(`
+    PRAGMA foreign_keys = OFF;
+    BEGIN TRANSACTION;
+
+    -- Add account2_id: "to" account for transfers (was only in transaction_splits as 2nd row).
+    CREATE TABLE transactions__v5 (
+      id TEXT PRIMARY KEY,
+      type TEXT NOT NULL CHECK(type IN ('income', 'expense', 'transfer')),
+      total_amount_cents INTEGER NOT NULL,
+      currency TEXT NOT NULL,
+      category_id TEXT,
+      account_id TEXT,
+      account2_id TEXT,
+      note TEXT,
+      date TEXT NOT NULL,
+      linked_transaction_id TEXT,
+      fd_id TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    -- Copy all rows; account2_id is NULL until the transfer backfill below.
+    INSERT INTO transactions__v5 (
+      id,
+      type,
+      total_amount_cents,
+      currency,
+      category_id,
+      account_id,
+      account2_id,
+      note,
+      date,
+      linked_transaction_id,
+      fd_id,
+      created_at,
+      updated_at
+    )
+    SELECT
+      id,
+      type,
+      total_amount_cents,
+      currency,
+      category_id,
+      account_id,
+      NULL,
+      note,
+      date,
+      linked_transaction_id,
+      fd_id,
+      created_at,
+      updated_at
+    FROM transactions;
+
+    -- Transfers: second split (by rowid order) is the counterparty account.
+    UPDATE transactions__v5
+    SET account2_id = (
+      SELECT s.account_id
+      FROM transaction_splits s
+      WHERE s.transaction_id = transactions__v5.id
+      ORDER BY s.rowid
+      LIMIT 1 OFFSET 1
+    )
+    WHERE type = 'transfer';
+
+    DROP TABLE transactions;
+    ALTER TABLE transactions__v5 RENAME TO transactions;
+
+    CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
+    CREATE INDEX IF NOT EXISTS idx_transactions_category_id ON transactions(category_id);
+    CREATE INDEX IF NOT EXISTS idx_transactions_type ON transactions(type);
+
+    COMMIT;
+    PRAGMA foreign_keys = ON;
+  `);
+}
 
 export async function runMigrations(db: SQLiteDatabase): Promise<void> {
   await db.execAsync(`
@@ -137,18 +215,19 @@ export async function runMigrations(db: SQLiteDatabase): Promise<void> {
     'SELECT version FROM schema_version ORDER BY version DESC LIMIT 1',
   );
   const currentVersion = versionResult[0]?.version ?? 0;
-
-  if (currentVersion < 1) {
-    await createSchema(db);
-  }
-  if (currentVersion < 2) {
-    await migrateV2(db);
-  }
-  if (currentVersion < 3) {
-    await migrateV3(db);
-  }
-  if (currentVersion < 4) {
-    await migrateV4(db);
+  const migrationFunctions = new Map<
+    number,
+    (db: SQLiteDatabase) => Promise<void>
+  >([
+    [1, createSchema],
+    [2, migrateV2],
+    [3, migrateV3],
+    [4, migrateV4],
+    [5, migrateV5],
+  ]);
+  for (let i = currentVersion + 1; i <= SCHEMA_VERSION; i++) {
+    const migrationFunc = migrationFunctions.get(i);
+    if (migrationFunc) await migrationFunc(db);
   }
   if (currentVersion < SCHEMA_VERSION) {
     await db.runAsync(
