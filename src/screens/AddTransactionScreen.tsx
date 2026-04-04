@@ -1,46 +1,46 @@
+import { useFDStore } from '@/stores/useFDStore';
+import { format, parseISO } from 'date-fns';
 import React, {
-  useEffect,
-  useState,
   useCallback,
-  useRef,
+  useEffect,
   useMemo,
+  useRef,
+  useState,
 } from 'react';
 import {
-  View,
+  Alert,
+  Animated,
+  Dimensions,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Animated,
-  Keyboard,
-  Dimensions,
-  TextInput as RNTextInput,
+  View
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  TextInput,
-  Text,
+  ActivityIndicator,
   Icon,
   Snackbar,
   Switch,
-  ActivityIndicator,
+  Text,
+  TextInput,
 } from 'react-native-paper';
-import { format, parseISO } from 'date-fns';
-import { useTransactionStore } from '../stores/useTransactionStore';
-import { useCategoryStore } from '../stores/useCategoryStore';
-import { useAccountStore } from '../stores/useAccountStore';
-import { useSettingsStore } from '../stores/useSettingsStore';
-import { transactionService } from '../services/transactionService';
-import CategoryPicker from '../components/CategoryPicker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AccountPicker from '../components/AccountPicker';
 import CalculatorPad from '../components/CalculatorPad';
+import CategoryPicker from '../components/CategoryPicker';
 import InlineCalendar from '../components/InlineCalendar';
-import { colors, spacing, radius } from '../theme';
-import { dollarsToCents, formatMoney } from '../utils/money';
-import type { RootStackScreenProps } from '../navigation/types';
 import type { SplitInput, TransactionType } from '../models/types';
+import type { RootStackScreenProps } from '../navigation/types';
+import { transactionService } from '../services/transactionService';
+import { useAccountStore } from '../stores/useAccountStore';
+import { useCategoryStore } from '../stores/useCategoryStore';
+import { useSettingsStore } from '../stores/useSettingsStore';
+import { useTransactionStore } from '../stores/useTransactionStore';
+import { colors, radius, spacing } from '../theme';
+import { dollarsToCents, formatMoney } from '../utils/money';
 
 type PanelType = 'none' | 'calculator' | 'calendar';
 
@@ -51,7 +51,7 @@ function evalExpression(expr: string): number {
     const sanitized = expr.replace(/×/g, '*').replace(/÷/g, '/');
     if (/[^0-9+\-*/.() ]/.test(sanitized)) return 0;
     const result = Function(`"use strict"; return (${sanitized})`)();
-    if (typeof result !== 'number' || !isFinite(result)) return 0;
+    if (typeof result !== 'number' || !Number.isFinite(result)) return 0;
     return Math.max(0, result);
   } catch {
     return 0;
@@ -60,6 +60,8 @@ function evalExpression(expr: string): number {
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const MINUTES = Array.from({ length: 12 }, (_, i) => i * 5);
+
+const isTransfer = (t: TransactionType) => t === 'transfer';
 
 export default function AddTransactionScreen({
   navigation,
@@ -79,6 +81,7 @@ export default function AddTransactionScreen({
     useTransactionStore();
   const { categories, loadCategories } = useCategoryStore();
   const { accounts, loadAccounts } = useAccountStore();
+  const { fdAccountIds, loadDeposits } = useFDStore();
   const { settings } = useSettingsStore();
 
   const [existing, setExisting] = useState<Awaited<
@@ -87,7 +90,6 @@ export default function AddTransactionScreen({
   const [loaded, setLoaded] = useState(!transactionId);
   const isEditing = !!existing;
 
-  const isTransfer = (t: TransactionType) => t === 'transfer';
   const [type, setType] = useState<TransactionType>(initialType);
   const [expression, setExpression] = useState('');
   const [categoryId, setCategoryId] = useState(initialCategoryId);
@@ -122,6 +124,7 @@ export default function AddTransactionScreen({
   useEffect(() => {
     loadCategories();
     loadAccounts();
+    loadDeposits();
   }, []);
   //Set default account when there is no account
   useEffect(() => {
@@ -175,6 +178,11 @@ export default function AddTransactionScreen({
       useNativeDriver: false,
     }).start();
   }, [type]);
+
+  const userAccounts = useMemo(
+    () => accounts.filter((acc) => !fdAccountIds.has(acc.id)),
+    [accounts, fdAccountIds],
+  );
 
   const splitSumError = useMemo(() => {
     if (!splitEnabled) return '';
@@ -263,7 +271,7 @@ export default function AddTransactionScreen({
       const parts = e.split(/[+\-*/]/);
       const lastPart = parts[parts.length - 1];
       if (lastPart.includes('.')) return e;
-      return e + '.';
+      return `${e}.`;
     });
   }, []);
   const handleBackspace = useCallback(
@@ -583,7 +591,7 @@ export default function AddTransactionScreen({
                 <View
                   style={[
                     styles.selectorIconWrap,
-                    { backgroundColor: colors.expense + '18' },
+                    { backgroundColor: `${colors.expense}18` },
                   ]}
                 >
                   <Icon
@@ -621,7 +629,7 @@ export default function AddTransactionScreen({
                 <View
                   style={[
                     styles.selectorIconWrap,
-                    { backgroundColor: colors.income + '18' },
+                    { backgroundColor: `${colors.income}18` },
                   ]}
                 >
                   <Icon
@@ -653,7 +661,7 @@ export default function AddTransactionScreen({
                 <View
                   style={[
                     styles.selectorIconWrap,
-                    { backgroundColor: colors.primary + '18' },
+                    { backgroundColor: `${colors.primary}18` },
                   ]}
                 >
                   <Icon
@@ -729,7 +737,7 @@ export default function AddTransactionScreen({
               activeUnderlineColor="transparent"
               textColor={colors.text}
               cursorColor={colors.primary}
-              selectionColor={colors.primary + '40'}
+              selectionColor={`${colors.primary}40`}
               multiline
               maxLength={200}
             />
@@ -885,7 +893,7 @@ export default function AddTransactionScreen({
                   <View
                     style={[
                       styles.splitToggleIcon,
-                      { backgroundColor: colors.transfer + '18' },
+                      { backgroundColor: `${colors.transfer}18` },
                     ]}
                   >
                     <Icon
@@ -948,7 +956,7 @@ export default function AddTransactionScreen({
                         activeUnderlineColor={colors.primary}
                         textColor={colors.text}
                         cursorColor={colors.primary}
-                        selectionColor={colors.primary + '40'}
+                        selectionColor={`${colors.primary}40`}
                       />
                     </View>
                   </View>
@@ -1003,7 +1011,7 @@ export default function AddTransactionScreen({
                         activeUnderlineColor={colors.primary}
                         textColor={colors.text}
                         cursorColor={colors.primary}
-                        selectionColor={colors.primary + '40'}
+                        selectionColor={`${colors.primary}40`}
                       />
                     </View>
                   </View>
@@ -1179,14 +1187,14 @@ export default function AddTransactionScreen({
         visible={account1PickerVisible}
         onDismiss={() => setAccount1PickerVisible(false)}
         onSelect={(acc) => setAccount1Id(acc.id)}
-        accounts={accounts}
+        accounts={userAccounts}
         selectedId={account1Id}
       />
       <AccountPicker
         visible={account2PickerVisible}
         onDismiss={() => setAccount2PickerVisible(false)}
         onSelect={(acc) => setAccount2Id(acc.id)}
-        accounts={accounts.filter((a) => a.id !== account1Id)}
+        accounts={userAccounts.filter((a) => a.id !== account1Id)}
         selectedId={account2Id}
         title={isTransfer(type) ? 'To Account' : undefined}
       />
@@ -1441,8 +1449,8 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   dateTimeChipActive: {
-    borderColor: colors.primary + '50',
-    backgroundColor: colors.primary + '0A',
+    borderColor: `${colors.primary}50`,
+    backgroundColor: `${colors.primary}0A`,
   },
   dateTimeText: {
     color: colors.text,
@@ -1508,7 +1516,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
   },
   timeOptionActive: {
-    backgroundColor: colors.primary + '18',
+    backgroundColor: `${colors.primary}18`,
   },
   timeOptionText: {
     color: colors.textSecondary,
@@ -1651,7 +1659,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xs,
     marginTop: spacing.xs,
-    backgroundColor: colors.error + '10',
+    backgroundColor: `${colors.error}10`,
     borderRadius: radius.sm,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs + 1,
@@ -1670,16 +1678,16 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingVertical: spacing.md,
     marginTop: spacing.md,
-    backgroundColor: colors.error + '0A',
+    backgroundColor: `${colors.error}0A`,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.error + '20',
+    borderColor: `${colors.error}20`,
   },
   deleteIconWrap: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.error + '18',
+    backgroundColor: `${colors.error}18`,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1738,7 +1746,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.capsule,
   },
   toolbarBtnActive: {
-    backgroundColor: colors.primary + '15',
+    backgroundColor: `${colors.primary}15`,
   },
   toolbarLabel: {
     color: colors.textSecondary,
