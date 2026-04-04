@@ -1,5 +1,4 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { create } from 'zustand';
 
 const SCHEMA_VERSION = 5;
 
