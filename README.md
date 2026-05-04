@@ -11,6 +11,14 @@ npx expo start
 
 Scan the QR code with Expo Go or press `a` / `i` for Android emulator / iOS simulator.
 
+## Android SMS Stocks Import
+
+The Stocks SMS importer uses `READ_SMS` and native modules. This means:
+
+- Use an Android development build (`npx expo run:android` or `eas build --profile development`)
+- Expo Go does not support SMS inbox access APIs
+- iOS cannot read inbox SMS, so auto-import is Android-only
+
 ## Tech Stack
 
 Expo SDK 54 | React Native | TypeScript | React Navigation 7 | React Native Paper 5 | Zustand | expo-sqlite | Victory Native | react-hook-form + Zod
