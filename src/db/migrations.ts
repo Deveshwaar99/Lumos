@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-const SCHEMA_VERSION = 5;
+const SCHEMA_VERSION = 6;
 
 async function createSchema(db: SQLiteDatabase): Promise<void> {
   await db.execAsync(`
@@ -203,6 +203,58 @@ async function migrateV5(db: SQLiteDatabase): Promise<void> {
   `);
 }
 
+async function migrateV6(db: SQLiteDatabase): Promise<void> {
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS stock_sms_log (
+      id TEXT PRIMARY KEY,
+      provider_sms_id TEXT,
+      sender TEXT NOT NULL,
+      body TEXT NOT NULL,
+      body_hash TEXT NOT NULL UNIQUE,
+      received_at INTEGER NOT NULL,
+      parsed_at TEXT NOT NULL,
+      parse_status TEXT NOT NULL CHECK(parse_status IN ('success', 'failed', 'ignored')),
+      parse_error TEXT,
+      movement_count INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_stock_sms_received_at
+      ON stock_sms_log(received_at DESC);
+
+    CREATE TABLE IF NOT EXISTS stock_movements (
+      id TEXT PRIMARY KEY,
+      sms_id TEXT REFERENCES stock_sms_log(id) ON DELETE SET NULL,
+      stock_code TEXT NOT NULL,
+      quantity INTEGER NOT NULL CHECK(quantity > 0),
+      direction TEXT NOT NULL CHECK(direction IN ('buy', 'sell')),
+      trade_date TEXT NOT NULL,
+      source TEXT NOT NULL CHECK(source IN ('sms', 'manual')),
+      note TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_stock_movements_code
+      ON stock_movements(stock_code);
+    CREATE INDEX IF NOT EXISTS idx_stock_movements_date
+      ON stock_movements(trade_date DESC);
+    CREATE INDEX IF NOT EXISTS idx_stock_movements_sms_id
+      ON stock_movements(sms_id);
+
+    CREATE TABLE IF NOT EXISTS stock_meta (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
+  `);
+
+  await db.runAsync(
+    "INSERT OR IGNORE INTO stock_meta (key, value) VALUES ('senderId', 'CDS-Alerts')",
+  );
+  await db.runAsync(
+    "INSERT OR IGNORE INTO stock_meta (key, value) VALUES ('firstSyncWindowDays', '365')",
+  );
+}
+
 export async function runMigrations(db: SQLiteDatabase): Promise<void> {
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS schema_version (
@@ -223,6 +275,7 @@ export async function runMigrations(db: SQLiteDatabase): Promise<void> {
     [3, migrateV3],
     [4, migrateV4],
     [5, migrateV5],
+    [6, migrateV6],
   ]);
   for (let i = currentVersion + 1; i <= SCHEMA_VERSION; i++) {
     const migrationFunc = migrationFunctions.get(i);

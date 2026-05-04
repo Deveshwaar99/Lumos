@@ -212,3 +212,56 @@ export interface CreateFDInput {
   currency: string;
   note?: string | null;
 }
+
+export type StockMovementDirection = 'buy' | 'sell';
+export type StockMovementSource = 'sms' | 'manual';
+export type StockSmsParseStatus = 'success' | 'failed' | 'ignored';
+export type SmsPermissionStatus =
+  | 'unknown'
+  | 'granted'
+  | 'denied'
+  | 'never_ask_again'
+  | 'unsupported';
+
+export interface StockSmsLog {
+  id: string;
+  providerSmsId: string | null;
+  sender: string;
+  body: string;
+  bodyHash: string;
+  receivedAt: number;
+  parsedAt: string;
+  parseStatus: StockSmsParseStatus;
+  parseError: string | null;
+  movementCount: number;
+}
+
+export interface StockMovement {
+  id: string;
+  smsId: string | null;
+  stockCode: string;
+  quantity: number;
+  direction: StockMovementDirection;
+  tradeDate: string;
+  source: StockMovementSource;
+  note: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StockHolding {
+  stockCode: string;
+  netQuantity: number;
+  totalBuy: number;
+  totalSell: number;
+  movementCount: number;
+  lastTradeDate: string;
+}
+
+export interface StockMovementInput {
+  stockCode: string;
+  quantity: number;
+  direction: StockMovementDirection;
+  tradeDate: string;
+  note?: string | null;
+}

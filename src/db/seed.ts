@@ -1,5 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
+import * as Crypto from 'expo-crypto';
 import { generateId } from '../utils/uuid';
+import { parseCdsAlert } from '../services/cdsSmsParser';
 import {
   startOfMonth,
   endOfMonth,
@@ -230,5 +232,106 @@ export async function seedDemoTransactions(db: SQLiteDatabase): Promise<void> {
         [splitId2, txnId, secondAccountId, split2Amount],
       );
     }
+  }
+}
+
+const DEMO_CDS_SENDER = 'CDS-Alerts';
+
+/** Sample CDS-style alerts + movements for demo mode (idempotent by fixed sms ids). */
+export async function seedDemoStockData(db: SQLiteDatabase): Promise<void> {
+  const tableExists = await db.getFirstAsync<{ name: string }>(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name='stock_sms_log'",
+  );
+  if (!tableExists) return;
+
+  const nowMs = Date.now();
+  const parsedAt = new Date().toISOString();
+
+  const demos: { id: string; body: string; daysAgo: number }[] = [
+    {
+      id: 'demo-stock-sms-1',
+      body:
+        'ARR XXXXXXX27 LI 0 24-APR-26 PURCHASES JKH 3000 NTB 235 SALES JKH 200 NTB 10',
+      daysAgo: 14,
+    },
+    {
+      id: 'demo-stock-sms-2',
+      body:
+        'ARR XXXXXXX27 LI 0 27-APR-26 PURCHASES NTB 20 ALUM 2250 SALES ALUM 150 NTB 5',
+      daysAgo: 11,
+    },
+    {
+      id: 'demo-stock-sms-3',
+      body:
+        'ARR XXXXXXX27 LI 0 30-APR-26 PURCHASES COCR 4 JKH 25 VONE 6 SALES JKH 10 VONE 2',
+      daysAgo: 8,
+    },
+    {
+      id: 'demo-stock-sms-4',
+      body:
+        'ARR XXXXXXX27 LI 0 02-MAY-26 PURCHASES LIOC 500 CAR 120 SALES LIOC 80 CAR 40',
+      daysAgo: 5,
+    },
+    {
+      id: 'demo-stock-sms-5',
+      body:
+        'ARR XXXXXXX27 LI 0 03-MAY-26 PURCHASES JKH 50 SALES JKH 50',
+      daysAgo: 2,
+    },
+  ];
+
+  for (const demo of demos) {
+    const exists = await db.getFirstAsync<{ id: string }>(
+      'SELECT id FROM stock_sms_log WHERE id = ?',
+      [demo.id],
+    );
+    if (exists) continue;
+
+    const bodyHash = await Crypto.digestStringAsync(
+      Crypto.CryptoDigestAlgorithm.SHA256,
+      demo.body,
+    );
+    const receivedAt = nowMs - demo.daysAgo * 24 * 60 * 60 * 1000;
+
+    await db.runAsync(
+      `INSERT INTO stock_sms_log (
+        id, provider_sms_id, sender, body, body_hash, received_at,
+        parsed_at, parse_status, parse_error, movement_count
+      ) VALUES (?, NULL, ?, ?, ?, ?, ?, 'success', NULL, 0)`,
+      [
+        demo.id,
+        DEMO_CDS_SENDER,
+        demo.body,
+        bodyHash,
+        receivedAt,
+        parsedAt,
+      ],
+    );
+
+    const parsed = parseCdsAlert(demo.body);
+    if (!parsed?.movements.length) continue;
+
+    for (const mov of parsed.movements) {
+      await db.runAsync(
+        `INSERT INTO stock_movements (
+          id, sms_id, stock_code, quantity, direction, trade_date, source, note, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, 'sms', NULL, ?, ?)`,
+        [
+          generateId(),
+          demo.id,
+          mov.stockCode,
+          mov.quantity,
+          mov.direction,
+          parsed.tradeDate,
+          parsedAt,
+          parsedAt,
+        ],
+      );
+    }
+
+    await db.runAsync(
+      'UPDATE stock_sms_log SET movement_count = ? WHERE id = ?',
+      [parsed.movements.length, demo.id],
+    );
   }
 }

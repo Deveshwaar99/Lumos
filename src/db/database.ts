@@ -31,6 +31,10 @@ export async function resetDatabase(): Promise<void> {
   await database.execAsync('DELETE FROM transactions');
   await database.execAsync('DELETE FROM fixed_deposits');
   await database.execAsync('DELETE FROM budgets');
+  await database.execAsync('DELETE FROM recurring_transactions');
+  await database.execAsync('DELETE FROM stock_movements');
+  await database.execAsync('DELETE FROM stock_sms_log');
+  await database.execAsync('DELETE FROM stock_meta');
   await database.execAsync('DELETE FROM categories');
   await database.execAsync('DELETE FROM accounts');
   await database.execAsync('DELETE FROM settings');
