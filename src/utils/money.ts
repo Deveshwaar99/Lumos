@@ -12,21 +12,53 @@ export function dollarsToCents(dollars: number): number {
   return Math.round(dollars * 100);
 }
 
+/** Clamps decimal places for display (matches typical money UI). */
+export function clampMoneyDecimalPlaces(decimalPlaces: number): number {
+  if (!Number.isFinite(decimalPlaces)) return 2;
+  return Math.min(6, Math.max(0, Math.round(decimalPlaces)));
+}
+
 /**
  * Formats a cents value as currency string using the given symbol.
+ * Uses the device locale for digit grouping (e.g. en-IN lakh/crore groups).
  */
 export function formatMoney(
   cents: number,
   currencySymbol: string = '$',
   decimalPlaces: number = 2,
 ): string {
+  const dp = clampMoneyDecimalPlaces(decimalPlaces);
   const dollars = centsToDollars(cents);
-  const fixed = dollars.toFixed(decimalPlaces);
-  const isNeg = fixed.startsWith('-');
-  const abs = isNeg ? fixed.slice(1) : fixed;
-  const [whole, frac] = abs.split('.');
-  const withCommas = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  const formatted = `${currencySymbol} ${withCommas}${frac ? '.' + frac : ''}`;
+
+  if (!Number.isFinite(dollars)) {
+    const zero = new Intl.NumberFormat(undefined, {
+      minimumFractionDigits: dp,
+      maximumFractionDigits: dp,
+      useGrouping: true,
+    }).format(0);
+    const sym = currencySymbol.trim();
+    return sym ? `${sym} ${zero}` : zero;
+  }
+
+  const isNeg = dollars < 0 || Object.is(dollars, -0);
+  const abs = Math.abs(dollars);
+
+  let numPart: string;
+  try {
+    numPart = new Intl.NumberFormat(undefined, {
+      minimumFractionDigits: dp,
+      maximumFractionDigits: dp,
+      useGrouping: true,
+    }).format(abs);
+  } catch {
+    const fixed = abs.toFixed(dp);
+    const [whole, frac] = fixed.split('.');
+    const withCommas = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    numPart = frac !== undefined ? `${withCommas}.${frac}` : withCommas;
+  }
+
+  const sym = currencySymbol.trim();
+  const formatted = sym.length > 0 ? `${sym} ${numPart}` : numPart;
   return isNeg ? `-${formatted}` : formatted;
 }
 
