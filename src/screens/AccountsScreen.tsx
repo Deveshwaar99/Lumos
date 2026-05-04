@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
   FlatList,
@@ -6,24 +6,36 @@ import {
   Alert,
   TouchableOpacity,
   RefreshControl,
+  Platform,
+  Linking,
 } from 'react-native';
-import { FAB, Snackbar, Icon, Text, Menu, Switch } from 'react-native-paper';
+import {
+  FAB,
+  Snackbar,
+  Icon,
+  Text,
+  Switch,
+  Button,
+  TextInput,
+} from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { useAccountStore } from '../stores/useAccountStore';
 import { useFDStore } from '../stores/useFDStore';
 import { useRecurringStore } from '../stores/useRecurringStore';
+import { useStockStore } from '../stores/useStockStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { colors, spacing, radius, elevation } from '../theme';
-import { formatMoney } from '../utils/money';
+import { clampMoneyDecimalPlaces, formatMoney } from '../utils/money';
 import {
   getDaysRemaining,
   calculateFDInterest,
   calculateNetInterest,
 } from '../utils/fdCalculator';
 import EmptyState from '../components/EmptyState';
+import { STOCK_MIN_AUTO_SYNC_INTERVAL_MS } from '../constants/stockSync';
 import type { TabScreenProps } from '../navigation/types';
 import type { Account, FixedDeposit, RecurringTransaction } from '../models/types';
 
@@ -43,7 +55,7 @@ const ACCOUNT_TYPE_LABELS: Record<Account['type'], string> = {
   other: 'Other',
 };
 
-type Tab = 'accounts' | 'investments' | 'recurring';
+type Tab = 'accounts' | 'investments' | 'recurring' | 'stocks';
 
 const FREQUENCY_LABELS: Record<string, string> = {
   daily: 'Daily',
@@ -77,25 +89,49 @@ export default function AccountsScreen({
   const { deposits, fdAccountIds, loadDeposits } = useFDStore();
   const { recurringTransactions, loadRecurring, removeRecurring, toggleRecurring } =
     useRecurringStore();
+  const {
+    holdings,
+    lastSyncAt,
+    isSyncing: stocksSyncing,
+    permissionStatus,
+    sync,
+    loadAll: loadStocks,
+    syncError,
+    setSenderId,
+  } = useStockStore();
   const { settings } = useSettingsStore();
   const [snackbar, setSnackbar] = useState('');
-  const [menuVisible, setMenuVisible] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('accounts');
   const [refreshing, setRefreshing] = useState(false);
+  const [senderEditorVisible, setSenderEditorVisible] = useState(false);
+  const [senderInput, setSenderInput] = useState('CDS-Alerts');
   const insets = useSafeAreaInsets();
   const sym = settings.currencySymbol;
+  const moneyDecimals = clampMoneyDecimalPlaces(settings.decimalPlaces);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([loadAccounts(), loadDeposits(), loadRecurring()]);
+    await Promise.all([
+      loadAccounts(),
+      loadDeposits(),
+      loadRecurring(),
+      Platform.OS === 'android' ? loadStocks() : Promise.resolve(),
+      Platform.OS === 'android' && activeTab === 'stocks'
+        ? sync()
+        : Promise.resolve(),
+    ]);
     setRefreshing(false);
-  }, [loadAccounts, loadDeposits, loadRecurring]);
+  }, [loadAccounts, loadDeposits, loadRecurring, loadStocks, sync, activeTab]);
 
   useFocusEffect(
+    // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
     useCallback(() => {
       loadAccounts();
       loadDeposits();
       loadRecurring();
+      if (Platform.OS === 'android') {
+        loadStocks();
+      }
     }, []),
   );
 
@@ -124,12 +160,33 @@ export default function AccountsScreen({
     }
 
     const netBalance = totalAssets - totalLiabilities;
-    return { totalAssets, totalLiabilities, netBalance };
+    const gross = totalAssets + totalLiabilities;
+    const debtPctOfAssets =
+      totalAssets > 0
+        ? Math.min(100, Math.round((totalLiabilities / totalAssets) * 100))
+        : null;
+    return {
+      totalAssets,
+      totalLiabilities,
+      netBalance,
+      gross,
+      debtPctOfAssets,
+    };
   }, [userAccounts, balances, deposits]);
+
+  useEffect(() => {
+    if (Platform.OS !== 'android' || activeTab !== 'stocks') return;
+    // ~1 CDS SMS/day: auto-sync at most every ~12h when visiting Stocks (manual Sync / pull-to-refresh always runs).
+    if (
+      !lastSyncAt ||
+      Date.now() - lastSyncAt > STOCK_MIN_AUTO_SYNC_INTERVAL_MS
+    ) {
+      sync().catch(() => null);
+    }
+  }, [activeTab, lastSyncAt, sync]);
 
   const handleDelete = useCallback(
     async (acc: Account) => {
-      setMenuVisible(null);
       Alert.alert('Delete Account', `Delete "${acc.name}"?`, [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -149,7 +206,6 @@ export default function AccountsScreen({
 
   const handleEdit = useCallback(
     (acc: Account) => {
-      setMenuVisible(null);
       navigation.navigate('AccountForm', { accountId: acc.id });
     },
     [navigation],
@@ -166,63 +222,142 @@ export default function AccountsScreen({
     return icons[type] || 'wallet-outline';
   };
 
-  const renderPortfolioCard = () => (
-    <LinearGradient
-      colors={['#2E2660', '#1E1545', '#252540']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.portfolioCard}
-    >
-      <View style={styles.portfolioHeader}>
-        <View style={styles.portfolioIconWrap}>
-          <Icon source="chart-arc" size={20} color={colors.primaryLight} />
-        </View>
-        <Text style={styles.portfolioTitle}>My Portfolio</Text>
-      </View>
+  const renderPortfolioCard = () => {
+    const { totalAssets, totalLiabilities, netBalance, gross, debtPctOfAssets } =
+      portfolioData;
+    const showBar = gross > 0;
 
-      <Text style={styles.balanceCaption}>Net Worth</Text>
-      <Text
-        style={[
-          styles.balanceHero,
-          {
-            color:
-              portfolioData.netBalance >= 0 ? colors.income : colors.expense,
-          },
-        ]}
+    return (
+      <LinearGradient
+        colors={[...colors.cardGradient]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.portfolioCard}
       >
-        {formatMoney(portfolioData.netBalance, sym, 2)}
-      </Text>
-
-      <View style={styles.summaryRow}>
-        <View style={styles.summaryItem}>
-          <View style={styles.summaryHeader}>
-            <Icon source="arrow-up-circle" size={16} color={colors.income} />
-          <Text style={styles.summaryLabel}>Assets</Text>
+        <View style={styles.portfolioMetricsStrip}>
+          <View style={styles.portfolioMetricCol}>
+            <View style={styles.summaryHeader}>
+              <View style={styles.portfolioMetricIcon}>
+                <Icon source="chart-arc" size={14} color={colors.primaryLight} />
+              </View>
+              <Text style={styles.summaryLabel} numberOfLines={2}>
+                Net worth
+              </Text>
+            </View>
+            <Text
+              style={[
+                styles.portfolioMetricAmount,
+                {
+                  color:
+                    netBalance >= 0 ? colors.income : colors.expense,
+                },
+              ]}
+              numberOfLines={2}
+              adjustsFontSizeToFit
+              minimumFontScale={0.45}
+            >
+              {formatMoney(netBalance, sym, moneyDecimals)}
+            </Text>
           </View>
-          <Text style={[styles.summaryAmount, { color: colors.income }]}>
-            {formatMoney(portfolioData.totalAssets, sym, 2)}
-          </Text>
+
+          <View style={styles.portfolioMetricDivider} />
+
+          <View style={styles.portfolioMetricCol}>
+            <View style={styles.summaryHeader}>
+              <View style={styles.portfolioMetricIcon}>
+                <Icon source="arrow-up-circle" size={14} color={colors.income} />
+              </View>
+              <Text style={styles.summaryLabel} numberOfLines={2}>
+                Assets
+              </Text>
+            </View>
+            <Text
+              style={[styles.portfolioMetricAmount, { color: colors.income }]}
+              numberOfLines={2}
+              adjustsFontSizeToFit
+              minimumFontScale={0.45}
+            >
+              {formatMoney(totalAssets, sym, moneyDecimals)}
+            </Text>
+          </View>
+
+          <View style={styles.portfolioMetricDivider} />
+
+          <View style={styles.portfolioMetricCol}>
+            <View style={styles.summaryHeader}>
+              <View style={styles.portfolioMetricIcon}>
+                <Icon
+                  source="arrow-down-circle"
+                  size={14}
+                  color={colors.secondaryLight}
+                />
+              </View>
+              <Text style={styles.summaryLabel} numberOfLines={2}>
+                Liabilities
+              </Text>
+            </View>
+            <Text
+              style={[
+                styles.portfolioMetricAmount,
+                { color: colors.secondaryLight },
+              ]}
+              numberOfLines={2}
+              adjustsFontSizeToFit
+              minimumFontScale={0.45}
+            >
+              {formatMoney(totalLiabilities, sym, moneyDecimals)}
+            </Text>
+          </View>
         </View>
 
-        <View style={styles.summaryDivider} />
-
-        <View style={styles.summaryItem}>
-          <View style={styles.summaryHeader}>
-            <Icon source="arrow-down-circle" size={16} color={colors.warning} />
-            <Text style={styles.summaryLabel}>Liabilities</Text>
-          </View>
-          <Text style={[styles.summaryAmount, { color: colors.warning }]}>
-            {formatMoney(portfolioData.totalLiabilities, sym, 2)}
+        {debtPctOfAssets != null && totalLiabilities > 0 ? (
+          <Text style={styles.portfolioInsight}>
+            Liabilities are {debtPctOfAssets}% of assets
           </Text>
-        </View>
-      </View>
-    </LinearGradient>
-  );
+        ) : totalAssets === 0 && totalLiabilities > 0 ? (
+          <Text style={styles.portfolioInsight}>No assets recorded</Text>
+        ) : null}
+
+        {showBar ? (
+          <View style={styles.portfolioBarTrack}>
+            <View style={styles.portfolioBarRow}>
+              {totalAssets > 0 ? (
+                <View
+                  style={[
+                    styles.portfolioBarSeg,
+                    styles.portfolioBarAssets,
+                    { flex: totalAssets },
+                  ]}
+                />
+              ) : null}
+              {totalLiabilities > 0 ? (
+                <View
+                  style={[
+                    styles.portfolioBarSeg,
+                    styles.portfolioBarLiab,
+                    { flex: totalLiabilities },
+                  ]}
+                />
+              ) : null}
+            </View>
+          </View>
+        ) : null}
+      </LinearGradient>
+    );
+  };
 
   const segmentTabs: { tab: Tab; label: string; icon: string; count: number }[] = [
     { tab: 'accounts', label: 'Accounts', icon: 'wallet', count: userAccounts.length },
     { tab: 'investments', label: 'Invest', icon: 'lock', count: deposits.length },
-    { tab: 'recurring', label: 'Recurring', icon: 'autorenew', count: recurringTransactions.length },
+    {
+      tab: 'recurring',
+      label: 'Recurring',
+      icon: 'autorenew',
+      count: recurringTransactions.length,
+    },
+    ...(Platform.OS === 'android'
+      ? [{ tab: 'stocks' as const, label: 'Stocks', icon: 'chart-line', count: holdings.length }]
+      : []),
   ];
 
   const renderSegmentedControl = () => (
@@ -280,75 +415,84 @@ export default function AccountsScreen({
         <View
           style={[styles.accountAccent, { backgroundColor: accentColor }]}
         />
-        <TouchableOpacity
-          style={styles.accountContent}
-          onPress={() =>
-            (navigation as any).navigate('AccountTransactions', {
-              accountId: item.id,
-            })
-          }
-          activeOpacity={0.7}
-        >
-          <View
-            style={[
-              styles.accountIcon,
-              { backgroundColor: accentColor + '1A' },
-            ]}
+        <View style={styles.accountContent}>
+          <TouchableOpacity
+            style={styles.accountMainTap}
+            onPress={() =>
+              (navigation as any).navigate('AccountTransactions', {
+                accountId: item.id,
+              })
+            }
+            activeOpacity={0.7}
           >
-            <Icon
-              source={(item.icon || getAccountTypeIcon(item.type)) as any}
-              size={22}
-              color={accentColor}
-            />
-          </View>
-          <View style={styles.accountDetails}>
-            <Text style={styles.accountName} numberOfLines={1}>
-              {item.name}
-            </Text>
-            <Text style={styles.accountType}>
-              {ACCOUNT_TYPE_LABELS[item.type]}
-            </Text>
-          </View>
-          <View style={styles.accountRight}>
-            <Text
+            <View
               style={[
-                styles.accountBalance,
-                balance < 0 && { color: colors.expense },
+                styles.accountIcon,
+                { backgroundColor: `${accentColor}1A` },
               ]}
             >
-              {formatMoney(balance, sym, 2)}
-            </Text>
-            <Menu
-              visible={menuVisible === item.id}
-              onDismiss={() => setMenuVisible(null)}
-              anchor={
-                <TouchableOpacity
-                  onPress={() => setMenuVisible(item.id)}
-                  hitSlop={12}
-                  style={styles.menuTrigger}
-                >
-                  <Icon
-                    source="dots-horizontal"
-                    size={20}
-                    color={colors.textTertiary}
-                  />
-                </TouchableOpacity>
+              <Icon
+                source={(item.icon || getAccountTypeIcon(item.type)) as any}
+                size={18}
+                color={accentColor}
+              />
+            </View>
+            <View style={styles.accountDetails}>
+              <Text style={styles.accountName} numberOfLines={1}>
+                {item.name}
+              </Text>
+              <Text style={styles.accountType}>
+                {ACCOUNT_TYPE_LABELS[item.type]}
+              </Text>
+            </View>
+          </TouchableOpacity>
+          <View style={styles.accountRight}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={styles.accountBalanceHit}
+              onPress={() =>
+                (navigation as any).navigate('AccountTransactions', {
+                  accountId: item.id,
+                })
               }
-              contentStyle={styles.menuContent}
             >
-              <Menu.Item
+              <Text
+                style={[
+                  styles.accountBalance,
+                  balance < 0 && { color: colors.expense },
+                ]}
+              >
+                {formatMoney(balance, sym, moneyDecimals)}
+              </Text>
+            </TouchableOpacity>
+            <View style={styles.accountRowActions}>
+              <TouchableOpacity
+                style={styles.accountIconAction}
                 onPress={() => handleEdit(item)}
-                title="Edit"
-                leadingIcon="pencil"
-              />
-              <Menu.Item
+                accessibilityRole="button"
+                accessibilityLabel="Edit account"
+              >
+                <Icon
+                  source="pencil"
+                  size={16}
+                  color={colors.primaryLight}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.accountIconAction, styles.accountIconActionDelete]}
                 onPress={() => handleDelete(item)}
-                title="Delete"
-                leadingIcon="delete-outline"
-              />
-            </Menu>
+                accessibilityRole="button"
+                accessibilityLabel="Delete account"
+              >
+                <Icon
+                  source="delete-outline"
+                  size={16}
+                  color={colors.expense}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
-        </TouchableOpacity>
+        </View>
       </View>
     );
   };
@@ -364,7 +508,7 @@ export default function AccountsScreen({
     );
     const net = calculateNetInterest(gross, item.taxRate);
     const maturityLabel = format(
-      new Date(item.maturityDate + 'T00:00:00'),
+      new Date(`${item.maturityDate}T00:00:00`),
       'MMM d, yyyy',
     );
 
@@ -382,7 +526,7 @@ export default function AccountsScreen({
             <View
               style={[
                 styles.fdIconWrap,
-                { backgroundColor: statusColor + '1A' },
+                { backgroundColor: `${statusColor}1A` },
               ]}
             >
               <Icon source="lock" size={20} color={statusColor} />
@@ -394,7 +538,7 @@ export default function AccountsScreen({
               <View
                 style={[
                   styles.fdStatusBadge,
-                  { backgroundColor: statusColor + '20' },
+                  { backgroundColor: `${statusColor}20` },
                 ]}
               >
                 <Text style={[styles.fdStatusText, { color: statusColor }]}>
@@ -408,14 +552,14 @@ export default function AccountsScreen({
             <View style={styles.fdStat}>
               <Text style={styles.fdStatLabel}>Principal</Text>
               <Text style={styles.fdStatValue}>
-                {formatMoney(item.principalCents, sym, 2)}
+                {formatMoney(item.principalCents, sym, moneyDecimals)}
               </Text>
             </View>
             <View style={styles.fdStatDivider} />
             <View style={styles.fdStat}>
               <Text style={styles.fdStatLabel}>Net Interest</Text>
               <Text style={[styles.fdStatValue, { color: colors.income }]}>
-                {formatMoney(net, sym, 2)}
+                {formatMoney(net, sym, moneyDecimals)}
               </Text>
             </View>
           </View>
@@ -503,7 +647,7 @@ export default function AccountsScreen({
           <View style={styles.recurringDetails}>
             <View style={styles.recurringTopRow}>
               <Text style={styles.recurringAmount} numberOfLines={1}>
-                {formatMoney(item.totalAmountCents, sym, 2)}
+                {formatMoney(item.totalAmountCents, sym, moneyDecimals)}
               </Text>
               <View style={[styles.frequencyBadge, { backgroundColor: accentColor + '18' }]}>
                 <Text style={[styles.frequencyBadgeText, { color: accentColor }]}>
@@ -637,13 +781,163 @@ export default function AccountsScreen({
     </>
   );
 
+  const handleStocksSync = useCallback(async () => {
+    const result = await sync();
+    if (result.status === 'permission_denied') {
+      setSnackbar('SMS permission is required to sync CDS-Alerts messages');
+      return;
+    }
+    if (result.status === 'unsupported') {
+      if (result.unsupportedReason !== 'expo_go') {
+        setSnackbar('Stocks SMS sync is only available on Android');
+      }
+      return;
+    }
+    setSnackbar(
+      `Synced ${result.newSms} new SMS · ${result.newMovements} new movements`,
+    );
+  }, [sync]);
+
+  const handleSaveSender = useCallback(async () => {
+    await setSenderId(senderInput.trim() || 'CDS-Alerts');
+    setSenderEditorVisible(false);
+    setSnackbar('Sender updated for future syncs');
+  }, [senderInput, setSenderId]);
+
+  const renderStockItem = ({ item }: { item: (typeof holdings)[number] }) => (
+    <TouchableOpacity
+      style={styles.stockCard}
+      onPress={() => (navigation as any).navigate('StockDetail', { stockCode: item.stockCode })}
+      activeOpacity={0.7}
+    >
+      <View style={styles.stockCodeWrap}>
+        <Text style={styles.stockCodeText}>{item.stockCode}</Text>
+        <Text style={styles.stockMetaText}>Last trade: {item.lastTradeDate}</Text>
+      </View>
+      <View style={{ alignItems: 'flex-end' }}>
+        <Text style={styles.stockQtyText}>{item.netQuantity}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  const renderStocksList = () => (
+    <>
+      <FlatList
+        data={holdings}
+        keyExtractor={(item) => item.stockCode}
+        renderItem={renderStockItem}
+        ListHeaderComponent={
+          <>
+            {renderPortfolioCard()}
+            {renderSegmentedControl()}
+            <View style={styles.stocksSummaryCard}>
+              <View style={styles.stocksSummaryTop}>
+                <View style={styles.stocksSummaryTextCol}>
+                  <Text style={styles.stocksSummaryTitle}>
+                    Stocks ({holdings.length})
+                  </Text>
+                  <Text style={styles.stocksSummaryMeta} numberOfLines={1}>
+                    Last sync{' '}
+                    {lastSyncAt
+                      ? formatDistanceToNow(new Date(lastSyncAt), { addSuffix: true })
+                      : 'never'}
+                  </Text>
+                </View>
+                <View style={styles.stocksSyncBtnWrap}>
+                  <Button
+                    mode="contained-tonal"
+                    loading={stocksSyncing}
+                    disabled={stocksSyncing}
+                    onPress={handleStocksSync}
+                    icon="refresh"
+                    compact
+                  >
+                    Sync
+                  </Button>
+                </View>
+              </View>
+              <View style={styles.stocksButtonsRow}>
+                <Button
+                  mode="outlined"
+                  style={styles.stockAuxButton}
+                  onPress={() => (navigation as any).navigate('StockSmsLog')}
+                  icon="message-text"
+                  compact
+                >
+                  SMS log
+                </Button>
+                <Button
+                  mode="outlined"
+                  style={styles.stockAuxButton}
+                  onPress={() => setSenderEditorVisible((v) => !v)}
+                  icon="account-edit"
+                  compact
+                >
+                  Sender
+                </Button>
+              </View>
+              {senderEditorVisible && (
+                <View style={styles.senderEditor}>
+                  <TextInput
+                    mode="outlined"
+                    label="Sender ID"
+                    value={senderInput}
+                    onChangeText={setSenderInput}
+                  />
+                  <Button mode="contained" onPress={handleSaveSender} style={{ marginTop: spacing.sm }}>
+                    Save Sender
+                  </Button>
+                </View>
+              )}
+              {permissionStatus === 'denied' && (
+                <View style={styles.permissionBanner}>
+                  <Icon source="alert-circle-outline" size={16} color={colors.warning} />
+                  <Text style={styles.permissionText}>SMS access denied. Tap sync to request again.</Text>
+                </View>
+              )}
+              {permissionStatus === 'never_ask_again' && (
+                <TouchableOpacity style={styles.permissionBanner} onPress={() => Linking.openSettings()}>
+                  <Icon source="cog" size={16} color={colors.warning} />
+                  <Text style={styles.permissionText}>SMS permission blocked. Open Settings.</Text>
+                </TouchableOpacity>
+              )}
+              {syncError ? (
+                <Text style={styles.syncErrorText} numberOfLines={2}>
+                  {syncError}
+                </Text>
+              ) : null}
+            </View>
+          </>
+        }
+        ListEmptyComponent={
+          <EmptyState
+            icon="chart-line"
+            title="No Stocks Yet"
+            subtitle="Tap Sync to import from CDS-Alerts SMS"
+          />
+        }
+        contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing || stocksSyncing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
+      />
+    </>
+  );
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {activeTab === 'accounts'
         ? renderAccountsList()
         : activeTab === 'investments'
           ? renderInvestmentsList()
-          : renderRecurringList()}
+          : activeTab === 'recurring'
+            ? renderRecurringList()
+            : renderStocksList()}
       <FAB
         icon="plus"
         style={[styles.fab, { bottom: insets.bottom + 16 }]}
@@ -652,6 +946,8 @@ export default function AccountsScreen({
             (navigation as any).navigate('FDForm');
           } else if (activeTab === 'recurring') {
             (navigation as any).navigate('RecurringTransactionForm');
+          } else if (activeTab === 'stocks') {
+            (navigation as any).navigate('StockMovementForm');
           } else {
             navigation.navigate('AccountForm');
           }
@@ -662,7 +958,9 @@ export default function AccountsScreen({
             ? 'Add fixed deposit'
             : activeTab === 'recurring'
               ? 'Add recurring transaction'
-              : 'Add account'
+              : activeTab === 'stocks'
+                ? 'Add stock movement'
+                : 'Add account'
         }
       />
       <Snackbar
@@ -745,105 +1043,126 @@ const styles = StyleSheet.create({
 
   /* ── Portfolio Card ── */
   portfolioCard: {
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.lg,
-    ...elevation.md,
-  },
-  portfolioHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.lg,
-  },
-  portfolioIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(139,125,209,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  portfolioTitle: {
-    color: colors.text,
-    fontSize: 17,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  balanceCaption: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  balanceHero: {
-    fontSize: 34,
-    fontWeight: '800',
-    marginTop: spacing.xs,
-    marginBottom: spacing.lg,
-    letterSpacing: -0.5,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    backgroundColor: 'rgba(0,0,0,0.2)',
     borderRadius: radius.md,
     padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    ...elevation.sm,
   },
-  summaryItem: {
-    flex: 1,
+  portfolioMetricsStrip: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    backgroundColor: 'rgba(0,0,0,0.22)',
+    borderRadius: radius.sm,
+    paddingVertical: spacing.sm + 2,
     paddingHorizontal: spacing.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+  },
+  portfolioMetricCol: {
+    flex: 1,
+    minWidth: 0,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xs,
+  },
+  portfolioMetricDivider: {
+    width: 1,
+    alignSelf: 'stretch',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    marginVertical: spacing.xxs,
+  },
+  portfolioMetricIcon: {
+    flexShrink: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  portfolioMetricAmount: {
+    fontSize: 15,
+    fontWeight: '700',
+    lineHeight: 19,
+    fontVariant: ['tabular-nums'],
+    maxWidth: '100%',
+  },
+  portfolioInsight: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: spacing.sm,
+    marginBottom: 0,
+    letterSpacing: 0.15,
+  },
+  portfolioBarTrack: {
+    marginTop: spacing.sm,
+    marginBottom: 0,
+  },
+  portfolioBarRow: {
+    flexDirection: 'row',
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
+  portfolioBarSeg: {
+    minWidth: 2,
+  },
+  portfolioBarAssets: {
+    backgroundColor: colors.income,
+  },
+  portfolioBarLiab: {
+    backgroundColor: colors.secondaryLight,
   },
   summaryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs + 2,
-    marginBottom: spacing.xs,
+    gap: spacing.xs,
+    minHeight: 18,
+    marginBottom: spacing.xxs,
+    flexWrap: 'nowrap',
   },
   summaryLabel: {
     color: colors.textSecondary,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-  summaryAmount: {
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  summaryDivider: {
-    width: 1,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    marginVertical: spacing.xxs,
+    letterSpacing: 0.45,
+    flex: 1,
+    minWidth: 0,
   },
 
   /* ── Account Cards ── */
   accountCard: {
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    marginBottom: spacing.md,
+    borderRadius: radius.md,
+    marginBottom: spacing.sm,
     overflow: 'hidden',
     flexDirection: 'row',
     ...elevation.sm,
   },
   accountAccent: {
-    width: 4,
-    borderTopLeftRadius: radius.lg,
-    borderBottomLeftRadius: radius.lg,
+    width: 3,
+    borderTopLeftRadius: radius.md,
+    borderBottomLeftRadius: radius.md,
   },
   accountContent: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.md + 2,
-    paddingHorizontal: spacing.md,
-    gap: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    gap: spacing.sm,
+  },
+  accountMainTap: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minWidth: 0,
   },
   accountIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
+    width: 36,
+    height: 36,
+    borderRadius: radius.sm,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -852,34 +1171,53 @@ const styles = StyleSheet.create({
   },
   accountName: {
     color: colors.text,
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '600',
   },
   accountType: {
     color: colors.textTertiary,
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '500',
-    marginTop: 2,
+    marginTop: 1,
   },
   accountRight: {
+    flexShrink: 0,
+    flexDirection: 'column',
     alignItems: 'flex-end',
+    justifyContent: 'center',
     gap: spacing.xs,
+  },
+  accountBalanceHit: {
+    alignSelf: 'flex-end',
+    maxWidth: '100%',
   },
   accountBalance: {
     color: colors.text,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
-    letterSpacing: -0.3,
+    letterSpacing: 0,
+    fontVariant: ['tabular-nums'],
+    textAlign: 'right',
+    lineHeight: 18,
+    includeFontPadding: false,
   },
-  menuTrigger: {
-    padding: spacing.xxs,
+  accountRowActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    flexWrap: 'nowrap',
+    gap: 0,
   },
-  menuContent: {
-    backgroundColor: colors.surfaceVariant,
-    borderRadius: radius.md,
+  accountIconAction: {
+    width: 28,
+    height: 28,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
   },
-
-  /* ── FD Cards ── */
+  accountIconActionDelete: {
+    marginLeft: -11,
+    alignItems: 'flex-end',
+  },
   fdCard: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
@@ -1045,6 +1383,85 @@ const styles = StyleSheet.create({
   recurringSwitch: {
     marginLeft: spacing.xs,
   },
+
+  stocksSummaryCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    ...elevation.sm,
+  },
+  stocksSummaryTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+  },
+  stocksSummaryTextCol: {
+    flex: 1,
+    minWidth: 0,
+  },
+  stocksSyncBtnWrap: {
+    flexShrink: 0,
+    paddingTop: 2,
+  },
+  stocksSummaryTitle: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  stocksSummaryMeta: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    marginTop: spacing.xs,
+    lineHeight: 16,
+  },
+  stocksButtonsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  stockAuxButton: {
+    flex: 1,
+  },
+  senderEditor: {
+    marginTop: spacing.sm,
+    gap: spacing.sm,
+  },
+  permissionBanner: {
+    marginTop: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    backgroundColor: colors.warning + '15',
+  },
+  permissionText: {
+    color: colors.warning,
+    fontSize: 12,
+    fontWeight: '600',
+    flex: 1,
+  },
+  syncErrorText: {
+    marginTop: spacing.sm,
+    color: colors.error,
+    fontSize: 12,
+  },
+  stockCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    ...elevation.sm,
+  },
+  stockCodeWrap: { flex: 1 },
+  stockCodeText: { color: colors.text, fontSize: 16, fontWeight: '700' },
+  stockQtyText: { color: colors.primary, fontSize: 18, fontWeight: '800' },
+  stockMetaText: { color: colors.textTertiary, fontSize: 12, marginTop: 2 },
 
   fab: {
     position: 'absolute',

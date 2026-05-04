@@ -11,13 +11,18 @@ import {
 } from 'react-native';
 import { Text, Snackbar, TextInput, Icon } from 'react-native-paper';
 import * as LocalAuthentication from 'expo-local-authentication';
+import Constants from 'expo-constants';
+import { format } from 'date-fns';
 import { useSettingsStore } from '../stores/useSettingsStore';
-import { seedDemoTransactions } from '../db/seed';
+import { seedDemoTransactions, seedDemoStockData } from '../db/seed';
 import { getDatabase, resetDatabase } from '../db/database';
 import { useTransactionStore } from '../stores/useTransactionStore';
 import { useCategoryStore } from '../stores/useCategoryStore';
 import { useAccountStore } from '../stores/useAccountStore';
 import { useBudgetStore } from '../stores/useBudgetStore';
+import { useFDStore } from '../stores/useFDStore';
+import { useRecurringStore } from '../stores/useRecurringStore';
+import { useStockStore } from '../stores/useStockStore';
 import { colors, spacing, radius } from '../theme';
 import type { AppSettings } from '../models/types';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -66,6 +71,18 @@ function CardRow({
   );
 }
 
+function formatAppMeta(): string {
+  const version = Constants.expoConfig?.version ?? '—';
+  const raw = Constants.expoConfig?.extra?.releaseDate;
+  let dateLabel = '';
+  if (typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const [y, m, d] = raw.split('-').map(Number);
+    dateLabel = format(new Date(y, m - 1, d), 'MMM d, yyyy');
+  }
+  const parts = [`v${version}`, dateLabel, 'Built by Devesh'].filter(Boolean);
+  return parts.join(' · ');
+}
+
 export default function SettingsScreen({
   navigation,
 }: RootStackScreenProps<'Settings'>) {
@@ -74,6 +91,9 @@ export default function SettingsScreen({
   const { loadCategories } = useCategoryStore();
   const { loadAccounts } = useAccountStore();
   const { loadBudgets } = useBudgetStore();
+  const { loadDeposits } = useFDStore();
+  const { loadRecurring } = useRecurringStore();
+  const { loadAll: loadStocks } = useStockStore();
   const [snackbar, setSnackbar] = useState('');
   const [localName, setLocalName] = useState(settings.username);
   const [localSymbol, setLocalSymbol] = useState(settings.currencySymbol);
@@ -138,7 +158,7 @@ export default function SettingsScreen({
   const handleSeedDemo = () => {
     Alert.alert(
       'Load Demo Data',
-      'This will add ~20 sample transactions. Continue?',
+      'This will add ~20 sample transactions and demo CDS stock alerts (holdings). Continue?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -146,7 +166,9 @@ export default function SettingsScreen({
           onPress: async () => {
             const db = await getDatabase();
             await seedDemoTransactions(db);
+            await seedDemoStockData(db);
             await loadTransactions(true);
+            await loadStocks();
             setSnackbar('Demo data loaded');
           },
         },
@@ -157,7 +179,7 @@ export default function SettingsScreen({
   const handleResetAll = () => {
     Alert.alert(
       'Reset All Data',
-      'This will permanently delete ALL your transactions, accounts, categories, budgets, and settings. This action cannot be undone.',
+      'This will permanently delete ALL your transactions, accounts, categories, budgets, stocks/SMS import state, recurring rules, fixed deposits, and settings. This action cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -177,6 +199,9 @@ export default function SettingsScreen({
                     loadAccounts(),
                     loadBudgets(),
                     loadSettings(),
+                    loadDeposits(),
+                    loadRecurring(),
+                    loadStocks(),
                   ]);
                   setSnackbar('All data has been reset');
                 },
@@ -315,7 +340,7 @@ export default function SettingsScreen({
             </View>
 
             <Text style={styles.appName}>Lumos</Text>
-            <Text style={styles.appMeta}>v1.0.1 · Built by Devesh</Text>
+            <Text style={styles.appMeta}>{formatAppMeta()}</Text>
             <Text style={styles.copyright}>
               {'\u00A9'} 2026 Devesh. All rights reserved.
             </Text>

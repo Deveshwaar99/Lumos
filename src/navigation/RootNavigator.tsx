@@ -13,6 +13,9 @@ import BudgetFormScreen from '../screens/BudgetFormScreen';
 import FDFormScreen from '../screens/FDFormScreen';
 import FDDetailScreen from '../screens/FDDetailScreen';
 import RecurringTransactionFormScreen from '../screens/RecurringTransactionFormScreen';
+import StockDetailScreen from '../screens/StockDetailScreen';
+import StockMovementFormScreen from '../screens/StockMovementFormScreen';
+import StockSmsLogScreen from '../screens/StockSmsLogScreen';
 import BackupRestoreScreen from '../screens/BackupRestoreScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 
@@ -91,6 +94,21 @@ export default function RootNavigator() {
         name="RecurringTransactionForm"
         component={RecurringTransactionFormScreen}
         options={{ title: 'Recurring Transaction', headerShown: false, presentation: 'modal', animation: 'slide_from_bottom', animationDuration: 300 }}
+      />
+      <Stack.Screen
+        name="StockDetail"
+        component={StockDetailScreen}
+        options={{ title: 'Stock Details' }}
+      />
+      <Stack.Screen
+        name="StockMovementForm"
+        component={StockMovementFormScreen}
+        options={{ title: 'Stock Movement' }}
+      />
+      <Stack.Screen
+        name="StockSmsLog"
+        component={StockSmsLogScreen}
+        options={{ title: 'SMS Import Log' }}
       />
       <Stack.Screen
         name="BackupRestore"

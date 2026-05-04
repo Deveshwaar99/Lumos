@@ -35,6 +35,9 @@ export type RootStackParamList = {
   FDForm: { fdId?: string } | undefined;
   FDDetail: { fdId: string };
   RecurringTransactionForm: { recurringId?: string } | undefined;
+  StockDetail: { stockCode: string };
+  StockMovementForm: { movementId?: string; stockCode?: string } | undefined;
+  StockSmsLog: undefined;
   BackupRestore: undefined;
   Settings: undefined;
 };
