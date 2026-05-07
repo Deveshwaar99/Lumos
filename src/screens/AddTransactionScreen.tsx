@@ -1,23 +1,18 @@
 import { useFDStore } from '@/stores/useFDStore';
 import { format, parseISO } from 'date-fns';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
-  Animated,
-  Dimensions,
+  FlatList,
   Keyboard,
   KeyboardAvoidingView,
+  Modal,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 import {
   ActivityIndicator,
@@ -44,8 +39,6 @@ import { dollarsToCents, formatMoney } from '../utils/money';
 
 type PanelType = 'none' | 'calculator' | 'calendar';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 function evalExpression(expr: string): number {
   try {
     const sanitized = expr.replace(/×/g, '*').replace(/÷/g, '/');
@@ -60,6 +53,33 @@ function evalExpression(expr: string): number {
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const MINUTES = Array.from({ length: 12 }, (_, i) => i * 5);
+
+/** Snap to 5-minute steps used by the picker wheels */
+function normalizeMinuteForPicker(mm: number): number {
+  if (!Number.isFinite(mm)) return 0;
+  const r = Math.round(mm / 5) * 5;
+  if (r >= 60) return 55;
+  if (r < 0) return 0;
+  return r;
+}
+
+function parseTimeStr(timeStr: string): { hh: number; mm: number } {
+  const now = new Date();
+  const match = /^(\d{1,2}):(\d{1,2})$/.exec(timeStr.trim());
+  if (!match) {
+    return {
+      hh: now.getHours(),
+      mm: normalizeMinuteForPicker(now.getMinutes()),
+    };
+  }
+  let hh = parseInt(match[1], 10);
+  let mm = parseInt(match[2], 10);
+  if (!Number.isFinite(hh) || hh < 0 || hh > 23) hh = now.getHours();
+  if (!Number.isFinite(mm) || mm < 0 || mm > 59) mm = now.getMinutes();
+  return { hh, mm: normalizeMinuteForPicker(mm) };
+}
+
+const TIME_PICKER_ROW_H = 44;
 
 const isTransfer = (t: TransactionType) => t === 'transfer';
 
@@ -109,10 +129,6 @@ export default function AddTransactionScreen({
   const [snackbar, setSnackbar] = useState('');
 
   const [activePanel, setActivePanel] = useState<PanelType>('none');
-  const panelAnim = useRef(new Animated.Value(0)).current;
-  const typeAnimVal =
-    initialType === 'income' ? 0 : initialType === 'expense' ? 1 : 2;
-  const typeAnim = useRef(new Animated.Value(typeAnimVal)).current;
 
   const filteredCategories = isTransfer(type)
     ? []
@@ -171,18 +187,40 @@ export default function AddTransactionScreen({
     } else if (selectedCategory && selectedCategory.type !== type) {
       setCategoryId('');
     }
-    const toVal = type === 'income' ? 0 : type === 'expense' ? 1 : 2;
-    Animated.timing(typeAnim, {
-      toValue: toVal,
-      duration: 250,
-      useNativeDriver: false,
-    }).start();
   }, [type]);
 
   const userAccounts = useMemo(
     () => accounts.filter((acc) => !fdAccountIds.has(acc.id)),
     [accounts, fdAccountIds],
   );
+
+  const pickerTime = useMemo(() => parseTimeStr(timeStr), [timeStr]);
+
+  const hourListRef = useRef<FlatList<number>>(null);
+  const minuteListRef = useRef<FlatList<number>>(null);
+
+  useEffect(() => {
+    if (!showTimePicker) return;
+    const { hh, mm } = parseTimeStr(timeStr);
+    const safeMi = Math.max(0, MINUTES.indexOf(mm));
+
+    const align = () => {
+      hourListRef.current?.scrollToIndex({
+        index: hh,
+        animated: false,
+        viewPosition: 0.45,
+      });
+      minuteListRef.current?.scrollToIndex({
+        index: safeMi,
+        animated: false,
+        viewPosition: 0.45,
+      });
+    };
+
+    const t = setTimeout(align, 60);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- scroll wheels only when modal opens (timeStr read from opening render)
+  }, [showTimePicker]);
 
   const splitSumError = useMemo(() => {
     if (!splitEnabled) return '';
@@ -228,31 +266,21 @@ export default function AddTransactionScreen({
     [expression],
   );
 
-  const togglePanel = useCallback(
-    (panel: PanelType) => {
-      Keyboard.dismiss();
-      setShowTimePicker(false);
-      setActivePanel((prev) => {
-        const next = prev === panel ? 'none' : panel;
-        Animated.timing(panelAnim, {
-          toValue: next === 'none' ? 0 : 1,
-          duration: 250,
-          useNativeDriver: false,
-        }).start();
-        return next;
-      });
-    },
-    [panelAnim],
-  );
+  const togglePanel = useCallback((panel: PanelType) => {
+    Keyboard.dismiss();
+    setShowTimePicker(false);
+    setActivePanel((prev) => (prev === panel ? 'none' : panel));
+  }, []);
 
   const closePanel = useCallback(() => {
     setActivePanel('none');
-    Animated.timing(panelAnim, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
-  }, [panelAnim]);
+  }, []);
+
+  const handleTimePress = useCallback(() => {
+    Keyboard.dismiss();
+    setActivePanel('none');
+    setShowTimePicker((v) => !v);
+  }, []);
 
   const handleDigit = useCallback(
     (d: string) => setExpression((e) => e + d),
@@ -349,7 +377,8 @@ export default function AddTransactionScreen({
     }
 
     try {
-      const fullDate = `${dateStr}T${timeStr}:00`;
+      const { hh: saveH, mm: saveM } = parseTimeStr(timeStr);
+      const fullDate = `${dateStr}T${String(saveH).padStart(2, '0')}:${String(saveM).padStart(2, '0')}:00`;
       const payload = {
         type,
         totalAmountCents: totalCents,
@@ -406,18 +435,16 @@ export default function AddTransactionScreen({
         ? colors.expense
         : colors.transfer;
   const dateLabel = format(new Date(`${dateStr}T00:00:00`), 'MMM d, yyyy');
-  const [hh, mm] = timeStr.split(':').map(Number);
+  const { hh, mm } = pickerTime;
   const timeLabel = format(new Date(2000, 0, 1, hh, mm), 'h:mm a');
   const totalForSplit = evalExpression(expression);
 
-  const typeSwitcherBg = typeAnim.interpolate({
-    inputRange: [0, 1, 2],
-    outputRange: [
-      `${colors.income}20`,
-      `${colors.expense}20`,
-      `${colors.transfer}20`,
-    ],
-  });
+  const typeSwitcherTint =
+    type === 'income'
+      ? `${colors.income}20`
+      : type === 'expense'
+        ? `${colors.expense}20`
+        : `${colors.transfer}20`;
 
   return (
     <View style={styles.container}>
@@ -427,113 +454,125 @@ export default function AddTransactionScreen({
           onPress={() => navigation.goBack()}
           hitSlop={16}
           style={styles.headerBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Close"
         >
           <Icon source="close" size={22} color={colors.textSecondary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          {isEditing ? 'Edit Transaction' : 'New Transaction'}
+        <Text
+          style={styles.headerTitle}
+          numberOfLines={1}
+          accessibilityRole="header"
+        >
+          {isEditing ? 'Edit transaction' : 'New transaction'}
         </Text>
         <TouchableOpacity
           onPress={onSubmit}
-          hitSlop={16}
-          style={styles.saveBtn}
+          hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+          style={[styles.headerSaveHit, styles.headerSavePill]}
+          accessibilityRole="button"
+          accessibilityLabel={isEditing ? 'Save changes' : 'Save'}
         >
-          <Icon source="check" size={18} color={colors.onPrimary} />
-          <Text style={styles.saveBtnText}>Save</Text>
+          <Text style={styles.headerSaveText}>Save</Text>
         </TouchableOpacity>
       </View>
 
-      {/* ── Type Switcher ── */}
-      <Animated.View
-        style={[styles.typeSwitcher, { backgroundColor: typeSwitcherBg }]}
-      >
-        <TouchableOpacity
-          style={[
-            styles.typeTab,
-            type === 'expense' && [
-              styles.typeTabActive,
-              { backgroundColor: colors.expense },
-            ],
-          ]}
-          onPress={() => setType('expense')}
-          activeOpacity={0.7}
-        >
-          <Icon
-            source="arrow-top-right"
-            size={16}
-            color={type === 'expense' ? colors.onPrimary : colors.textSecondary}
-          />
-          <Text
-            style={[
-              styles.typeTabText,
-              type === 'expense' && styles.typeTabTextActive,
-            ]}
-          >
-            Expense
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.typeTab,
-            type === 'income' && [
-              styles.typeTabActive,
-              { backgroundColor: colors.income },
-            ],
-          ]}
-          onPress={() => setType('income')}
-          activeOpacity={0.7}
-        >
-          <Icon
-            source="arrow-bottom-left"
-            size={16}
-            color={type === 'income' ? colors.onPrimary : colors.textSecondary}
-          />
-          <Text
-            style={[
-              styles.typeTabText,
-              type === 'income' && styles.typeTabTextActive,
-            ]}
-          >
-            Income
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.typeTab,
-            type === 'transfer' && [
-              styles.typeTabActive,
-              { backgroundColor: colors.transfer },
-            ],
-          ]}
-          onPress={() => setType('transfer')}
-          activeOpacity={0.7}
-        >
-          <Icon
-            source="swap-horizontal"
-            size={16}
-            color={
-              type === 'transfer' ? colors.onPrimary : colors.textSecondary
-            }
-          />
-          <Text
-            style={[
-              styles.typeTabText,
-              type === 'transfer' && styles.typeTabTextActive,
-            ]}
-          >
-            Transfer
-          </Text>
-        </TouchableOpacity>
-      </Animated.View>
-
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior="padding"
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 16 : 0}
       >
+        {/* ── Type Switcher ── */}
+        <View
+          style={[styles.typeSwitcher, { backgroundColor: typeSwitcherTint }]}
+        >
+          <TouchableOpacity
+            style={[
+              styles.typeTab,
+              type === 'expense' && [
+                styles.typeTabActive,
+                { backgroundColor: colors.expense },
+              ],
+            ]}
+            onPress={() => setType('expense')}
+            activeOpacity={0.7}
+          >
+            <Icon
+              source="arrow-top-right"
+              size={16}
+              color={
+                type === 'expense' ? colors.onPrimary : colors.textSecondary
+              }
+            />
+            <Text
+              style={[
+                styles.typeTabText,
+                type === 'expense' && styles.typeTabTextActive,
+              ]}
+            >
+              Expense
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.typeTab,
+              type === 'income' && [
+                styles.typeTabActive,
+                { backgroundColor: colors.income },
+              ],
+            ]}
+            onPress={() => setType('income')}
+            activeOpacity={0.7}
+          >
+            <Icon
+              source="arrow-bottom-left"
+              size={16}
+              color={type === 'income' ? colors.onPrimary : colors.textSecondary}
+            />
+            <Text
+              style={[
+                styles.typeTabText,
+                type === 'income' && styles.typeTabTextActive,
+              ]}
+            >
+              Income
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.typeTab,
+              type === 'transfer' && [
+                styles.typeTabActive,
+                { backgroundColor: colors.transfer },
+              ],
+            ]}
+            onPress={() => setType('transfer')}
+            activeOpacity={0.7}
+          >
+            <Icon
+              source="swap-horizontal"
+              size={16}
+              color={
+                type === 'transfer' ? colors.onPrimary : colors.textSecondary
+              }
+            />
+            <Text
+              style={[
+                styles.typeTabText,
+                type === 'transfer' && styles.typeTabTextActive,
+              ]}
+            >
+              Transfer
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         <ScrollView
           style={styles.scrollArea}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: insets.bottom + spacing.xl },
+          ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -606,11 +645,7 @@ export default function AddTransactionScreen({
                     {selectedAccount1?.name ?? 'Select account'}
                   </Text>
                 </View>
-                <Icon
-                  source="chevron-right"
-                  size={20}
-                  color={colors.textTertiary}
-                />
+                <Icon source="menu-down" size={22} color={colors.textTertiary} />
               </TouchableOpacity>
 
               <View style={styles.selectorDivider} />
@@ -644,47 +679,11 @@ export default function AddTransactionScreen({
                     {selectedAccount2?.name ?? 'Select account'}
                   </Text>
                 </View>
-                <Icon
-                  source="chevron-right"
-                  size={20}
-                  color={colors.textTertiary}
-                />
+                <Icon source="menu-down" size={22} color={colors.textTertiary} />
               </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.selectorsCard}>
-              <TouchableOpacity
-                style={styles.selectorRow}
-                onPress={() => setAccount1PickerVisible(true)}
-                activeOpacity={0.6}
-              >
-                <View
-                  style={[
-                    styles.selectorIconWrap,
-                    { backgroundColor: `${colors.primary}18` },
-                  ]}
-                >
-                  <Icon
-                    source={selectedAccount1?.icon ?? 'wallet'}
-                    size={20}
-                    color={colors.primary}
-                  />
-                </View>
-                <View style={styles.selectorTextCol}>
-                  <Text style={styles.selectorLabel}>Account</Text>
-                  <Text style={styles.selectorValue} numberOfLines={1}>
-                    {selectedAccount1?.name ?? 'Select account'}
-                  </Text>
-                </View>
-                <Icon
-                  source="chevron-right"
-                  size={20}
-                  color={colors.textTertiary}
-                />
-              </TouchableOpacity>
-
-              <View style={styles.selectorDivider} />
-
               <TouchableOpacity
                 style={styles.selectorRow}
                 onPress={() => setCategoryPickerVisible(true)}
@@ -713,13 +712,88 @@ export default function AddTransactionScreen({
                   </Text>
                 </View>
                 <Icon
-                  source="chevron-right"
-                  size={20}
+                  source="menu-down"
+                  size={22}
+                  color={colors.textTertiary}
+                />
+              </TouchableOpacity>
+
+              <View style={styles.selectorDivider} />
+
+              <TouchableOpacity
+                style={styles.selectorRow}
+                onPress={() => setAccount1PickerVisible(true)}
+                activeOpacity={0.6}
+              >
+                <View
+                  style={[
+                    styles.selectorIconWrap,
+                    { backgroundColor: `${colors.primary}18` },
+                  ]}
+                >
+                  <Icon
+                    source={selectedAccount1?.icon ?? 'wallet'}
+                    size={20}
+                    color={colors.primary}
+                  />
+                </View>
+                <View style={styles.selectorTextCol}>
+                  <Text style={styles.selectorLabel}>Account</Text>
+                  <Text style={styles.selectorValue} numberOfLines={1}>
+                    {selectedAccount1?.name ?? 'Select account'}
+                  </Text>
+                </View>
+                <Icon
+                  source="menu-down"
+                  size={22}
                   color={colors.textTertiary}
                 />
               </TouchableOpacity>
             </View>
           )}
+
+          <Text style={styles.sectionLabel}>WHEN</Text>
+          <View style={styles.whenCard}>
+            <View style={styles.whenCombinedRow}>
+              <TouchableOpacity
+                style={[
+                  styles.whenHalf,
+                  activePanel === 'calendar' && styles.whenHalfActive,
+                ]}
+                onPress={() => togglePanel('calendar')}
+                activeOpacity={0.65}
+                accessibilityRole="button"
+                accessibilityLabel={`Date ${dateLabel}`}
+              >
+                <Icon
+                  source="calendar-month-outline"
+                  size={18}
+                  color={colors.primary}
+                />
+                <Text style={styles.whenCombinedValue} numberOfLines={1}>
+                  {dateLabel}
+                </Text>
+              </TouchableOpacity>
+
+              <Text style={styles.whenMiddleDot}>·</Text>
+
+              <TouchableOpacity
+                style={[
+                  styles.whenHalf,
+                  showTimePicker && styles.whenHalfActive,
+                ]}
+                onPress={handleTimePress}
+                activeOpacity={0.65}
+                accessibilityRole="button"
+                accessibilityLabel={`Time ${timeLabel}`}
+              >
+                <Icon source="clock-outline" size={18} color={colors.primary} />
+                <Text style={styles.whenCombinedValue} numberOfLines={1}>
+                  {timeLabel}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
 
           {/* ── Note ── */}
           <View style={styles.noteCard}>
@@ -742,147 +816,6 @@ export default function AddTransactionScreen({
               maxLength={200}
             />
           </View>
-
-          {/* ── Date & Time ── */}
-          <View style={styles.dateTimeRow}>
-            <TouchableOpacity
-              style={[
-                styles.dateTimeChip,
-                activePanel === 'calendar' && styles.dateTimeChipActive,
-              ]}
-              onPress={() => togglePanel('calendar')}
-              activeOpacity={0.7}
-            >
-              <Icon
-                source="calendar-month-outline"
-                size={18}
-                color={
-                  activePanel === 'calendar'
-                    ? colors.primary
-                    : colors.textSecondary
-                }
-              />
-              <Text
-                style={[
-                  styles.dateTimeText,
-                  activePanel === 'calendar' && { color: colors.primary },
-                ]}
-              >
-                {dateLabel}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.dateTimeChip,
-                showTimePicker && styles.dateTimeChipActive,
-              ]}
-              onPress={() => {
-                Keyboard.dismiss();
-                setShowTimePicker((v) => !v);
-                if (activePanel !== 'none') closePanel();
-              }}
-              activeOpacity={0.7}
-            >
-              <Icon
-                source="clock-outline"
-                size={18}
-                color={showTimePicker ? colors.primary : colors.textSecondary}
-              />
-              <Text
-                style={[
-                  styles.dateTimeText,
-                  showTimePicker && { color: colors.primary },
-                ]}
-              >
-                {timeLabel}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {showTimePicker && (
-            <View style={styles.timePickerContainer}>
-              <View style={styles.timePickerHeader}>
-                <Text style={styles.timePickerTitle}>Select Time</Text>
-                <TouchableOpacity onPress={() => setShowTimePicker(false)}>
-                  <Text style={styles.timePickerDone}>Done</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.timePickerBody}>
-                <View style={styles.timeColumn}>
-                  <Text style={styles.timeColumnLabel}>Hour</Text>
-                  <ScrollView
-                    style={styles.timeScroll}
-                    showsVerticalScrollIndicator={false}
-                    nestedScrollEnabled
-                  >
-                    {HOURS.map((h) => (
-                      <TouchableOpacity
-                        key={h}
-                        style={[
-                          styles.timeOption,
-                          hh === h && styles.timeOptionActive,
-                        ]}
-                        onPress={() =>
-                          setTimeStr(
-                            `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`,
-                          )
-                        }
-                      >
-                        <Text
-                          style={[
-                            styles.timeOptionText,
-                            hh === h && styles.timeOptionTextActive,
-                          ]}
-                        >
-                          {h === 0
-                            ? '12 AM'
-                            : h < 12
-                              ? `${h} AM`
-                              : h === 12
-                                ? '12 PM'
-                                : `${h - 12} PM`}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-                <View style={styles.timeColumnDivider} />
-                <View style={styles.timeColumn}>
-                  <Text style={styles.timeColumnLabel}>Minute</Text>
-                  <ScrollView
-                    style={styles.timeScroll}
-                    showsVerticalScrollIndicator={false}
-                    nestedScrollEnabled
-                  >
-                    {MINUTES.map((m) => (
-                      <TouchableOpacity
-                        key={m}
-                        style={[
-                          styles.timeOption,
-                          mm === m && styles.timeOptionActive,
-                        ]}
-                        onPress={() =>
-                          setTimeStr(
-                            `${String(hh).padStart(2, '0')}:${String(m).padStart(2, '0')}`,
-                          )
-                        }
-                      >
-                        <Text
-                          style={[
-                            styles.timeOptionText,
-                            mm === m && styles.timeOptionTextActive,
-                          ]}
-                        >
-                          {String(m).padStart(2, '0')}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-              </View>
-            </View>
-          )}
 
           {/* ── Split Payment (hidden for transfers) ── */}
           {!isTransfer(type) && (
@@ -1058,11 +991,10 @@ export default function AddTransactionScreen({
 
           <View style={{ height: 40 }} />
         </ScrollView>
-      </KeyboardAvoidingView>
 
-      {/* ── Panels ── */}
+      {/* ── Sheets (calculator / calendar / time) ── */}
       {activePanel !== 'none' && (
-        <Animated.View style={styles.panelOverlay}>
+        <View style={styles.sheetSurface}>
           {activePanel === 'calculator' && (
             <View style={styles.calcPanel}>
               <View style={styles.calcHeader}>
@@ -1089,91 +1021,142 @@ export default function AddTransactionScreen({
               onDone={closePanel}
             />
           )}
-        </Animated.View>
+        </View>
       )}
 
-      {/* ── Bottom Toolbar ── */}
-      <View
-        style={[
-          styles.bottomToolbar,
-          { paddingBottom: insets.bottom + spacing.xs },
-        ]}
+      </KeyboardAvoidingView>
+
+      <Modal
+        visible={showTimePicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowTimePicker(false)}
       >
-        <TouchableOpacity
-          style={[
-            styles.toolbarBtn,
-            activePanel === 'calendar' && styles.toolbarBtnActive,
-          ]}
-          onPress={() => togglePanel('calendar')}
-          activeOpacity={0.7}
-        >
-          <Icon
-            source="calendar-month"
-            size={22}
-            color={
-              activePanel === 'calendar' ? colors.primary : colors.textSecondary
-            }
+        <View style={styles.timeModalRoot}>
+          <Pressable
+            style={styles.timeModalBackdrop}
+            onPress={() => setShowTimePicker(false)}
           />
-          <Text
+          <View
             style={[
-              styles.toolbarLabel,
-              activePanel === 'calendar' && { color: colors.primary },
+              styles.timeModalSheet,
+              {
+                paddingBottom: Math.max(insets.bottom, spacing.md),
+                marginBottom: spacing.md,
+              },
             ]}
           >
-            Date
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.toolbarBtn, showTimePicker && styles.toolbarBtnActive]}
-          onPress={() => {
-            if (activePanel !== 'none') closePanel();
-            setShowTimePicker((v) => !v);
-          }}
-          activeOpacity={0.7}
-        >
-          <Icon
-            source="clock-outline"
-            size={22}
-            color={showTimePicker ? colors.primary : colors.textSecondary}
-          />
-          <Text
-            style={[
-              styles.toolbarLabel,
-              showTimePicker && { color: colors.primary },
-            ]}
-          >
-            Time
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.toolbarBtn,
-            activePanel === 'calculator' && styles.toolbarBtnActive,
-          ]}
-          onPress={() => togglePanel('calculator')}
-          activeOpacity={0.7}
-        >
-          <Icon
-            source="calculator"
-            size={22}
-            color={
-              activePanel === 'calculator'
-                ? colors.primary
-                : colors.textSecondary
-            }
-          />
-          <Text
-            style={[
-              styles.toolbarLabel,
-              activePanel === 'calculator' && { color: colors.primary },
-            ]}
-          >
-            Calc
-          </Text>
-        </TouchableOpacity>
-      </View>
+            <View style={styles.timeModalGrabber} />
+            <View style={styles.timePickerHeader}>
+              <Text style={styles.timePickerTitle}>Time</Text>
+              <TouchableOpacity onPress={() => setShowTimePicker(false)}>
+                <Text style={styles.timePickerDone}>Done</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.timePickerBody}>
+              <View style={styles.timeColumn}>
+                <Text style={styles.timeColumnLabel}>Hour</Text>
+                <FlatList
+                  ref={hourListRef}
+                  data={HOURS}
+                  keyExtractor={(item) => `h-${item}`}
+                  showsVerticalScrollIndicator={false}
+                  style={styles.timeScroll}
+                  getItemLayout={(_, index) => ({
+                    length: TIME_PICKER_ROW_H,
+                    offset: TIME_PICKER_ROW_H * index,
+                    index,
+                  })}
+                  onScrollToIndexFailed={(info) => {
+                    const offset = info.averageItemLength * info.index;
+                    setTimeout(() => {
+                      hourListRef.current?.scrollToOffset({
+                        offset,
+                        animated: false,
+                      });
+                    }, 120);
+                  }}
+                  renderItem={({ item: h }) => (
+                    <TouchableOpacity
+                      style={[
+                        styles.timeOption,
+                        hh === h && styles.timeOptionActive,
+                      ]}
+                      onPress={() =>
+                        setTimeStr(
+                          `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`,
+                        )
+                      }
+                    >
+                      <Text
+                        style={[
+                          styles.timeOptionText,
+                          hh === h && styles.timeOptionTextActive,
+                        ]}
+                      >
+                        {h === 0
+                          ? '12 AM'
+                          : h < 12
+                            ? `${h} AM`
+                            : h === 12
+                              ? '12 PM'
+                              : `${h - 12} PM`}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+              <View style={styles.timeColumnDivider} />
+              <View style={styles.timeColumn}>
+                <Text style={styles.timeColumnLabel}>Minute</Text>
+                <FlatList
+                  ref={minuteListRef}
+                  data={MINUTES}
+                  keyExtractor={(item) => `m-${item}`}
+                  showsVerticalScrollIndicator={false}
+                  style={styles.timeScroll}
+                  getItemLayout={(_, index) => ({
+                    length: TIME_PICKER_ROW_H,
+                    offset: TIME_PICKER_ROW_H * index,
+                    index,
+                  })}
+                  onScrollToIndexFailed={(info) => {
+                    const offset = info.averageItemLength * info.index;
+                    setTimeout(() => {
+                      minuteListRef.current?.scrollToOffset({
+                        offset,
+                        animated: false,
+                      });
+                    }, 120);
+                  }}
+                  renderItem={({ item: m }) => (
+                    <TouchableOpacity
+                      style={[
+                        styles.timeOption,
+                        mm === m && styles.timeOptionActive,
+                      ]}
+                      onPress={() =>
+                        setTimeStr(
+                          `${String(hh).padStart(2, '0')}:${String(m).padStart(2, '0')}`,
+                        )
+                      }
+                    >
+                      <Text
+                        style={[
+                          styles.timeOptionText,
+                          mm === m && styles.timeOptionTextActive,
+                        ]}
+                      >
+                        {String(m).padStart(2, '0')}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* ── Modals ── */}
       <CategoryPicker
@@ -1218,7 +1201,6 @@ const styles = StyleSheet.create({
   /* ── Header ── */
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
@@ -1231,25 +1213,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  headerSaveHit: {
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+  },
+  headerSavePill: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 3,
+    borderRadius: radius.capsule,
+    minWidth: 64,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerSaveText: {
+    color: colors.onPrimary,
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
   headerTitle: {
+    flex: 1,
+    textAlign: 'center',
     color: colors.text,
     fontSize: 17,
     fontWeight: '700',
     letterSpacing: 0.2,
-  },
-  saveBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radius.capsule,
-    paddingHorizontal: spacing.md + 2,
-    paddingVertical: spacing.sm,
-    gap: spacing.xs + 1,
-  },
-  saveBtnText: {
-    color: colors.onPrimary,
-    fontWeight: '700',
-    fontSize: 14,
   },
 
   /* ── Type Switcher ── */
@@ -1291,7 +1280,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
-    paddingBottom: 120,
+    paddingBottom: spacing.xl,
   },
 
   /* ── Amount Hero ── */
@@ -1404,6 +1393,43 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
 
+  whenCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    marginBottom: spacing.lg,
+  },
+  whenCombinedRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    minHeight: 52,
+  },
+  whenHalf: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md + 2,
+    paddingHorizontal: spacing.sm,
+  },
+  whenHalfActive: {
+    backgroundColor: `${colors.primary}10`,
+  },
+  whenMiddleDot: {
+    alignSelf: 'center',
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.textTertiary,
+    paddingHorizontal: spacing.xxs,
+  },
+  whenCombinedValue: {
+    flexShrink: 1,
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
   /* ── Note ── */
   noteCard: {
     flexDirection: 'row',
@@ -1430,55 +1456,45 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
 
-  /* ── Date & Time ── */
-  dateTimeRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginBottom: spacing.xl,
-  },
-  dateTimeChip: {
+  timeModalRoot: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
+  },
+  timeModalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  timeModalSheet: {
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    paddingVertical: spacing.md,
-    gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: 'transparent',
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    maxHeight: '56%',
   },
-  dateTimeChipActive: {
-    borderColor: `${colors.primary}50`,
-    backgroundColor: `${colors.primary}0A`,
-  },
-  dateTimeText: {
-    color: colors.text,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-
-  /* ── Time Picker ── */
-  timePickerContainer: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    marginBottom: spacing.lg,
-    marginTop: -spacing.md,
-    overflow: 'hidden',
+  timeModalGrabber: {
+    alignSelf: 'center',
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.outlineVariant,
+    marginBottom: spacing.md,
   },
   timePickerHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: 0,
+    marginBottom: spacing.xs,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
   timePickerTitle: {
     color: colors.text,
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
   timePickerDone: {
     color: colors.primary,
@@ -1487,7 +1503,7 @@ const styles = StyleSheet.create({
   },
   timePickerBody: {
     flexDirection: 'row',
-    height: 180,
+    height: 168,
   },
   timeColumn: {
     flex: 1,
@@ -1509,7 +1525,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   timeOption: {
-    paddingVertical: spacing.sm,
+    height: TIME_PICKER_ROW_H,
+    justifyContent: 'center',
     paddingHorizontal: spacing.md,
     alignItems: 'center',
     marginHorizontal: spacing.xs,
@@ -1697,8 +1714,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  /* ── Panel ── */
-  panelOverlay: {
+  /* ── Sheets (inline panels) ── */
+  sheetSurface: {
     backgroundColor: colors.surface,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
@@ -1726,31 +1743,4 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
-  /* ── Bottom Toolbar ── */
-  bottomToolbar: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-    paddingTop: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    gap: spacing.xs,
-  },
-  toolbarBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs + 1,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md + 2,
-    borderRadius: radius.capsule,
-  },
-  toolbarBtnActive: {
-    backgroundColor: `${colors.primary}15`,
-  },
-  toolbarLabel: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    fontWeight: '600',
-  },
 });

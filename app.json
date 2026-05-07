@@ -2,7 +2,7 @@
   "expo": {
     "name": "Lumos",
     "slug": "Lumos",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -41,7 +41,7 @@
       "eas": {
         "projectId": "2bfa852c-ad3b-490e-8b56-5f42ac2312f0"
       },
-      "releaseDate": "2026-05-04"
+      "releaseDate": "2026-05-07"
     }
   }
 }
