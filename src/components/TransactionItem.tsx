@@ -32,6 +32,7 @@ interface TransactionItemProps {
   category?: Category;
   accountMap: Record<string, Account>;
   currencySymbol?: string;
+  decimalPlaces?: number;
   onPress: () => void;
 }
 
@@ -40,6 +41,7 @@ function TransactionItemComponent({
   category,
   accountMap,
   currencySymbol,
+  decimalPlaces,
   onPress,
 }: TransactionItemProps) {
   const isIncome = transaction.type === 'income';
@@ -71,7 +73,7 @@ const { accountId: fromAid, account2Id: toAid } = transaction;
   const amountStr = formatMoney(
     transaction.totalAmountCents,
     currencySymbol,
-    2,
+    decimalPlaces,
   );
   const accessibilityLabel = `${titleText}, ${prefix}${amountStr}`;
 
@@ -135,7 +137,7 @@ const { accountId: fromAid, account2Id: toAid } = transaction;
           style={{ color: amountColor, fontWeight: '600' }}
         >
           {prefix}
-          {formatMoney(transaction.totalAmountCents, currencySymbol, 2)}
+          {formatMoney(transaction.totalAmountCents, currencySymbol, decimalPlaces)}
         </Text>
         <Text variant="bodySmall" style={styles.date}>
           {formatDateTimeShort(transaction.date)}

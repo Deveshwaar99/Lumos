@@ -9,6 +9,7 @@ interface SummaryBarProps {
   expense: number;
   balance: number;
   currencySymbol?: string;
+  decimalPlaces?: number;
 }
 
 function SummaryBar({
@@ -16,25 +17,26 @@ function SummaryBar({
   expense,
   balance,
   currencySymbol,
+  decimalPlaces,
 }: SummaryBarProps) {
   return (
     <View style={styles.container}>
       <View style={[styles.item, { backgroundColor: colors.expense + '14' }]}>
         <Text style={styles.label}>EXPENSE</Text>
         <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.amount, { color: colors.expense }]}>
-          {formatMoney(expense, currencySymbol)}
+          {formatMoney(expense, currencySymbol, decimalPlaces)}
         </Text>
       </View>
       <View style={[styles.item, { backgroundColor: colors.income + '14' }]}>
         <Text style={styles.label}>INCOME</Text>
         <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.amount, { color: colors.income }]}>
-          {formatMoney(income, currencySymbol)}
+          {formatMoney(income, currencySymbol, decimalPlaces)}
         </Text>
       </View>
       <View style={[styles.item, { backgroundColor: colors.surfaceVariant }]}>
         <Text style={styles.label}>BALANCE</Text>
         <Text numberOfLines={1} adjustsFontSizeToFit style={styles.amount}>
-          {formatMoney(balance, currencySymbol)}
+          {formatMoney(balance, currencySymbol, decimalPlaces)}
         </Text>
       </View>
     </View>

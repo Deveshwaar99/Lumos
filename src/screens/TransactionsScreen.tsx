@@ -9,6 +9,7 @@ import { useSettingsStore } from '../stores/useSettingsStore';
 import TransactionList from '../components/TransactionList';
 import FilterBar from '../components/FilterBar';
 import { colors, spacing } from '../theme';
+import { clampMoneyDecimalPlaces } from '../utils/money';
 import type { RootStackScreenProps } from '../navigation/types';
 import type { TransactionWithSplits } from '../models/types';
 
@@ -31,6 +32,7 @@ export default function TransactionsScreen({
   const { accounts, loadAccounts } = useAccountStore();
   const { settings } = useSettingsStore();
   const insets = useSafeAreaInsets();
+  const moneyDecimals = clampMoneyDecimalPlaces(settings.decimalPlaces);
 
   useEffect(() => {
     loadCategories();
@@ -68,6 +70,7 @@ export default function TransactionsScreen({
         loading={loading}
         hasMore={hasMore}
         currencySymbol={settings.currencySymbol}
+        decimalPlaces={moneyDecimals}
         onLoadMore={loadMore}
         onRefresh={() => loadTransactions(true)}
         onItemPress={handleItemPress}

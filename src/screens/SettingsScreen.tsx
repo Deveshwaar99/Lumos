@@ -27,6 +27,8 @@ import { colors, spacing, radius } from '../theme';
 import type { AppSettings } from '../models/types';
 import type { RootStackScreenProps } from '../navigation/types';
 
+const DECIMAL_PLACE_OPTIONS = [0, 2, 3, 4] as const;
+
 function GroupedCard({ children }: { children: React.ReactNode }) {
   return <View style={styles.groupedCard}>{children}</View>;
 }
@@ -96,6 +98,7 @@ export default function SettingsScreen({
   const { loadAll: loadStocks } = useStockStore();
   const [snackbar, setSnackbar] = useState('');
   const [localName, setLocalName] = useState(settings.username);
+  const [localCode, setLocalCode] = useState(settings.currencyCode);
   const [localSymbol, setLocalSymbol] = useState(settings.currencySymbol);
   const debounceRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
@@ -108,8 +111,9 @@ export default function SettingsScreen({
 
   useEffect(() => {
     setLocalName(settings.username);
+    setLocalCode(settings.currencyCode);
     setLocalSymbol(settings.currencySymbol);
-  }, [settings.username, settings.currencySymbol]);
+  }, [settings.username, settings.currencyCode, settings.currencySymbol]);
 
   const debouncedUpdate = <K extends keyof AppSettings>(
     key: K,
@@ -253,6 +257,29 @@ export default function SettingsScreen({
           <Text style={styles.sectionHeader}>Currency</Text>
           <GroupedCard>
             <CardRow
+              icon="alphabetical-variant"
+              title="Code"
+              right={
+                <TextInput
+                  value={localCode}
+                  onChangeText={(v) => {
+                    const next = v.toUpperCase().replace(/[^A-Z]/g, '');
+                    setLocalCode(next);
+                    debouncedUpdate('currencyCode', next || 'USD');
+                  }}
+                  mode="flat"
+                  style={styles.inlineInput}
+                  contentStyle={styles.inlineInputContent}
+                  underlineStyle={styles.inlineInputUnderline}
+                  maxLength={3}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  cursorColor={colors.primary}
+                  selectionColor={colors.primary + '40'}
+                />
+              }
+            />
+            <CardRow
               icon="currency-usd"
               title="Symbol"
               right={
@@ -273,6 +300,45 @@ export default function SettingsScreen({
               }
               isLast
             />
+          </GroupedCard>
+
+          <Text style={styles.sectionHeader}>Formatting</Text>
+          <GroupedCard>
+            <View style={styles.cardRow}>
+              <Icon
+                source="decimal"
+                size={20}
+                color={colors.textSecondary}
+              />
+              <Text variant="bodyLarge" style={styles.cardRowTitle}>
+                Decimal Places
+              </Text>
+              <View style={styles.decimalOptions}>
+                {DECIMAL_PLACE_OPTIONS.map((option) => {
+                  const isSelected = settings.decimalPlaces === option;
+                  return (
+                    <TouchableOpacity
+                      key={option}
+                      style={[
+                        styles.decimalChip,
+                        isSelected && styles.decimalChipActive,
+                      ]}
+                      onPress={() => updateSetting('decimalPlaces', option)}
+                      activeOpacity={0.7}
+                    >
+                      <Text
+                        style={[
+                          styles.decimalChipText,
+                          isSelected && styles.decimalChipTextActive,
+                        ]}
+                      >
+                        {option}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
           </GroupedCard>
 
           <Text style={styles.sectionHeader}>Security</Text>
@@ -416,6 +482,31 @@ const styles = StyleSheet.create({
   },
   inlineInputUnderline: {
     display: 'none',
+  },
+  decimalOptions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  decimalChip: {
+    minWidth: 28,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: radius.capsule,
+    backgroundColor: colors.surfaceVariant,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  decimalChipActive: {
+    backgroundColor: colors.primary,
+  },
+  decimalChipText: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  decimalChipTextActive: {
+    color: colors.onPrimary,
   },
   footerDivider: {
     height: 1,

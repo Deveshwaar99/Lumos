@@ -13,6 +13,7 @@ interface TransactionListProps {
   loading: boolean;
   hasMore: boolean;
   currencySymbol?: string;
+  decimalPlaces?: number;
   onLoadMore: () => void;
   onRefresh: () => void;
   onItemPress: (transaction: TransactionWithSplits) => void;
@@ -26,6 +27,7 @@ export default function TransactionList({
   loading,
   hasMore,
   currencySymbol,
+  decimalPlaces,
   onLoadMore,
   onRefresh,
   onItemPress,
@@ -47,10 +49,11 @@ export default function TransactionList({
         category={item.categoryId ? categoryMap[item.categoryId] : undefined}
         accountMap={accountMap}
         currencySymbol={currencySymbol}
+        decimalPlaces={decimalPlaces}
         onPress={() => onItemPress(item)}
       />
     ),
-    [categoryMap, accountMap, onItemPress],
+    [categoryMap, accountMap, currencySymbol, decimalPlaces, onItemPress],
   );
 
   const renderFooter = () => {

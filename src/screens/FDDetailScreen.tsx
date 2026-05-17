@@ -17,7 +17,7 @@ import { useSettingsStore } from '../stores/useSettingsStore';
 import { fdService } from '../services/fdService';
 import { transactionService } from '../services/transactionService';
 import { colors, spacing, radius } from '../theme';
-import { formatMoney } from '../utils/money';
+import { clampMoneyDecimalPlaces, formatMoney } from '../utils/money';
 import {
   calculateFDInterest,
   calculateTDS,
@@ -57,6 +57,7 @@ export default function FDDetailScreen({
   const { closeDeposit, removeDeposit, loadDeposits } = useFDStore();
   const { settings } = useSettingsStore();
   const sym = settings.currencySymbol;
+  const moneyDecimals = clampMoneyDecimalPlaces(settings.decimalPlaces);
 
   const [fd, setFd] = useState<FixedDeposit | null>(null);
   const [linkedTxns, setLinkedTxns] = useState<Transaction[]>([]);
@@ -197,7 +198,7 @@ export default function FDDetailScreen({
         <View style={styles.heroCard}>
           <Text style={styles.heroLabel}>Principal</Text>
           <Text style={styles.heroAmount}>
-            {formatMoney(fd.principalCents, sym, 2)}
+            {formatMoney(fd.principalCents, sym, moneyDecimals)}
           </Text>
           <View style={styles.heroMeta}>
             <Text style={styles.heroRate}>{fd.annualInterestRate}% p.a.</Text>
@@ -332,13 +333,13 @@ export default function FDDetailScreen({
           <View style={styles.breakdownRow}>
             <Text style={styles.breakdownLabel}>Gross Interest</Text>
             <Text style={styles.breakdownValue}>
-              {formatMoney(breakdown.gross, sym, 2)}
+              {formatMoney(breakdown.gross, sym, moneyDecimals)}
             </Text>
           </View>
           <View style={styles.breakdownRow}>
             <Text style={styles.breakdownLabel}>TDS ({fd.taxRate}%)</Text>
             <Text style={[styles.breakdownValue, { color: colors.expense }]}>
-              -{formatMoney(breakdown.tds, sym, 2)}
+              -{formatMoney(breakdown.tds, sym, moneyDecimals)}
             </Text>
           </View>
           <View style={styles.breakdownDivider} />
@@ -352,7 +353,7 @@ export default function FDDetailScreen({
                 { color: colors.income, fontWeight: '800' },
               ]}
             >
-              {formatMoney(breakdown.net, sym, 2)}
+              {formatMoney(breakdown.net, sym, moneyDecimals)}
             </Text>
           </View>
           <View style={styles.breakdownRow}>
@@ -365,7 +366,7 @@ export default function FDDetailScreen({
                 { color: colors.primary, fontWeight: '800' },
               ]}
             >
-              {formatMoney(breakdown.maturityValue, sym, 2)}
+              {formatMoney(breakdown.maturityValue, sym, moneyDecimals)}
             </Text>
           </View>
         </View>
@@ -406,7 +407,7 @@ export default function FDDetailScreen({
                   ]}
                 >
                   {txn.type === 'income' ? '+' : '-'}
-                  {formatMoney(txn.totalAmountCents, sym, 2)}
+                  {formatMoney(txn.totalAmountCents, sym, moneyDecimals)}
                 </Text>
               </View>
             ))}

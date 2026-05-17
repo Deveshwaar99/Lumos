@@ -18,7 +18,7 @@ import AccountPicker from '../components/AccountPicker';
 import CategoryPicker from '../components/CategoryPicker';
 import InlineCalendar from '../components/InlineCalendar';
 import { colors, spacing, radius } from '../theme';
-import { dollarsToCents, formatMoney } from '../utils/money';
+import { clampMoneyDecimalPlaces, dollarsToCents, formatMoney } from '../utils/money';
 import {
   calculateFDInterest,
   calculateTDS,
@@ -126,6 +126,7 @@ export default function FDFormScreen({
     (c) => c.id === interestCategoryId,
   );
   const sym = settings.currencySymbol;
+  const moneyDecimals = clampMoneyDecimalPlaces(settings.decimalPlaces);
 
   const handleSubmit = useCallback(async () => {
     const principal = dollarsToCents(parseFloat(amountText) || 0);
@@ -172,7 +173,7 @@ export default function FDFormScreen({
         startDate,
         maturityDate,
         taxRate: tax,
-        currency: 'USD',
+        currency: settings.currencyCode,
         note: note || null,
       });
       navigation.goBack();
@@ -479,7 +480,7 @@ export default function FDFormScreen({
               <View style={styles.previewRow}>
                 <Text style={styles.previewLabel}>Gross Interest</Text>
                 <Text style={styles.previewValue}>
-                  {formatMoney(preview.grossInterest, sym, 2)}
+                  {formatMoney(preview.grossInterest, sym, moneyDecimals)}
                 </Text>
               </View>
               <View style={styles.previewRow}>
@@ -487,7 +488,7 @@ export default function FDFormScreen({
                   TDS ({taxRateText || '0'}%)
                 </Text>
                 <Text style={[styles.previewValue, { color: colors.expense }]}>
-                  -{formatMoney(preview.tds, sym, 2)}
+                  -{formatMoney(preview.tds, sym, moneyDecimals)}
                 </Text>
               </View>
               <View style={styles.previewDivider} />
@@ -499,7 +500,7 @@ export default function FDFormScreen({
                     { color: colors.income, fontWeight: '800' },
                   ]}
                 >
-                  {formatMoney(preview.netInterest, sym, 2)}
+                  {formatMoney(preview.netInterest, sym, moneyDecimals)}
                 </Text>
               </View>
               <View style={styles.previewRow}>
@@ -510,7 +511,7 @@ export default function FDFormScreen({
                     { color: colors.primary, fontWeight: '800' },
                   ]}
                 >
-                  {formatMoney(preview.maturityValue, sym, 2)}
+                  {formatMoney(preview.maturityValue, sym, moneyDecimals)}
                 </Text>
               </View>
             </View>

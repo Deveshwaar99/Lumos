@@ -9,6 +9,7 @@ interface BudgetProgressBarProps {
   limit: number;
   alertThreshold: number;
   currencySymbol?: string;
+  decimalPlaces?: number;
   showLabels?: boolean;
 }
 
@@ -17,6 +18,7 @@ function BudgetProgressBar({
   limit,
   alertThreshold,
   currencySymbol,
+  decimalPlaces,
   showLabels = true,
 }: BudgetProgressBarProps) {
   const percentage = limit > 0 ? (spent / limit) * 100 : 0;
@@ -36,8 +38,8 @@ function BudgetProgressBar({
             variant="bodySmall"
             style={{ color }}
           >
-            {formatMoney(spent, currencySymbol)} of{' '}
-            {formatMoney(limit, currencySymbol)}
+            {formatMoney(spent, currencySymbol, decimalPlaces)} of{' '}
+            {formatMoney(limit, currencySymbol, decimalPlaces)}
           </Text>
           <Text variant="bodySmall" style={{ color }}>
             {Math.round(percentage)}%

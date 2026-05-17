@@ -9,7 +9,7 @@ import { useAccountStore } from '../stores/useAccountStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { transactionService } from '../services/transactionService';
 import { colors, spacing, radius, elevation } from '../theme';
-import { formatMoney } from '../utils/money';
+import { clampMoneyDecimalPlaces, formatMoney } from '../utils/money';
 import { formatDate, formatTimeShort } from '../utils/dates';
 import type { TransactionWithSplits } from '../models/types';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -45,6 +45,7 @@ export default function TransactionDetailScreen({
   const { categories } = useCategoryStore();
   const { accounts } = useAccountStore();
   const { settings } = useSettingsStore();
+  const moneyDecimals = clampMoneyDecimalPlaces(settings.decimalPlaces);
 
   const [transaction, setTransaction] = useState<TransactionWithSplits | null>(
     null,
@@ -156,7 +157,7 @@ export default function TransactionDetailScreen({
           {formatMoney(
             transaction.totalAmountCents,
             settings.currencySymbol,
-            2,
+            moneyDecimals,
           )}
         </Text>
       </LinearGradient>
@@ -202,7 +203,7 @@ export default function TransactionDetailScreen({
                     {fromAcc?.name ?? 'Unknown'}
                   </Text>
                   <Text variant="bodySmall" style={styles.nodeSubText}>
-                    {formatMoney(transaction.totalAmountCents, settings.currencySymbol, 2)}
+                    {formatMoney(transaction.totalAmountCents, settings.currencySymbol, moneyDecimals)}
                   </Text>
                 </View>
               </View>
@@ -220,7 +221,7 @@ export default function TransactionDetailScreen({
                     {toAcc?.name ?? 'Unknown'}
                   </Text>
                   <Text variant="bodySmall" style={styles.nodeSubText}>
-                    {formatMoney(transaction.totalAmountCents, settings.currencySymbol, 2)}
+                    {formatMoney(transaction.totalAmountCents, settings.currencySymbol, moneyDecimals)}
                   </Text>
                 </View>
               </View>
@@ -270,7 +271,7 @@ export default function TransactionDetailScreen({
                         {acc?.name ?? 'Unknown'}
                       </Text>
                       <Text variant="bodySmall" style={styles.nodeSubText}>
-                        {formatMoney(split.amountCents, settings.currencySymbol, 2)}
+                        {formatMoney(split.amountCents, settings.currencySymbol, moneyDecimals)}
                       </Text>
                     </View>
                   </View>

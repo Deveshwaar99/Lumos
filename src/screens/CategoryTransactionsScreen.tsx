@@ -10,7 +10,7 @@ import { transactionService } from '../services/transactionService';
 import TransactionItem from '../components/TransactionItem';
 import DateHeader from '../components/DateHeader';
 import { colors, spacing, radius } from '../theme';
-import { formatMoney } from '../utils/money';
+import { clampMoneyDecimalPlaces, formatMoney } from '../utils/money';
 import type { RootStackScreenProps } from '../navigation/types';
 import type { TransactionWithSplits } from '../models/types';
 
@@ -28,6 +28,7 @@ export default function CategoryTransactionsScreen({
   const { categories } = useCategoryStore();
   const { settings } = useSettingsStore();
   const insets = useSafeAreaInsets();
+  const moneyDecimals = clampMoneyDecimalPlaces(settings.decimalPlaces);
 
   const [transactions, setTransactions] = useState<TransactionWithSplits[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -87,7 +88,8 @@ export default function CategoryTransactionsScreen({
     return { count, total };
   }, [transactions]);
 
-  const fmt = (cents: number) => formatMoney(cents, settings.currencySymbol, 2);
+  const fmt = (cents: number) =>
+    formatMoney(cents, settings.currencySymbol, moneyDecimals);
 
   return (
     <View style={styles.container}>
@@ -134,6 +136,7 @@ export default function CategoryTransactionsScreen({
               }
               accountMap={accountMap}
               currencySymbol={settings.currencySymbol}
+              decimalPlaces={moneyDecimals}
               onPress={() =>
                 navigation.navigate('AddTransaction', {
                   transactionId: item.id,

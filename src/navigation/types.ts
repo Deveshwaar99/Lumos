@@ -31,7 +31,9 @@ export type RootStackParamList = {
   AccountForm: { accountId?: string } | undefined;
   AccountTransactions: { accountId: string };
   CategoryTransactions: { categoryId: string };
-  BudgetForm: { budgetId?: string; month?: string } | undefined;
+  BudgetForm:
+    | { budgetId?: string; month?: string; categoryId?: string }
+    | undefined;
   FDForm: { fdId?: string } | undefined;
   FDDetail: { fdId: string };
   RecurringTransactionForm: { recurringId?: string } | undefined;

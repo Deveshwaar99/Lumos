@@ -22,7 +22,8 @@ export default function BudgetFormScreen({
   navigation,
   route,
 }: RootStackScreenProps<'BudgetForm'>) {
-  const { budgetId, month: routeMonth } = route.params ?? {};
+  const { budgetId, month: routeMonth, categoryId: routeCategoryId } =
+    route.params ?? {};
   const { budgets, addBudget, updateBudget, removeBudget, loadBudgets } =
     useBudgetStore();
   const { categories, loadCategories } = useCategoryStore();
@@ -32,7 +33,9 @@ export default function BudgetFormScreen({
   const isEditing = !!existing;
   const month = existing?.month ?? routeMonth ?? getCurrentMonth();
 
-  const [categoryId, setCategoryId] = useState(existing?.categoryId ?? '');
+  const [categoryId, setCategoryId] = useState(
+    existing?.categoryId ?? routeCategoryId ?? '',
+  );
   const [limitCents, setLimitCents] = useState(existing?.limitCents ?? 0);
   const [alertThresholdPct, setAlertThresholdPct] = useState(
     String(existing?.alertThresholdPct ?? 80),
@@ -58,6 +61,12 @@ export default function BudgetFormScreen({
       setEnabled(existing.enabled);
     }
   }, [existing?.id]);
+
+  useEffect(() => {
+    if (!isEditing && routeCategoryId) {
+      setCategoryId(routeCategoryId);
+    }
+  }, [isEditing, routeCategoryId]);
 
   // Only show expense categories without existing budgets for this month
   const existingCategoryIds = budgets

@@ -382,7 +382,7 @@ export default function AddTransactionScreen({
       const payload = {
         type,
         totalAmountCents: totalCents,
-        currency: 'USD',
+        currency: settings.currencyCode,
         categoryId: isTransfer(type) ? null : categoryId,
         note: note || null,
         date: fullDate,

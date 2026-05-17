@@ -37,6 +37,7 @@ import {
   stepAnchor,
   type TimePeriod,
 } from '../utils/dates';
+import { clampMoneyDecimalPlaces } from '../utils/money';
 
 interface TransactionSection {
   title: string;
@@ -49,6 +50,7 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
   const { loadBudgets } = useBudgetStore();
   const { settings, loadSettings } = useSettingsStore();
   const insets = useSafeAreaInsets();
+  const moneyDecimals = clampMoneyDecimalPlaces(settings.decimalPlaces);
 
   const [anchor, setAnchor] = useState(() => new Date());
   const [period, setPeriod] = useState<TimePeriod>('month');
@@ -234,11 +236,18 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
           category={item.categoryId ? categoryMap[item.categoryId] : undefined}
           accountMap={accountMap}
           currencySymbol={settings.currencySymbol}
+          decimalPlaces={moneyDecimals}
           onPress={() => handleItemPress(item.id)}
         />
       </>
     ),
-    [categoryMap, accountMap, settings.currencySymbol, handleItemPress],
+    [
+      categoryMap,
+      accountMap,
+      settings.currencySymbol,
+      moneyDecimals,
+      handleItemPress,
+    ],
   );
 
   const keyExtractor = useCallback(
@@ -310,6 +319,7 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
               expense={summary.totalExpense}
               balance={summary.net}
               currencySymbol={settings.currencySymbol}
+              decimalPlaces={moneyDecimals}
             />
           </>
         )}

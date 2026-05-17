@@ -55,6 +55,7 @@ export interface Budget {
 
 export interface AppSettings {
   decimalPlaces: number;
+  currencyCode: string;
   currencySymbol: string;
   lastBackupAt: string | null;
   username: string;

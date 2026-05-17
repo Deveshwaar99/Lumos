@@ -25,7 +25,7 @@ import CalendarGrid from '../components/charts/CalendarGrid';
 import AccountAnalysisChart from '../components/charts/AccountAnalysisChart';
 import NetWorthChart from '../components/charts/NetWorthChart';
 import { colors, spacing, radius } from '../theme';
-import { formatMoney } from '../utils/money';
+import { clampMoneyDecimalPlaces, formatMoney } from '../utils/money';
 import {
   getTimePeriodRange,
   getTimePeriodLabel,
@@ -62,6 +62,7 @@ export default function AnalyticsScreen({
   navigation,
 }: TabScreenProps<'Analytics'>) {
   const { settings } = useSettingsStore();
+  const moneyDecimals = clampMoneyDecimalPlaces(settings.decimalPlaces);
   const insets = useSafeAreaInsets();
   const [anchor, setAnchor] = useState(() => new Date());
   const [period, setPeriod] = useState<TimePeriod>('month');
@@ -254,7 +255,7 @@ export default function AnalyticsScreen({
                     }}
                   >
                     {isExpense ? '-' : ''}
-                    {formatMoney(cat.total, settings.currencySymbol, 2)}
+                    {formatMoney(cat.total, settings.currencySymbol, moneyDecimals)}
                   </Text>
                 </View>
                 <View style={styles.barRow}>
@@ -369,6 +370,7 @@ export default function AnalyticsScreen({
             <NetWorthChart
               data={netWorthHistory}
               currencySymbol={settings.currencySymbol}
+              decimalPlaces={moneyDecimals}
             />
           </View>
         );
@@ -395,14 +397,14 @@ export default function AnalyticsScreen({
         <View style={styles.summaryRow}>
           <View style={styles.summaryItem}>
             <Text style={[styles.summaryValue, { color: colors.income }]}>
-              {formatMoney(summary.totalIncome, settings.currencySymbol, 0)}
+              {formatMoney(summary.totalIncome, settings.currencySymbol, moneyDecimals)}
             </Text>
             <Text style={styles.summaryLabel}>Income</Text>
           </View>
           <View style={styles.summaryDivider} />
           <View style={styles.summaryItem}>
             <Text style={[styles.summaryValue, { color: colors.expense }]}>
-              {formatMoney(summary.totalExpense, settings.currencySymbol, 0)}
+              {formatMoney(summary.totalExpense, settings.currencySymbol, moneyDecimals)}
             </Text>
             <Text style={styles.summaryLabel}>Spent</Text>
           </View>
@@ -415,7 +417,7 @@ export default function AnalyticsScreen({
               ]}
             >
               {summary.net >= 0 ? '+' : ''}
-              {formatMoney(summary.net, settings.currencySymbol, 0)}
+              {formatMoney(summary.net, settings.currencySymbol, moneyDecimals)}
             </Text>
             <Text style={styles.summaryLabel}>Net</Text>
           </View>

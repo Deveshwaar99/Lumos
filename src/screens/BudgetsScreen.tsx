@@ -9,7 +9,7 @@ import { useCategoryStore } from '../stores/useCategoryStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import BudgetProgressBar from '../components/BudgetProgressBar';
 import { colors, spacing, radius, elevation } from '../theme';
-import { formatMoney } from '../utils/money';
+import { clampMoneyDecimalPlaces, formatMoney } from '../utils/money';
 import { getMonthLabel, addMonths } from '../utils/dates';
 import type { TabScreenProps } from '../navigation/types';
 import type { BudgetWithSpent, Category } from '../models/types';
@@ -31,6 +31,7 @@ export default function BudgetsScreen({
   const [snackbar, setSnackbar] = React.useState('');
   const insets = useSafeAreaInsets();
   const sym = settings.currencySymbol;
+  const moneyDecimals = clampMoneyDecimalPlaces(settings.decimalPlaces);
 
   useFocusEffect(
     useCallback(() => {
@@ -121,7 +122,7 @@ export default function BudgetsScreen({
                   },
                 ]}
               >
-                {formatMoney(totalRemaining, sym, 2)}
+                {formatMoney(totalRemaining, sym, moneyDecimals)}
               </Text>
             </View>
             <View style={styles.heroPctWrap}>
@@ -155,7 +156,7 @@ export default function BudgetsScreen({
                 adjustsFontSizeToFit
                 style={styles.statValue}
               >
-                {formatMoney(totalBudgeted, sym, 2)}
+                {formatMoney(totalBudgeted, sym, moneyDecimals)}
               </Text>
             </View>
 
@@ -174,7 +175,7 @@ export default function BudgetsScreen({
                   totalSpent > totalBudgeted && { color: colors.expense },
                 ]}
               >
-                {formatMoney(totalSpent, sym, 2)}
+                {formatMoney(totalSpent, sym, moneyDecimals)}
               </Text>
             </View>
           </View>
@@ -273,8 +274,8 @@ export default function BudgetsScreen({
                   ellipsizeMode="tail"
                   style={styles.budgetMeta}
                 >
-                  {formatMoney(item.spent, sym, 2)} of{' '}
-                  {formatMoney(item.limitCents, sym, 2)}
+                  {formatMoney(item.spent, sym, moneyDecimals)} of{' '}
+                  {formatMoney(item.limitCents, sym, moneyDecimals)}
                 </Text>
               </View>
             </View>
@@ -305,6 +306,7 @@ export default function BudgetsScreen({
             limit={item.limitCents}
             alertThreshold={item.alertThresholdPct}
             currencySymbol={sym}
+            decimalPlaces={moneyDecimals}
             showLabels={false}
           />
         </View>
@@ -338,7 +340,12 @@ export default function BudgetsScreen({
         <TouchableOpacity
           activeOpacity={0.7}
           style={styles.setBudgetBtn}
-          onPress={() => navigation.navigate('BudgetForm', { month })}
+          onPress={() =>
+            navigation.navigate('BudgetForm', {
+              month,
+              categoryId: cat.id,
+            })
+          }
         >
           <Icon source="plus" size={14} color={colors.onPrimary} />
           <Text style={styles.setBudgetText}>Budget</Text>

@@ -160,7 +160,7 @@ export default function RecurringTransactionFormScreen({
       const payload = {
         type,
         totalAmountCents: totalCents,
-        currency: 'USD',
+        currency: settings.currencyCode,
         categoryId: isTransfer ? null : categoryId,
         note: note || null,
         accountId: account1Id,
