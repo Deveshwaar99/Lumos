@@ -1,30 +1,30 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { format } from 'date-fns';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  View,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
+  View,
 } from 'react-native';
-import { TextInput, Button, Text, Icon, Snackbar } from 'react-native-paper';
-import { format } from 'date-fns';
-import { useAccountStore } from '../stores/useAccountStore';
-import { useFDStore } from '../stores/useFDStore';
-import { useCategoryStore } from '../stores/useCategoryStore';
-import { useSettingsStore } from '../stores/useSettingsStore';
-import { fdService } from '../services/fdService';
+import { Button, Icon, Snackbar, Text, TextInput } from 'react-native-paper';
 import AccountPicker from '../components/AccountPicker';
 import CategoryPicker from '../components/CategoryPicker';
 import InlineCalendar from '../components/InlineCalendar';
-import { colors, spacing, radius } from '../theme';
-import { clampMoneyDecimalPlaces, dollarsToCents, formatMoney } from '../utils/money';
+import type { RootStackScreenProps } from '../navigation/types';
+import { fdService } from '../services/fdService';
+import { useAccountStore } from '../stores/useAccountStore';
+import { useCategoryStore } from '../stores/useCategoryStore';
+import { useFDStore } from '../stores/useFDStore';
+import { useSettingsStore } from '../stores/useSettingsStore';
+import { colors, radius, spacing } from '../theme';
 import {
   calculateFDInterest,
-  calculateTDS,
   calculateNetInterest,
+  calculateTDS,
 } from '../utils/fdCalculator';
-import type { RootStackScreenProps } from '../navigation/types';
+import { clampMoneyDecimalPlaces, dollarsToCents, formatMoney } from '../utils/money';
 
 type CalendarTarget = 'none' | 'start' | 'maturity';
 

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Budget, BudgetWithSpent } from '../models/types';
+import type { Budget, BudgetWithSpent } from '../models/types';
 import { budgetService } from '../services/budgetService';
 import { getCurrentMonth } from '../utils/dates';
 

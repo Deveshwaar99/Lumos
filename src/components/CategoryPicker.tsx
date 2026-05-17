@@ -10,12 +10,16 @@ import {
 } from 'react-native';
 import { Icon, Portal, Text, TextInput } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, spacing, radius } from '../theme';
 import type { Category } from '../models/types';
+import { colors, radius, spacing } from '../theme';
 
 const SCREEN_W = Dimensions.get('window').width;
 const GRID_GAP = spacing.sm;
 const CELL_W = (SCREEN_W - spacing.lg * 2 - GRID_GAP * 2) / 3;
+const PICKER_SURFACE = '#171A24';
+const PICKER_SURFACE_MUTED = '#22283A';
+const PICKER_BORDER = 'rgba(255, 255, 255, 0.10)';
+const PICKER_HAIRLINE = 'rgba(255, 255, 255, 0.08)';
 
 interface CategoryPickerProps {
   visible: boolean;
@@ -189,12 +193,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.45)',
   },
   sheet: {
-    backgroundColor: colors.surface,
+    backgroundColor: PICKER_SURFACE,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
     maxHeight: '82%',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: PICKER_BORDER,
   },
   grabber: {
     alignSelf: 'center',
@@ -222,7 +228,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.surfaceVariant,
+    backgroundColor: PICKER_SURFACE_MUTED,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -234,7 +240,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    backgroundColor: colors.surfaceVariant,
+    backgroundColor: PICKER_SURFACE_MUTED,
     borderRadius: radius.lg,
     fontSize: 15,
     marginBottom: 0,
@@ -266,12 +272,12 @@ const styles = StyleSheet.create({
   },
   gridCell: {
     borderRadius: radius.lg,
-    backgroundColor: colors.surfaceVariant,
+    backgroundColor: PICKER_SURFACE_MUTED,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.xs,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: PICKER_HAIRLINE,
   },
   gridCellSelected: {
     borderColor: colors.primary,

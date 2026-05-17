@@ -1,28 +1,28 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import React, { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import {
-  View,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
+  View,
 } from 'react-native';
 import {
-  TextInput,
   Button,
-  SegmentedButtons,
-  Text,
   Icon,
+  SegmentedButtons,
   Snackbar,
+  Text,
+  TextInput,
 } from 'react-native-paper';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useCategoryStore } from '../stores/useCategoryStore';
-import { categorySchema } from '../models/schemas';
-import { colors, spacing, radius, CATEGORY_COLORS } from '../theme';
-import { CATEGORY_ICONS } from '../constants/icons';
-import type { RootStackScreenProps } from '../navigation/types';
 import type { z } from 'zod';
+import { CATEGORY_ICONS } from '../constants/icons';
+import { categorySchema } from '../models/schemas';
+import type { RootStackScreenProps } from '../navigation/types';
+import { useCategoryStore } from '../stores/useCategoryStore';
+import { CATEGORY_COLORS, colors, radius, spacing } from '../theme';
 
 type FormData = z.infer<typeof categorySchema>;
 

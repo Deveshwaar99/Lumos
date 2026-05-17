@@ -1,4 +1,5 @@
 import * as SQLite from 'expo-sqlite';
+import { SCHEMA_VERSION } from './migrations';
 import { runMigrations } from './migrations';
 import { seedDatabase } from './seed';
 
@@ -38,5 +39,10 @@ export async function resetDatabase(): Promise<void> {
   await database.execAsync('DELETE FROM categories');
   await database.execAsync('DELETE FROM accounts');
   await database.execAsync('DELETE FROM settings');
+  await database.execAsync('DELETE FROM schema_version');
+  await database.runAsync(
+    'INSERT INTO schema_version (version) VALUES (?)',
+    SCHEMA_VERSION,
+  );
   await seedDatabase(database);
 }

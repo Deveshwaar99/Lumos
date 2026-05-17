@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Category } from '../models/types';
+import type { Category } from '../models/types';
 import { categoryService } from '../services/categoryService';
 
 interface CategoryState {

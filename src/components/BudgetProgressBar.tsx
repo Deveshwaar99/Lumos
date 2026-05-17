@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Text, ProgressBar } from 'react-native-paper';
-import { colors, spacing, radius } from '../theme';
+import { StyleSheet, View } from 'react-native';
+import { ProgressBar, Text } from 'react-native-paper';
+import { colors, radius, spacing } from '../theme';
 import { formatMoney } from '../utils/money';
 
 interface BudgetProgressBarProps {

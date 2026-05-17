@@ -1,20 +1,22 @@
 import React, { memo } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Text, Icon } from 'react-native-paper';
-import { colors, spacing, radius } from '../theme';
-import { formatMoney } from '../utils/money';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Icon, Text } from 'react-native-paper';
+import type { Account, Category, TransactionWithSplits } from '../models/types';
+import { colors, spacing } from '../theme';
 import { formatDateTimeShort } from '../utils/dates';
-import type { TransactionWithSplits, Category, Account } from '../models/types';
+import { formatMoney } from '../utils/money';
+import AmountText from './ui/AmountText';
+import { Chip } from './ui/Chip';
 
 const BADGE_COLORS = [
   '#FC4C02',
-  '#5C6BC0',
-  '#26A69A',
+  '#6FB7FF',
+  '#34D8C9',
   '#AB47BC',
   '#42A5F5',
-  '#FF7043',
+  '#FF8A65',
   '#78909C',
-  '#8D6E63',
+  '#A1887F',
   '#EC407A',
   '#9CCC65',
 ];
@@ -51,7 +53,7 @@ function TransactionItemComponent({
     : isIncome
       ? colors.income
       : colors.expense;
-  const prefix = isTransfer ? '' : isIncome ? '+' : '-';
+  const signPrefix = isTransfer ? '' : isIncome ? '+' : '-';
 
   const iconSource = isTransfer
     ? 'swap-horizontal'
@@ -65,7 +67,7 @@ function TransactionItemComponent({
 
   const titleText = isTransfer ? 'Transfer' : (category?.name ?? 'Unknown');
 
-const { accountId: fromAid, account2Id: toAid } = transaction;
+  const { accountId: fromAid, account2Id: toAid } = transaction;
   const fromAcc =
     isTransfer && fromAid ? accountMap[fromAid] ?? null : null;
   const toAcc = isTransfer && toAid ? accountMap[toAid] ?? null : null;
@@ -75,7 +77,7 @@ const { accountId: fromAid, account2Id: toAid } = transaction;
     currencySymbol,
     decimalPlaces,
   );
-  const accessibilityLabel = `${titleText}, ${prefix}${amountStr}`;
+  const accessibilityLabel = `${titleText}, ${signPrefix}${amountStr}`;
 
   return (
     <TouchableOpacity
@@ -85,7 +87,12 @@ const { accountId: fromAid, account2Id: toAid } = transaction;
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
     >
-      <View style={[styles.iconCircle, { backgroundColor: iconBg }]}>
+      <View
+        style={[
+          styles.iconCircle,
+          { backgroundColor: iconBg, borderColor: `${iconColor}40` },
+        ]}
+      >
         <Icon source={iconSource as any} size={20} color={iconColor} />
       </View>
       <View style={styles.details}>
@@ -94,16 +101,11 @@ const { accountId: fromAid, account2Id: toAid } = transaction;
         </Text>
         {isTransfer ? (
           <View style={styles.badgeRow}>
-            <View
-              style={[
-                styles.badge,
-                { backgroundColor: `${colors.transfer}22` },
-              ]}
-            >
-              <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.badgeText, { color: colors.transfer }]}>
-                {fromAcc?.name ?? '?'} → {toAcc?.name ?? '?'}
-              </Text>
-            </View>
+            <Chip
+              label={`${fromAcc?.name ?? '?'} → ${toAcc?.name ?? '?'}`}
+              backgroundColor={`${colors.transfer}22`}
+              textColor={colors.transfer}
+            />
           </View>
         ) : (
           <View style={styles.badgeRow}>
@@ -112,14 +114,12 @@ const { accountId: fromAid, account2Id: toAid } = transaction;
               const name = acc?.name ?? '?';
               const badgeColor = hashColor(name);
               return (
-                <View
+                <Chip
                   key={s.id}
-                  style={[styles.badge, { backgroundColor: `${badgeColor}22` }]}
-                >
-                  <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.badgeText, { color: badgeColor }]}>
-                    {name}
-                  </Text>
-                </View>
+                  label={name}
+                  backgroundColor={`${badgeColor}22`}
+                  textColor={badgeColor}
+                />
               );
             })}
           </View>
@@ -131,14 +131,16 @@ const { accountId: fromAid, account2Id: toAid } = transaction;
         ) : null}
       </View>
       <View style={styles.right}>
-        <Text
-          variant="titleSmall"
+        <AmountText
+          cents={transaction.totalAmountCents}
+          currencySymbol={currencySymbol}
+          decimalPlaces={decimalPlaces}
+          signPrefix={signPrefix}
+          tone="custom"
+          customColor={amountColor}
+          size="body"
           numberOfLines={1}
-          style={{ color: amountColor, fontWeight: '600' }}
-        >
-          {prefix}
-          {formatMoney(transaction.totalAmountCents, currencySymbol, decimalPlaces)}
-        </Text>
+        />
         <Text variant="bodySmall" style={styles.date}>
           {formatDateTimeShort(transaction.date)}
         </Text>
@@ -158,11 +160,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   iconCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
   },
   details: { flex: 1, marginLeft: spacing.md },
   title: { color: colors.text, fontWeight: '600', fontSize: 15 },
@@ -171,15 +174,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 6,
     marginTop: 2,
-  },
-  badge: {
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: radius.capsule,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '600',
   },
   note: { color: colors.textSecondary, marginTop: 2 },
   right: { alignItems: 'flex-end', marginLeft: 8, flexShrink: 0 },

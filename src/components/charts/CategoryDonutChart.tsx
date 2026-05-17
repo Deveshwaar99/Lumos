@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import Svg, { Circle, G } from 'react-native-svg';
-import { colors, spacing } from '../../theme';
 import type { CategoryBreakdown } from '../../models/types';
+import { colors, spacing } from '../../theme';
 
 const CHART_SIZE = 150;
 const RING_RADIUS = CHART_SIZE * 0.36;

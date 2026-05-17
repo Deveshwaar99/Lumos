@@ -1,23 +1,23 @@
-import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { colors } from '../theme';
-import type { RootStackParamList } from './types';
-import TabNavigator from './TabNavigator';
-import AddTransactionScreen from '../screens/AddTransactionScreen';
-import TransactionDetailScreen from '../screens/TransactionDetailScreen';
-import CategoryFormScreen from '../screens/CategoryFormScreen';
+import React from 'react';
 import AccountFormScreen from '../screens/AccountFormScreen';
 import AccountTransactionsScreen from '../screens/AccountTransactionsScreen';
-import CategoryTransactionsScreen from '../screens/CategoryTransactionsScreen';
+import AddTransactionScreen from '../screens/AddTransactionScreen';
+import BackupRestoreScreen from '../screens/BackupRestoreScreen';
 import BudgetFormScreen from '../screens/BudgetFormScreen';
-import FDFormScreen from '../screens/FDFormScreen';
+import CategoryFormScreen from '../screens/CategoryFormScreen';
+import CategoryTransactionsScreen from '../screens/CategoryTransactionsScreen';
 import FDDetailScreen from '../screens/FDDetailScreen';
+import FDFormScreen from '../screens/FDFormScreen';
 import RecurringTransactionFormScreen from '../screens/RecurringTransactionFormScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 import StockDetailScreen from '../screens/StockDetailScreen';
 import StockMovementFormScreen from '../screens/StockMovementFormScreen';
 import StockSmsLogScreen from '../screens/StockSmsLogScreen';
-import BackupRestoreScreen from '../screens/BackupRestoreScreen';
-import SettingsScreen from '../screens/SettingsScreen';
+import TransactionDetailScreen from '../screens/TransactionDetailScreen';
+import { colors } from '../theme';
+import TabNavigator from './TabNavigator';
+import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 

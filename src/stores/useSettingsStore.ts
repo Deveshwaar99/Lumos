@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { AppSettings } from '../models/types';
-import { getDatabase } from '../db/database';
 import { DEFAULT_SETTINGS } from '../constants/defaults';
+import { getDatabase } from '../db/database';
+import type { AppSettings } from '../models/types';
 
 interface SettingsRow {
   key: string;

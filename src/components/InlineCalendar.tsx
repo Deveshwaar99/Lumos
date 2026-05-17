@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Calendar, DateData } from 'react-native-calendars';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Calendar, type DateData } from 'react-native-calendars';
 import { Text } from 'react-native-paper';
 import { colors, spacing } from '../theme';
 
@@ -10,6 +10,7 @@ interface InlineCalendarProps {
   onDone: () => void;
   onDismiss?: () => void;
   onClear?: () => void;
+  surfaceColor?: string;
   /**
    * `fullscreen` — parent must have a bounded height (e.g. StyleSheet.absoluteFill).
    * Backdrop fills space above the sheet; tap dismisses.
@@ -24,13 +25,14 @@ export default function InlineCalendar({
   onDone,
   onDismiss,
   onClear,
+  surfaceColor = colors.surface,
   variant = 'fullscreen',
 }: InlineCalendarProps) {
   const handleDismiss = onDismiss ?? onDone;
   const isSheet = variant === 'sheet';
 
   const body = (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: surfaceColor }]}>
       <View style={styles.header}>
         {onClear ? (
           <TouchableOpacity
@@ -63,7 +65,7 @@ export default function InlineCalendar({
           },
         }}
         theme={{
-          calendarBackground: colors.surface,
+          calendarBackground: surfaceColor,
           monthTextColor: colors.text,
           textMonthFontWeight: '700' as const,
           textMonthFontSize: 16,
@@ -79,7 +81,7 @@ export default function InlineCalendar({
           selectedDayBackgroundColor: colors.primary,
           selectedDayTextColor: '#FFFFFF',
         }}
-        style={styles.calendar}
+        style={[styles.calendar, { backgroundColor: surfaceColor }]}
       />
     </View>
   );
@@ -113,7 +115,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   container: {
-    backgroundColor: colors.surface,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     overflow: 'hidden',
@@ -125,7 +126,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderBottomWidth: 0.5,
-    borderBottomColor: colors.border,
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
   },
   cancelText: {
     color: colors.primary,
@@ -148,7 +149,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   calendar: {
-    backgroundColor: colors.surface,
     paddingBottom: spacing.md,
   },
 });

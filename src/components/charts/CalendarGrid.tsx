@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
-import { colors, spacing, radius } from '../../theme';
-import { getMonthLabel } from '../../utils/dates';
 import type { DailyCashFlow } from '../../models/types';
+import { colors, radius, spacing } from '../../theme';
+import { getMonthLabel } from '../../utils/dates';
 
 interface CalendarGridProps {
   month: string;

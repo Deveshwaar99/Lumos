@@ -1,1 +1,1 @@
-export { colors as THEME, CATEGORY_COLORS } from '../theme';
+export { CATEGORY_COLORS, colors as THEME } from '../theme';

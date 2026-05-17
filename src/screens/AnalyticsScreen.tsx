@@ -1,45 +1,48 @@
+import { useFocusEffect } from '@react-navigation/native';
+import { format } from 'date-fns';
 import React, {
-  useState,
   useCallback,
-  useMemo,
   useEffect,
+  useMemo,
   useRef,
+  useState,
 } from 'react';
 import {
-  View,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  View,
 } from 'react-native';
-import { Text, Icon, ActivityIndicator } from 'react-native-paper';
-import { useFocusEffect } from '@react-navigation/native';
+import { ActivityIndicator, Icon, Text } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { format } from 'date-fns';
-import { analyticsService } from '../services/analyticsService';
-import { useSettingsStore } from '../stores/useSettingsStore';
-import PeriodNavigator from '../components/PeriodNavigator';
-import TimePeriodPicker from '../components/TimePeriodPicker';
+import AccountAnalysisChart from '../components/charts/AccountAnalysisChart';
+import CalendarGrid from '../components/charts/CalendarGrid';
 import CategoryDonutChart from '../components/charts/CategoryDonutChart';
 import FlowLineChart from '../components/charts/FlowLineChart';
-import CalendarGrid from '../components/charts/CalendarGrid';
-import AccountAnalysisChart from '../components/charts/AccountAnalysisChart';
 import NetWorthChart from '../components/charts/NetWorthChart';
-import { colors, spacing, radius } from '../theme';
-import { clampMoneyDecimalPlaces, formatMoney } from '../utils/money';
+import PeriodNavigator from '../components/PeriodNavigator';
+import TimePeriodPicker from '../components/TimePeriodPicker';
+import AmountText from '../components/ui/AmountText';
+import { GlassCard } from '../components/ui/GlassCard';
+import type {
+  AccountPeriodBalance,
+  CategoryBreakdown,
+  DailyCashFlow,
+  MonthSummary,
+  NetWorthPoint,
+} from '../models/types';
+import type { TabScreenProps } from '../navigation/types';
+import { analyticsService } from '../services/analyticsService';
+import { useSettingsStore } from '../stores/useSettingsStore';
+import { colors, radius, spacing } from '../theme';
 import {
-  getTimePeriodRange,
+  getDaysInRange,
   getTimePeriodLabel,
+  getTimePeriodRange,
   stepAnchor,
   type TimePeriod,
 } from '../utils/dates';
-import type { TabScreenProps } from '../navigation/types';
-import type {
-  MonthSummary,
-  CategoryBreakdown,
-  DailyCashFlow,
-  AccountPeriodBalance,
-  NetWorthPoint,
-} from '../models/types';
+import { clampMoneyDecimalPlaces } from '../utils/money';
 
 type AnalysisView =
   | 'expense_overview'
@@ -80,6 +83,10 @@ export default function AnalyticsScreen({
     [anchor, period],
   );
   const monthKey = useMemo(() => format(anchor, 'yyyy-MM'), [anchor]);
+  const periodDayCount = useMemo(
+    () => Math.max(1, getDaysInRange(range.start, range.end).length),
+    [range.start, range.end],
+  );
 
   const [summary, setSummary] = useState<MonthSummary>({
     totalIncome: 0,
@@ -98,6 +105,18 @@ export default function AnalyticsScreen({
     [],
   );
   const [netWorthHistory, setNetWorthHistory] = useState<NetWorthPoint[]>([]);
+  const avgIncomePerDay = useMemo(
+    () => Math.round(summary.totalIncome / periodDayCount),
+    [summary.totalIncome, periodDayCount],
+  );
+  const avgExpensePerDay = useMemo(
+    () => Math.round(summary.totalExpense / periodDayCount),
+    [summary.totalExpense, periodDayCount],
+  );
+  const avgNetPerDay = useMemo(
+    () => Math.round(summary.net / periodDayCount),
+    [summary.net, periodDayCount],
+  );
 
   const loadedViewRef = useRef<{
     view: AnalysisView;
@@ -246,17 +265,15 @@ export default function AnalyticsScreen({
                   <Text variant="bodyMedium" style={styles.catName}>
                     {cat.categoryName}
                   </Text>
-                  <Text
-                    variant="bodyMedium"
-                    style={{
-                      color: isExpense ? colors.expense : colors.income,
-                      fontWeight: '700',
-                      fontSize: 13,
-                    }}
-                  >
-                    {isExpense ? '-' : ''}
-                    {formatMoney(cat.total, settings.currencySymbol, moneyDecimals)}
-                  </Text>
+                  <AmountText
+                    cents={cat.total}
+                    currencySymbol={settings.currencySymbol}
+                    decimalPlaces={moneyDecimals}
+                    signPrefix={isExpense ? '-' : ''}
+                    tone={isExpense ? 'expense' : 'income'}
+                    size="body"
+                    style={{ fontSize: 13, fontWeight: '700' }}
+                  />
                 </View>
                 <View style={styles.barRow}>
                   <View style={styles.barTrack}>
@@ -394,34 +411,85 @@ export default function AnalyticsScreen({
         />
 
         {/* Summary figures */}
-        <View style={styles.summaryRow}>
-          <View style={styles.summaryItem}>
-            <Text style={[styles.summaryValue, { color: colors.income }]}>
-              {formatMoney(summary.totalIncome, settings.currencySymbol, moneyDecimals)}
-            </Text>
-            <Text style={styles.summaryLabel}>Income</Text>
+        <GlassCard style={styles.summaryGlass} intensity={30} border>
+          <View style={styles.summaryRow}>
+            <View style={styles.summaryItem}>
+              <AmountText
+                cents={summary.totalIncome}
+                currencySymbol={settings.currencySymbol}
+                decimalPlaces={moneyDecimals}
+                tone="income"
+                size="body"
+                style={styles.summaryValue}
+              />
+              <Text style={styles.summaryLabel}>Income</Text>
+            </View>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryItem}>
+              <AmountText
+                cents={summary.totalExpense}
+                currencySymbol={settings.currencySymbol}
+                decimalPlaces={moneyDecimals}
+                signPrefix="-"
+                tone="expense"
+                size="body"
+                style={styles.summaryValue}
+              />
+              <Text style={styles.summaryLabel}>Spent</Text>
+            </View>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryItem}>
+              <AmountText
+                cents={summary.net}
+                currencySymbol={settings.currencySymbol}
+                decimalPlaces={moneyDecimals}
+                signPrefix={summary.net >= 0 ? '+' : ''}
+                tone={summary.net >= 0 ? 'income' : 'expense'}
+                size="body"
+                style={styles.summaryValue}
+              />
+              <Text style={styles.summaryLabel}>Net</Text>
+            </View>
           </View>
-          <View style={styles.summaryDivider} />
-          <View style={styles.summaryItem}>
-            <Text style={[styles.summaryValue, { color: colors.expense }]}>
-              {formatMoney(summary.totalExpense, settings.currencySymbol, moneyDecimals)}
-            </Text>
-            <Text style={styles.summaryLabel}>Spent</Text>
+          <View style={styles.summaryFooter}>
+            <View style={styles.summaryFooterItem}>
+              <Text style={styles.summaryFooterLabel}>Daily Avg In</Text>
+              <AmountText
+                cents={avgIncomePerDay}
+                currencySymbol={settings.currencySymbol}
+                decimalPlaces={moneyDecimals}
+                tone="income"
+                size="body"
+                style={styles.summaryFooterValue}
+              />
+            </View>
+            <View style={styles.summaryFooterDivider} />
+            <View style={styles.summaryFooterItem}>
+              <Text style={styles.summaryFooterLabel}>Daily Avg Out</Text>
+              <AmountText
+                cents={avgExpensePerDay}
+                currencySymbol={settings.currencySymbol}
+                decimalPlaces={moneyDecimals}
+                tone="expense"
+                size="body"
+                style={styles.summaryFooterValue}
+              />
+            </View>
+            <View style={styles.summaryFooterDivider} />
+            <View style={styles.summaryFooterItem}>
+              <Text style={styles.summaryFooterLabel}>Daily Avg Net</Text>
+              <AmountText
+                cents={avgNetPerDay}
+                currencySymbol={settings.currencySymbol}
+                decimalPlaces={moneyDecimals}
+                signPrefix={avgNetPerDay >= 0 ? '+' : ''}
+                tone={avgNetPerDay >= 0 ? 'income' : 'expense'}
+                size="body"
+                style={styles.summaryFooterValue}
+              />
+            </View>
           </View>
-          <View style={styles.summaryDivider} />
-          <View style={styles.summaryItem}>
-            <Text
-              style={[
-                styles.summaryValue,
-                { color: summary.net >= 0 ? colors.income : colors.expense },
-              ]}
-            >
-              {summary.net >= 0 ? '+' : ''}
-              {formatMoney(summary.net, settings.currencySymbol, moneyDecimals)}
-            </Text>
-            <Text style={styles.summaryLabel}>Net</Text>
-          </View>
-        </View>
+        </GlassCard>
 
         {/* View selector + chart body */}
         <View style={styles.bodyContent}>
@@ -489,14 +557,15 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingBottom: 100 },
 
+  summaryGlass: {
+    marginHorizontal: spacing.cardInset,
+    marginBottom: spacing.md,
+  },
   summaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    marginHorizontal: spacing.cardInset,
-    borderRadius: radius.lg,
     paddingVertical: 10,
-    marginBottom: spacing.md,
+    paddingHorizontal: spacing.xs,
   },
   summaryItem: {
     flex: 1,
@@ -516,6 +585,35 @@ const styles = StyleSheet.create({
   summaryDivider: {
     width: 1,
     height: 28,
+    backgroundColor: colors.border,
+  },
+  summaryFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+    paddingVertical: spacing.xs + 2,
+    paddingHorizontal: spacing.xs,
+  },
+  summaryFooterItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  summaryFooterLabel: {
+    color: colors.textTertiary,
+    fontSize: 9,
+    fontWeight: '600',
+    letterSpacing: 0.25,
+    marginBottom: 2,
+    textAlign: 'center',
+  },
+  summaryFooterValue: {
+    fontWeight: '700',
+    fontSize: 11,
+  },
+  summaryFooterDivider: {
+    width: 1,
+    height: 20,
     backgroundColor: colors.border,
   },
 

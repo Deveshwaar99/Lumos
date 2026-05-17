@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Text, Icon, Button } from 'react-native-paper';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { colors, spacing, radius } from '../theme';
+import React, { useCallback, useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { Button, Icon, Text } from 'react-native-paper';
+import { colors, radius, spacing } from '../theme';
 
 const { AuthenticationType } = LocalAuthentication;
 

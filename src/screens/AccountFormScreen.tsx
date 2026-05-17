@@ -1,23 +1,23 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import React, { useEffect, useState } from 'react';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import {
-  View,
-  ScrollView,
-  StyleSheet,
   KeyboardAvoidingView,
   Platform,
   TextInput as RNTextInput,
+  ScrollView,
+  StyleSheet,
   TouchableOpacity,
+  View,
 } from 'react-native';
-import { Button, Text, Icon, Chip, Snackbar } from 'react-native-paper';
-import { useForm, Controller, useWatch } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useAccountStore } from '../stores/useAccountStore';
-import { z } from 'zod';
+import { Button, Chip, Icon, Snackbar, Text } from 'react-native-paper';
+import type { z } from 'zod';
 import { accountSchema } from '../models/schemas';
-import { colors, spacing, radius } from '../theme';
-import { dollarsToCents, centsToDollars } from '../utils/money';
-import { useSettingsStore } from '../stores/useSettingsStore';
 import type { RootStackScreenProps } from '../navigation/types';
+import { useAccountStore } from '../stores/useAccountStore';
+import { useSettingsStore } from '../stores/useSettingsStore';
+import { colors, radius, spacing } from '../theme';
+import { centsToDollars, dollarsToCents } from '../utils/money';
 
 const ACCOUNT_TYPES = [
   { value: 'cash', label: 'Cash' },

@@ -1,32 +1,32 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { format } from 'date-fns';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  View,
+  Alert,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Alert,
+  View,
 } from 'react-native';
-import { Text, Icon, Snackbar } from 'react-native-paper';
-import { useFocusEffect } from '@react-navigation/native';
+import { Icon, Snackbar, Text } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { format } from 'date-fns';
+import type { FixedDeposit, Transaction } from '../models/types';
+import type { RootStackScreenProps } from '../navigation/types';
+import { fdService } from '../services/fdService';
+import { transactionService } from '../services/transactionService';
 import { useAccountStore } from '../stores/useAccountStore';
 import { useCategoryStore } from '../stores/useCategoryStore';
 import { useFDStore } from '../stores/useFDStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
-import { fdService } from '../services/fdService';
-import { transactionService } from '../services/transactionService';
-import { colors, spacing, radius } from '../theme';
-import { clampMoneyDecimalPlaces, formatMoney } from '../utils/money';
+import { colors, radius, spacing } from '../theme';
 import {
   calculateFDInterest,
-  calculateTDS,
   calculateNetInterest,
-  getDaysRemaining,
+  calculateTDS,
   daysBetween,
+  getDaysRemaining,
 } from '../utils/fdCalculator';
-import type { RootStackScreenProps } from '../navigation/types';
-import type { FixedDeposit, Transaction } from '../models/types';
+import { clampMoneyDecimalPlaces, formatMoney } from '../utils/money';
 
 const STATUS_CONFIG = {
   active: {

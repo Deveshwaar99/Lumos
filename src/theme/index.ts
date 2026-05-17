@@ -1,12 +1,19 @@
-import { MD3DarkTheme } from 'react-native-paper';
-import { colors, CATEGORY_COLORS } from './colors';
-import { spacing } from './spacing';
-import { radius } from './radius';
-import { typography } from './typography';
+import { configureFonts, MD3DarkTheme } from 'react-native-paper';
+import { CATEGORY_COLORS, colors } from './colors';
 import { elevation } from './elevation';
+import { interFontAssets, interFontFamily, interPaperFontConfig } from './fonts';
+import { radius } from './radius';
+import { spacing } from './spacing';
+import { typography } from './typography';
+
+const fonts = configureFonts({
+  isV3: true,
+  config: interPaperFontConfig,
+});
 
 export const paperTheme = {
   ...MD3DarkTheme,
+  fonts,
   colors: {
     ...MD3DarkTheme.colors,
     primary: colors.primary,
@@ -48,6 +55,16 @@ export const paperTheme = {
   roundness: radius.md,
 };
 
-export { colors, CATEGORY_COLORS, spacing, radius, typography, elevation };
+export {
+  colors,
+  CATEGORY_COLORS,
+  spacing,
+  radius,
+  typography,
+  elevation,
+  interFontAssets,
+  interFontFamily,
+  interPaperFontConfig,
+};
 
 export const THEME = colors;

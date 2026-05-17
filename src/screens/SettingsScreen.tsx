@@ -1,31 +1,33 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { format } from 'date-fns';
+import Constants from 'expo-constants';
+import * as LocalAuthentication from 'expo-local-authentication';
+import type React from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  ScrollView,
-  StyleSheet,
   Alert,
   KeyboardAvoidingView,
   Platform,
-  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
   Switch,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Text, Snackbar, TextInput, Icon } from 'react-native-paper';
-import * as LocalAuthentication from 'expo-local-authentication';
-import Constants from 'expo-constants';
-import { format } from 'date-fns';
-import { useSettingsStore } from '../stores/useSettingsStore';
-import { seedDemoTransactions, seedDemoStockData } from '../db/seed';
+import { Icon, Snackbar, Text, TextInput } from 'react-native-paper';
 import { getDatabase, resetDatabase } from '../db/database';
-import { useTransactionStore } from '../stores/useTransactionStore';
-import { useCategoryStore } from '../stores/useCategoryStore';
-import { useAccountStore } from '../stores/useAccountStore';
-import { useBudgetStore } from '../stores/useBudgetStore';
-import { useFDStore } from '../stores/useFDStore';
-import { useRecurringStore } from '../stores/useRecurringStore';
-import { useStockStore } from '../stores/useStockStore';
-import { colors, spacing, radius } from '../theme';
+import { SCHEMA_VERSION } from '../db/migrations';
+import { seedDemoStockData, seedDemoTransactions } from '../db/seed';
 import type { AppSettings } from '../models/types';
 import type { RootStackScreenProps } from '../navigation/types';
+import { useAccountStore } from '../stores/useAccountStore';
+import { useBudgetStore } from '../stores/useBudgetStore';
+import { useCategoryStore } from '../stores/useCategoryStore';
+import { useFDStore } from '../stores/useFDStore';
+import { useRecurringStore } from '../stores/useRecurringStore';
+import { useSettingsStore } from '../stores/useSettingsStore';
+import { useStockStore } from '../stores/useStockStore';
+import { useTransactionStore } from '../stores/useTransactionStore';
+import { colors, radius, spacing } from '../theme';
 
 const DECIMAL_PLACE_OPTIONS = [0, 2, 3, 4] as const;
 
@@ -73,7 +75,7 @@ function CardRow({
   );
 }
 
-function formatAppMeta(): string {
+function formatAppMeta(dbSchemaVersion?: number | null): string {
   const version = Constants.expoConfig?.version ?? '—';
   const raw = Constants.expoConfig?.extra?.releaseDate;
   let dateLabel = '';
@@ -81,7 +83,11 @@ function formatAppMeta(): string {
     const [y, m, d] = raw.split('-').map(Number);
     dateLabel = format(new Date(y, m - 1, d), 'MMM d, yyyy');
   }
-  const parts = [`v${version}`, dateLabel, 'Built by Devesh'].filter(Boolean);
+  const schemaLabel =
+    typeof dbSchemaVersion === 'number'
+      ? `v${version} (${dbSchemaVersion})`
+      : `v${version} (${SCHEMA_VERSION})`;
+  const parts = [schemaLabel, dateLabel, 'Built by Devesh'].filter(Boolean);
   return parts.join(' · ');
 }
 
@@ -100,10 +106,23 @@ export default function SettingsScreen({
   const [localName, setLocalName] = useState(settings.username);
   const [localCode, setLocalCode] = useState(settings.currencyCode);
   const [localSymbol, setLocalSymbol] = useState(settings.currencySymbol);
+  const [dbSchemaVersion, setDbSchemaVersion] = useState<number | null>(null);
   const debounceRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   useEffect(() => {
     loadSettings();
+    getDatabase()
+      .then((db) =>
+        db.getFirstAsync<{ version: number | null }>(
+          'SELECT version FROM schema_version ORDER BY version DESC LIMIT 1',
+        ),
+      )
+      .then((result) => {
+        setDbSchemaVersion(result?.version ?? SCHEMA_VERSION);
+      })
+      .catch(() => {
+        setDbSchemaVersion(SCHEMA_VERSION);
+      });
     return () => {
       Object.values(debounceRef.current).forEach(clearTimeout);
     };
@@ -406,7 +425,7 @@ export default function SettingsScreen({
             </View>
 
             <Text style={styles.appName}>Lumos</Text>
-            <Text style={styles.appMeta}>{formatAppMeta()}</Text>
+            <Text style={styles.appMeta}>{formatAppMeta(dbSchemaVersion)}</Text>
             <Text style={styles.copyright}>
               {'\u00A9'} 2026 Devesh. All rights reserved.
             </Text>

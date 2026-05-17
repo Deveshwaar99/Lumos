@@ -1,20 +1,20 @@
+import { format } from 'date-fns';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  View,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
+  View,
 } from 'react-native';
-import { TextInput, Text, Button, Icon, Snackbar } from 'react-native-paper';
-import { format } from 'date-fns';
+import { Button, Icon, Snackbar, Text, TextInput } from 'react-native-paper';
 import InlineCalendar from '../components/InlineCalendar';
-import { useStockStore } from '../stores/useStockStore';
-import { stockService } from '../services/stockService';
-import { colors, spacing, radius } from '../theme';
-import type { RootStackScreenProps } from '../navigation/types';
 import type { StockMovementDirection } from '../models/types';
+import type { RootStackScreenProps } from '../navigation/types';
+import { stockService } from '../services/stockService';
+import { useStockStore } from '../stores/useStockStore';
+import { colors, radius, spacing } from '../theme';
 
 export default function StockMovementFormScreen({
   navigation,

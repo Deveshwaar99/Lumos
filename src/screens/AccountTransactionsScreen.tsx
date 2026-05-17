@@ -1,19 +1,20 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { View, SectionList, StyleSheet, RefreshControl } from 'react-native';
-import { Text, Icon, Divider, FAB, Snackbar } from 'react-native-paper';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { RefreshControl, SectionList, StyleSheet, View } from 'react-native';
+import { Divider, Icon, Snackbar, Text } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import DateHeader from '../components/DateHeader';
+import TransactionItem from '../components/TransactionItem';
+import { GlowFAB } from '../components/ui';
+import AmountText from '../components/ui/AmountText';
+import type { TransactionWithSplits } from '../models/types';
+import type { RootStackScreenProps } from '../navigation/types';
+import { transactionService } from '../services/transactionService';
 import { useAccountStore } from '../stores/useAccountStore';
 import { useCategoryStore } from '../stores/useCategoryStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
-import { transactionService } from '../services/transactionService';
-
-import TransactionItem from '../components/TransactionItem';
-import DateHeader from '../components/DateHeader';
-import { colors, spacing, radius } from '../theme';
-import { clampMoneyDecimalPlaces, formatMoney } from '../utils/money';
-import type { RootStackScreenProps } from '../navigation/types';
-import type { TransactionWithSplits } from '../models/types';
+import { colors, radius, spacing } from '../theme';
+import { clampMoneyDecimalPlaces } from '../utils/money';
 
 interface TransactionSection {
   title: string;
@@ -105,16 +106,16 @@ export default function AccountTransactionsScreen({
         <Text style={styles.headerName} numberOfLines={1} ellipsizeMode="tail">
           {account?.name ?? 'Account'}
         </Text>
-        <Text
-          style={[
-            styles.headerBalance,
-            balance < 0 && { color: colors.expense },
-          ]}
+        <AmountText
+          cents={balance}
+          currencySymbol={settings.currencySymbol}
+          decimalPlaces={moneyDecimals}
+          tone={balance < 0 ? 'expense' : 'default'}
+          size="hero"
           numberOfLines={1}
           adjustsFontSizeToFit
-        >
-          {formatMoney(balance, settings.currencySymbol, moneyDecimals)}
-        </Text>
+          style={styles.headerBalance}
+        />
       </View>
 
       <SectionList
@@ -162,15 +163,14 @@ export default function AccountTransactionsScreen({
         stickySectionHeadersEnabled={false}
       />
 
-      <FAB
+      <GlowFAB
         icon="plus"
-        style={[styles.fab, { bottom: insets.bottom + 16 }]}
+        bottomInset={insets.bottom + 16}
         onPress={() =>
           navigation.navigate('AddTransaction', {
             accountId,
           })
         }
-        color={colors.onPrimary}
         accessibilityLabel="Add transaction"
       />
 
@@ -238,10 +238,4 @@ const styles = StyleSheet.create({
     paddingVertical: 80,
   },
   emptyText: { color: colors.textSecondary, marginTop: spacing.lg },
-
-  fab: {
-    position: 'absolute',
-    right: spacing.lg,
-    backgroundColor: colors.primary,
-  },
 });

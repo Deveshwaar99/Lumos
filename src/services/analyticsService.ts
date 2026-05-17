@@ -1,13 +1,13 @@
 import { getDatabase } from '../db/database';
-import {
-  MonthSummary,
-  CategoryBreakdown,
-  DailyCashFlow,
+import type {
   AccountBalance,
   AccountPeriodBalance,
+  CategoryBreakdown,
+  DailyCashFlow,
+  MonthSummary,
   NetWorthPoint,
 } from '../models/types';
-import { getMonthRange, getDaysInMonth, getDaysInRange } from '../utils/dates';
+import { getDaysInMonth, getDaysInRange, getMonthRange } from '../utils/dates';
 
 export const analyticsService = {
   async getMonthSummary(month: string): Promise<MonthSummary> {

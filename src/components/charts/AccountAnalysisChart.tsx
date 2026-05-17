@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, Icon } from 'react-native-paper';
-import Svg, { Rect, Text as SvgText, Line } from 'react-native-svg';
-import { colors, spacing, radius } from '../../theme';
-import { formatMoney } from '../../utils/money';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Icon, Text } from 'react-native-paper';
+import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
 import type { AccountPeriodBalance } from '../../models/types';
+import { colors, radius, spacing } from '../../theme';
+import { formatMoney } from '../../utils/money';
 
 interface AccountAnalysisChartProps {
   data: AccountPeriodBalance[];

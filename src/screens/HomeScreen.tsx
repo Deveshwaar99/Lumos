@@ -1,5 +1,7 @@
 import { useFocusEffect } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
+  type ComponentType,
   useCallback,
   useEffect,
   useMemo,
@@ -11,17 +13,19 @@ import {
   RefreshControl,
   TextInput as RNTextInput,
   SectionList,
+  type SectionListProps,
   StyleSheet,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { FAB, Icon, Snackbar, Text } from 'react-native-paper';
+import { Icon, Snackbar, Text } from 'react-native-paper';
+import AnimatedReanimated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DateHeader from '../components/DateHeader';
 import PeriodNavigator from '../components/PeriodNavigator';
-import SummaryBar from '../components/SummaryBar';
 import TimePeriodPicker from '../components/TimePeriodPicker';
 import TransactionItem from '../components/TransactionItem';
+import { GlowFAB, HeroBalanceCard } from '../components/ui';
 import type { MonthSummary, TransactionWithSplits } from '../models/types';
 import type { TabScreenProps } from '../navigation/types';
 import { analyticsService } from '../services/analyticsService';
@@ -30,7 +34,7 @@ import { useAccountStore } from '../stores/useAccountStore';
 import { useBudgetStore } from '../stores/useBudgetStore';
 import { useCategoryStore } from '../stores/useCategoryStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
-import { colors, elevation, radius, spacing } from '../theme';
+import { colors, radius, spacing } from '../theme';
 import {
   getTimePeriodLabel,
   getTimePeriodRange,
@@ -38,6 +42,16 @@ import {
   type TimePeriod,
 } from '../utils/dates';
 import { clampMoneyDecimalPlaces } from '../utils/money';
+
+type HomeSectionListProps = SectionListProps<
+  TransactionWithSplits,
+  TransactionSection
+>;
+
+const AnimatedSectionList =
+  AnimatedReanimated.createAnimatedComponent(SectionList) as unknown as ComponentType<
+    HomeSectionListProps
+  >;
 
 interface TransactionSection {
   title: string;
@@ -255,13 +269,11 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
     [],
   );
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.headerSection}>
+  const listHeader = useMemo(
+    () => (
+      <View style={[styles.headerStack, { paddingTop: insets.top }]}>
         {searchActive ? (
-          <View
-            style={[styles.searchBar, { paddingTop: insets.top + spacing.xs }]}
-          >
+          <View style={styles.searchBar}>
             <TouchableOpacity hitSlop={12} onPress={closeSearch}>
               <Icon source="arrow-left" size={24} color={colors.text} />
             </TouchableOpacity>
@@ -286,59 +298,87 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
             )}
           </View>
         ) : (
-          <>
-            <View
-              style={[styles.topBar, { paddingTop: insets.top + spacing.md }]}
+          <View style={styles.topBar}>
+            <TouchableOpacity
+              hitSlop={8}
+              onPress={() => navigation.navigate('Settings' as any)}
+              accessibilityLabel="Open settings"
+              accessibilityRole="button"
             >
-              <TouchableOpacity
-                hitSlop={8}
-                onPress={() => navigation.navigate('Settings' as any)}
-                accessibilityLabel="Open settings"
-                accessibilityRole="button"
-              >
-                <Icon source="cog" size={24} color={colors.text} />
-              </TouchableOpacity>
-              <PeriodNavigator
-                label={navLabel}
-                onPrev={handlePrev}
-                onNext={handleNext}
-                onFilterPress={() => setFilterVisible(true)}
-              />
-              <TouchableOpacity
-                hitSlop={8}
-                onPress={openSearch}
-                accessibilityLabel="Search transactions"
-                accessibilityRole="button"
-              >
-                <Icon source="magnify" size={24} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-
-            <SummaryBar
-              income={summary.totalIncome}
-              expense={summary.totalExpense}
-              balance={summary.net}
-              currencySymbol={settings.currencySymbol}
-              decimalPlaces={moneyDecimals}
+              <Icon source="cog" size={24} color={colors.text} />
+            </TouchableOpacity>
+            <PeriodNavigator
+              label={navLabel}
+              onPrev={handlePrev}
+              onNext={handleNext}
+              onFilterPress={() => setFilterVisible(true)}
             />
-          </>
+            <TouchableOpacity
+              hitSlop={8}
+              onPress={openSearch}
+              accessibilityLabel="Search transactions"
+              accessibilityRole="button"
+            >
+              <Icon source="magnify" size={24} color={colors.text} />
+            </TouchableOpacity>
+          </View>
         )}
+        {!searchActive ? (
+          <HeroBalanceCard
+            income={summary.totalIncome}
+            expense={summary.totalExpense}
+            balance={summary.net}
+            periodLabel={navLabel}
+            currencySymbol={settings.currencySymbol}
+            decimalPlaces={moneyDecimals}
+          />
+        ) : null}
       </View>
+    ),
+    [
+      insets.top,
+      closeSearch,
+      searchQuery,
+      navigation,
+      navLabel,
+      handlePrev,
+      handleNext,
+      openSearch,
+      searchInputRef,
+      setFilterVisible,
+      searchActive,
+      summary.totalIncome,
+      summary.totalExpense,
+      summary.net,
+      settings.currencySymbol,
+      moneyDecimals,
+    ],
+  );
 
-      <SectionList
+  return (
+    <View style={styles.container}>
+      <AnimatedSectionList
         sections={displaySections}
         keyExtractor={keyExtractor}
         renderSectionHeader={renderSectionHeader}
         renderItem={renderItem}
+        ListHeaderComponent={listHeader}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <View style={styles.emptyIconWrap}>
-              <Icon
-                source={searchActive ? 'magnify' : 'receipt'}
-                size={64}
-                color={colors.primaryLight}
-              />
-            </View>
+            <LinearGradient
+              colors={[...colors.gradientPrimary]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.emptyRing}
+            >
+              <View style={styles.emptyIconInner}>
+                <Icon
+                  source={searchActive ? 'magnify' : 'receipt'}
+                  size={64}
+                  color={colors.primaryLight}
+                />
+              </View>
+            </LinearGradient>
             <Text variant="titleMedium" style={styles.emptyTitle}>
               {searchActive && searchQuery.trim()
                 ? 'No matching transactions'
@@ -371,11 +411,10 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
       />
 
       {!searchActive && (
-        <FAB
+        <GlowFAB
           icon="plus"
-          style={[styles.fab, { bottom: insets.bottom + 16 }]}
+          bottomInset={insets.bottom + 16}
           onPress={() => navigation.navigate('AddTransaction')}
-          color={colors.onPrimary}
           accessibilityLabel="Add transaction"
         />
       )}
@@ -404,21 +443,18 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  headerSection: {
-    backgroundColor: colors.surface,
-    paddingBottom: spacing.sm,
-    ...elevation.md,
-    zIndex: 1,
+  headerStack: {
+    paddingBottom: spacing.xs,
   },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.md,
+    paddingBottom: spacing.xs,
+    paddingHorizontal: spacing.sm + 2,
   },
-  list: { flex: 1, marginTop: spacing.xs },
+  list: { flex: 1 },
   listContent: { paddingBottom: 100 },
   itemDivider: {
     height: StyleSheet.hairlineWidth,
@@ -431,14 +467,18 @@ const styles = StyleSheet.create({
     paddingVertical: 80,
     paddingHorizontal: spacing.xxl,
   },
-  emptyIconWrap: {
+  emptyRing: {
+    padding: 2,
+    borderRadius: 50,
+    marginBottom: spacing.lg,
+  },
+  emptyIconInner: {
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: colors.primaryContainer,
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.lg,
   },
   emptyTitle: {
     color: colors.text,
@@ -450,18 +490,11 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     textAlign: 'center',
   },
-  fab: {
-    position: 'absolute',
-    right: spacing.lg,
-    backgroundColor: colors.primary,
-    ...elevation.lg,
-  },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
     gap: spacing.md,
+    paddingBottom: spacing.sm,
   },
   searchInput: {
     flex: 1,

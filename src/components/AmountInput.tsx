@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { TextInput } from 'react-native-paper';
-import { dollarsToCents, centsToDollars } from '../utils/money';
 import { colors } from '../theme';
+import { centsToDollars, dollarsToCents } from '../utils/money';
 
 interface AmountInputProps {
   value: number; // cents

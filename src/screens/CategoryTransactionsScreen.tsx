@@ -1,18 +1,20 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { View, SectionList, StyleSheet, RefreshControl } from 'react-native';
-import { Text, Icon, Divider, FAB } from 'react-native-paper';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { RefreshControl, SectionList, StyleSheet, View } from 'react-native';
+import { Divider, Icon, Text } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import DateHeader from '../components/DateHeader';
+import TransactionItem from '../components/TransactionItem';
+import { GlowFAB } from '../components/ui';
+import AmountText from '../components/ui/AmountText';
+import type { TransactionWithSplits } from '../models/types';
+import type { RootStackScreenProps } from '../navigation/types';
+import { transactionService } from '../services/transactionService';
 import { useAccountStore } from '../stores/useAccountStore';
 import { useCategoryStore } from '../stores/useCategoryStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
-import { transactionService } from '../services/transactionService';
-import TransactionItem from '../components/TransactionItem';
-import DateHeader from '../components/DateHeader';
-import { colors, spacing, radius } from '../theme';
-import { clampMoneyDecimalPlaces, formatMoney } from '../utils/money';
-import type { RootStackScreenProps } from '../navigation/types';
-import type { TransactionWithSplits } from '../models/types';
+import { colors, radius, spacing } from '../theme';
+import { clampMoneyDecimalPlaces } from '../utils/money';
 
 interface TransactionSection {
   title: string;
@@ -88,9 +90,6 @@ export default function CategoryTransactionsScreen({
     return { count, total };
   }, [transactions]);
 
-  const fmt = (cents: number) =>
-    formatMoney(cents, settings.currencySymbol, moneyDecimals);
-
   return (
     <View style={styles.container}>
       <View style={styles.headerCard}>
@@ -105,13 +104,16 @@ export default function CategoryTransactionsScreen({
           <Text style={styles.headerName} numberOfLines={1}>
             {category?.name ?? 'Category'}
           </Text>
-          <Text
+          <AmountText
             numberOfLines={1}
             adjustsFontSizeToFit
+            cents={stats.total}
+            currencySymbol={settings.currencySymbol}
+            decimalPlaces={moneyDecimals}
+            tone="default"
+            size="hero"
             style={styles.headerTotal}
-          >
-            {fmt(stats.total)}
-          </Text>
+          />
         </View>
         <View style={styles.headerBadge}>
           <Text style={styles.headerBadgeText}>
@@ -165,11 +167,10 @@ export default function CategoryTransactionsScreen({
         stickySectionHeadersEnabled={false}
       />
 
-      <FAB
+      <GlowFAB
         icon="plus"
-        style={[styles.fab, { bottom: insets.bottom + 16 }]}
+        bottomInset={insets.bottom + 16}
         onPress={() => navigation.navigate('AddTransaction', { categoryId })}
-        color={colors.onPrimary}
         accessibilityLabel="Add transaction"
       />
     </View>
@@ -240,10 +241,4 @@ const styles = StyleSheet.create({
     paddingVertical: 80,
   },
   emptyText: { color: colors.textSecondary, marginTop: spacing.lg },
-
-  fab: {
-    position: 'absolute',
-    right: spacing.lg,
-    backgroundColor: colors.primary,
-  },
 });

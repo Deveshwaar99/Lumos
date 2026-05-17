@@ -8,12 +8,9 @@ importers:
 
   .:
     dependencies:
-      '@expo-google-fonts/playfair-display':
+      '@expo-google-fonts/inter':
         specifier: ^0.4.2
         version: 0.4.2
-      '@expo/ngrok':
-        specifier: ^4.1.3
-        version: 4.1.3
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.71.2(react@19.1.0))
@@ -38,6 +35,9 @@ importers:
       expo:
         specifier: ~54.0.34
         version: 54.0.34(@babel/core@7.29.0)(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
+      expo-blur:
+        specifier: ~15.0.8
+        version: 15.0.8(expo@54.0.34(@babel/core@7.29.0)(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
       expo-constants:
         specifier: ~18.0.13
         version: 18.0.13(expo@54.0.34(@babel/core@7.29.0)(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))
@@ -123,6 +123,9 @@ importers:
       '@biomejs/biome':
         specifier: 2.4.6
         version: 2.4.6
+      '@expo/ngrok':
+        specifier: ^4.1.0
+        version: 4.1.0
       '@types/react':
         specifier: ~19.1.0
         version: 19.1.17
@@ -708,8 +711,8 @@ packages:
     resolution: {integrity: sha512-XQsZgjm2EcVUiZQf11UBJQfmZeEmOW8DpI1gsFeln6w0ae0ii4dMQEQ0kjl6DspdWX1aGY1/loyXnP0JS06e/A==}
     engines: {node: '>=0.8.0'}
 
-  '@expo-google-fonts/playfair-display@0.4.2':
-    resolution: {integrity: sha512-mWhBV59RUjSS3aYpytUb7UyHHTnXcHh7epAn7gq+M4XAEh5PuMKUrP8eiUfkJLb6UwHZCi7EhQpUzxHu5OL96w==}
+  '@expo-google-fonts/inter@0.4.2':
+    resolution: {integrity: sha512-syfiImMaDmq7cFi0of+waE2M4uSCyd16zgyWxdPOY7fN2VBmSLKEzkfbZgeOjJq61kSqPBNNtXjggiQiSD6gMQ==}
 
   '@expo/cli@54.0.24':
     resolution: {integrity: sha512-5xse1bEgnVUBhOrtttc6xTNJVvjyTRavpzuF0/0nuj+312vfSbk7EiRbG+xJ2pW/iZxnhLPJkFCrPYG0nmheAQ==}
@@ -774,67 +777,67 @@ packages:
   '@expo/metro@54.2.0':
     resolution: {integrity: sha512-h68TNZPGsk6swMmLm9nRSnE2UXm48rWwgcbtAHVMikXvbxdS41NDHHeqg1rcQ9AbznDRp6SQVC2MVpDnsRKU1w==}
 
-  '@expo/ngrok-bin-darwin-arm64@2.3.41':
-    resolution: {integrity: sha512-TPf95xp6SkvbRONZjltTOFcCJbmzAH7lrQ36Dv+djrOckWGPVq4HCur48YAeiGDqspmFEmqZ7ykD5c/bDfRFOA==}
+  '@expo/ngrok-bin-darwin-arm64@2.3.40':
+    resolution: {integrity: sha512-Zij81v/bIsVBvgXgYS71xbi/3lqKfVEfr7rId8BsHO3Ec1nQcp/I+729W3KX9PUHzWlXCLxOKZ3uF4jL/TcNbg==}
     cpu: [arm64]
     os: [darwin]
 
-  '@expo/ngrok-bin-darwin-x64@2.3.41':
-    resolution: {integrity: sha512-29QZHfX4Ec0p0pQF5UrqiP2/Qe7t2rI96o+5b8045VCEl9AEAKHceGuyo+jfUDR4FSQBGFLSDb06xy8ghL3ZYA==}
+  '@expo/ngrok-bin-darwin-x64@2.3.40':
+    resolution: {integrity: sha512-nqGLfxIjZBoT79VDk5mqaHQKCWkunSi486zGLeB8Ye8Qar1yo4STFwks+DqTbnGD5ItArQz2LzKRVE4YXuJFuw==}
     cpu: [x64]
     os: [darwin]
 
-  '@expo/ngrok-bin-freebsd-ia32@2.3.41':
-    resolution: {integrity: sha512-YYXgwNZ+p0aIrwgb+1/RxJbsWhGEzBDBhZulKg1VB7tKDAd2C8uGnbK1rOCuZy013iOUsJDXaj9U5QKc13iIXw==}
+  '@expo/ngrok-bin-freebsd-ia32@2.3.40':
+    resolution: {integrity: sha512-Ji3jZaOuIZO+ege23kZZAAEPUYkF+6mCpghb16b28Is1QHOSl2L4foDnAcWyzSEiBihMicxWltaQyaaxA0fdgw==}
     cpu: [ia32]
     os: [freebsd]
 
-  '@expo/ngrok-bin-freebsd-x64@2.3.41':
-    resolution: {integrity: sha512-1Ei6K8BB+3etmmBT0tXYC4dyVkJMigT4ELbRTF5jKfw1pblqeXM9Qpf3p8851PTlH142S3bockCeO39rSkOnkg==}
+  '@expo/ngrok-bin-freebsd-x64@2.3.40':
+    resolution: {integrity: sha512-mVnzKGQmOyXimZx6udoiyo3ZTYLZnPShlTySaDP0tqQ0vYz4ZscgvaYpMmDSPrsP/YG2owmKgzmOE2V+ycD8qA==}
     cpu: [x64]
     os: [freebsd]
 
-  '@expo/ngrok-bin-linux-arm64@2.3.41':
-    resolution: {integrity: sha512-eC8GA/xPcmQJy4h+g2FlkuQB3lf5DjITy8Y6GyydmPYMByjUYAGEXe0brOcP893aalAzRqbNOAjSuAw1lcCLSQ==}
+  '@expo/ngrok-bin-linux-arm64@2.3.40':
+    resolution: {integrity: sha512-S6kbnRqsVXHo/bWNxc0jfq33aQQRsGWjb6e7SvZ2DgXsPFLn27cfK0eHD96uCssARDVhzPsc+VU/B3d8C1DT5A==}
     cpu: [arm64]
     os: [linux]
 
-  '@expo/ngrok-bin-linux-arm@2.3.41':
-    resolution: {integrity: sha512-B6+rW/+tEi7ZrKWQGkRzlwmKo7c1WJhNODFBSgkF/Sj9PmmNhBz67mer91S2+6nNt5pfcwLLd61CjtWfR1LUHQ==}
+  '@expo/ngrok-bin-linux-arm@2.3.40':
+    resolution: {integrity: sha512-Je1QBd7x0hbZa4T3gZbVgD0cSzstpJ7Mu0+dM2lOB+vm3bd603yHtD0RlLdqARJFhPTE1M2zLd68gCEeZ5fRgQ==}
     cpu: [arm]
     os: [linux]
 
-  '@expo/ngrok-bin-linux-ia32@2.3.41':
-    resolution: {integrity: sha512-w5Cy31wSz4jYnygEHS7eRizR1yt8s9TX6kHlkjzayIiRTFRb2E1qD2l0/4T2w0LJpBjM5ZFPaaKqsNWgCUIEow==}
+  '@expo/ngrok-bin-linux-ia32@2.3.40':
+    resolution: {integrity: sha512-gPY5zv5Fu+TkCm5iZolXQbu7e5hc7fTllIKn/zJQxxZs/WCvSxyB5ip6vQcHiavu/kjr0HtNciPX/guXvWENkg==}
     cpu: [ia32]
     os: [linux]
 
-  '@expo/ngrok-bin-linux-x64@2.3.41':
-    resolution: {integrity: sha512-LcU3MbYHv7Sn2eFz8Yzo2rXduufOvX1/hILSirwCkH+9G8PYzpwp2TeGqVWuO+EmvtBe6NEYwgdQjJjN6I4L1A==}
+  '@expo/ngrok-bin-linux-x64@2.3.40':
+    resolution: {integrity: sha512-yOuwpOmMe6RGnk9ninlM7Zg1EiF81ptFOcFmT61PDOA4gK8/ttZKTMkDQiq0DZdcXUyE0HCr83EglJZTnHIzPA==}
     cpu: [x64]
     os: [linux]
 
-  '@expo/ngrok-bin-sunos-x64@2.3.41':
-    resolution: {integrity: sha512-bcOj45BLhiV2PayNmLmEVZlFMhEiiGpOr36BXC0XSL+cHUZHd6uNaS28AaZdz95lrRzGpeb0hAF8cuJjo6nq4g==}
+  '@expo/ngrok-bin-sunos-x64@2.3.40':
+    resolution: {integrity: sha512-0itEIQ7KsxRbF9nJk6tt0Ey+9TDC5H7krOsy3t7DPx01EvtaiEdMyhmE1XWjBtwr8+BaY9CpEhUWkx4iCcE4cw==}
     cpu: [x64]
     os: [sunos]
 
-  '@expo/ngrok-bin-win32-ia32@2.3.41':
-    resolution: {integrity: sha512-0+vPbKvUA+a9ERgiAknmZCiWA3AnM5c6beI+51LqmjKEM4iAAlDmfXNJ89aAbvZMUtBNwEPHzJHnaM4s2SeBhA==}
+  '@expo/ngrok-bin-win32-ia32@2.3.40':
+    resolution: {integrity: sha512-RAunwOAskfU0R5mYlxxB+bihLJ4nLRx5/x+q5nIq1muYmaqLvGtkQQHZKzgHJANJ7ZIbzfJY57IN2UICpibgIQ==}
     cpu: [ia32]
     os: [win32]
 
-  '@expo/ngrok-bin-win32-x64@2.3.41':
-    resolution: {integrity: sha512-mncsPRaG462LiYrM8mQT8OYe3/i44m3N/NzUeieYpGi8+pCOo8TIC23kR9P93CVkbM9mmXsy3X6hq91a8FWBdA==}
+  '@expo/ngrok-bin-win32-x64@2.3.40':
+    resolution: {integrity: sha512-a8xtUxX/Ftp2ho+/+VR5GCg0ttP9MNzYj58TVjfiKMkl4mVrbFVIzEinRzmy7PhiOWxqGQSCOdzEfa6C2G4nEA==}
     cpu: [x64]
     os: [win32]
 
-  '@expo/ngrok-bin@2.3.42':
-    resolution: {integrity: sha512-kyhORGwv9XpbPeNIrX6QZ9wDVCDOScyTwxeS+ScNmUqYoZqD9LRmEqF7bpDh5VonTsrXgWrGl7wD2++oSHcaTQ==}
+  '@expo/ngrok-bin@2.3.40':
+    resolution: {integrity: sha512-40GK1CY1QLPDHSQS7Fd36CJeZgMwtbeezkgp4tzfExVRVtWw30jOBCsM7TBB9IqEmmX7C/XwG47scMQHCnMw8A==}
     hasBin: true
 
-  '@expo/ngrok@4.1.3':
-    resolution: {integrity: sha512-AESYaROGIGKWwWmUyQoUXcbvaUZjmpecC5buArXxYou+RID813F8T0Y5jQ2HUY49mZpYfJiy9oh4VSN37GgrXA==}
+  '@expo/ngrok@4.1.0':
+    resolution: {integrity: sha512-PrtWxBt/SnOF1jZkf7oWznhEPFrmYKKeJPLVRKnEBd/y4eUYfoiNIXOzflIzhdrMubjWVI+pFuPJ6nkjVL95/Q==}
     engines: {node: '>=10.19.0'}
 
   '@expo/osascript@2.4.2':
@@ -1753,6 +1756,13 @@ packages:
 
   expo-asset@12.0.13:
     resolution: {integrity: sha512-x/p7WvQUnkn6K43b9eL6SPeq5Vnf1E8BDe9bDrWrvMqzyUvJnUFvl+ctg3034s/+UHe7Ne2pAmc0+yzbl8CrDQ==}
+    peerDependencies:
+      expo: '*'
+      react: '*'
+      react-native: '*'
+
+  expo-blur@15.0.8:
+    resolution: {integrity: sha512-rWyE1NBRZEu9WD+X+5l7gyPRszw7n12cW3IRNAb5i6KFzaBp8cxqT5oeaphJapqURvcqhkOZn2k5EtBSbsuU7w==}
     peerDependencies:
       expo: '*'
       react: '*'
@@ -3190,7 +3200,7 @@ packages:
 
   uuid@3.4.0:
     resolution: {integrity: sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==}
-    deprecated: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   uuid@7.0.3:
@@ -4022,7 +4032,7 @@ snapshots:
     dependencies:
       '@types/hammerjs': 2.0.46
 
-  '@expo-google-fonts/playfair-display@0.4.2': {}
+  '@expo-google-fonts/inter@0.4.2': {}
 
   '@expo/cli@54.0.24(expo@54.0.34(@babel/core@7.29.0)(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))':
     dependencies:
@@ -4247,56 +4257,56 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@expo/ngrok-bin-darwin-arm64@2.3.41':
+  '@expo/ngrok-bin-darwin-arm64@2.3.40':
     optional: true
 
-  '@expo/ngrok-bin-darwin-x64@2.3.41':
+  '@expo/ngrok-bin-darwin-x64@2.3.40':
     optional: true
 
-  '@expo/ngrok-bin-freebsd-ia32@2.3.41':
+  '@expo/ngrok-bin-freebsd-ia32@2.3.40':
     optional: true
 
-  '@expo/ngrok-bin-freebsd-x64@2.3.41':
+  '@expo/ngrok-bin-freebsd-x64@2.3.40':
     optional: true
 
-  '@expo/ngrok-bin-linux-arm64@2.3.41':
+  '@expo/ngrok-bin-linux-arm64@2.3.40':
     optional: true
 
-  '@expo/ngrok-bin-linux-arm@2.3.41':
+  '@expo/ngrok-bin-linux-arm@2.3.40':
     optional: true
 
-  '@expo/ngrok-bin-linux-ia32@2.3.41':
+  '@expo/ngrok-bin-linux-ia32@2.3.40':
     optional: true
 
-  '@expo/ngrok-bin-linux-x64@2.3.41':
+  '@expo/ngrok-bin-linux-x64@2.3.40':
     optional: true
 
-  '@expo/ngrok-bin-sunos-x64@2.3.41':
+  '@expo/ngrok-bin-sunos-x64@2.3.40':
     optional: true
 
-  '@expo/ngrok-bin-win32-ia32@2.3.41':
+  '@expo/ngrok-bin-win32-ia32@2.3.40':
     optional: true
 
-  '@expo/ngrok-bin-win32-x64@2.3.41':
+  '@expo/ngrok-bin-win32-x64@2.3.40':
     optional: true
 
-  '@expo/ngrok-bin@2.3.42':
+  '@expo/ngrok-bin@2.3.40':
     optionalDependencies:
-      '@expo/ngrok-bin-darwin-arm64': 2.3.41
-      '@expo/ngrok-bin-darwin-x64': 2.3.41
-      '@expo/ngrok-bin-freebsd-ia32': 2.3.41
-      '@expo/ngrok-bin-freebsd-x64': 2.3.41
-      '@expo/ngrok-bin-linux-arm': 2.3.41
-      '@expo/ngrok-bin-linux-arm64': 2.3.41
-      '@expo/ngrok-bin-linux-ia32': 2.3.41
-      '@expo/ngrok-bin-linux-x64': 2.3.41
-      '@expo/ngrok-bin-sunos-x64': 2.3.41
-      '@expo/ngrok-bin-win32-ia32': 2.3.41
-      '@expo/ngrok-bin-win32-x64': 2.3.41
+      '@expo/ngrok-bin-darwin-arm64': 2.3.40
+      '@expo/ngrok-bin-darwin-x64': 2.3.40
+      '@expo/ngrok-bin-freebsd-ia32': 2.3.40
+      '@expo/ngrok-bin-freebsd-x64': 2.3.40
+      '@expo/ngrok-bin-linux-arm': 2.3.40
+      '@expo/ngrok-bin-linux-arm64': 2.3.40
+      '@expo/ngrok-bin-linux-ia32': 2.3.40
+      '@expo/ngrok-bin-linux-x64': 2.3.40
+      '@expo/ngrok-bin-sunos-x64': 2.3.40
+      '@expo/ngrok-bin-win32-ia32': 2.3.40
+      '@expo/ngrok-bin-win32-x64': 2.3.40
 
-  '@expo/ngrok@4.1.3':
+  '@expo/ngrok@4.1.0':
     dependencies:
-      '@expo/ngrok-bin': 2.3.42
+      '@expo/ngrok-bin': 2.3.40
       got: 11.8.6
       uuid: 3.4.0
       yaml: 1.10.2
@@ -5372,6 +5382,12 @@ snapshots:
       react-native: 0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)
     transitivePeerDependencies:
       - supports-color
+
+  expo-blur@15.0.8(expo@54.0.34(@babel/core@7.29.0)(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0):
+    dependencies:
+      expo: 54.0.34(@babel/core@7.29.0)(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
+      react: 19.1.0
+      react-native: 0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)
 
   expo-constants@18.0.13(expo@54.0.34(@babel/core@7.29.0)(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)):
     dependencies:

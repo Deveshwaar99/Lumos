@@ -1,18 +1,19 @@
-import React, { useCallback, useState } from 'react';
-import { View, ScrollView, StyleSheet, Alert } from 'react-native';
-import { Text, Icon, Button, ActivityIndicator } from 'react-native-paper';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
-import { useTransactionStore } from '../stores/useTransactionStore';
-import { useCategoryStore } from '../stores/useCategoryStore';
-import { useAccountStore } from '../stores/useAccountStore';
-import { useSettingsStore } from '../stores/useSettingsStore';
-import { transactionService } from '../services/transactionService';
-import { colors, spacing, radius, elevation } from '../theme';
-import { clampMoneyDecimalPlaces, formatMoney } from '../utils/money';
-import { formatDate, formatTimeShort } from '../utils/dates';
+import { LinearGradient } from 'expo-linear-gradient';
+import type React from 'react';
+import { useCallback, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Button, Icon, Text } from 'react-native-paper';
 import type { TransactionWithSplits } from '../models/types';
 import type { RootStackScreenProps } from '../navigation/types';
+import { transactionService } from '../services/transactionService';
+import { useAccountStore } from '../stores/useAccountStore';
+import { useCategoryStore } from '../stores/useCategoryStore';
+import { useSettingsStore } from '../stores/useSettingsStore';
+import { useTransactionStore } from '../stores/useTransactionStore';
+import { colors, elevation, radius, spacing } from '../theme';
+import { formatDate, formatTimeShort } from '../utils/dates';
+import { clampMoneyDecimalPlaces, formatMoney } from '../utils/money';
 
 type TimelineNodeProps = {
   dotColor: string;

@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 6;
 
 async function createSchema(db: SQLiteDatabase): Promise<void> {
   await db.execAsync(`

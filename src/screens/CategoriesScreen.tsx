@@ -1,20 +1,20 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import {
-  View,
-  FlatList,
-  StyleSheet,
-  Alert,
-  RefreshControl,
-  TouchableOpacity,
-} from 'react-native';
-import { FAB, Snackbar, Icon, Text, Menu } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useMemo, useState } from 'react';
+import {
+  Alert,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { FAB, Icon, Menu, Snackbar, Text } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useCategoryStore } from '../stores/useCategoryStore';
-import { colors, spacing, radius, elevation } from '../theme';
 import EmptyState from '../components/EmptyState';
-import type { TabScreenProps } from '../navigation/types';
 import type { Category } from '../models/types';
+import type { TabScreenProps } from '../navigation/types';
+import { useCategoryStore } from '../stores/useCategoryStore';
+import { colors, elevation, radius, spacing } from '../theme';
 
 export default function CategoriesScreen({
   navigation,

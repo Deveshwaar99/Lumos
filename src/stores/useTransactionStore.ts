@@ -1,8 +1,8 @@
 import { create } from 'zustand';
-import {
-  TransactionWithSplits,
-  TransactionFilter,
+import type {
   CreateTransactionInput,
+  TransactionFilter,
+  TransactionWithSplits,
 } from '../models/types';
 import { transactionService } from '../services/transactionService';
 

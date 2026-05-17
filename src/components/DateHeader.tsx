@@ -1,7 +1,7 @@
+import { format, isToday, isYesterday, parseISO } from 'date-fns';
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
-import { format, parseISO, isToday, isYesterday } from 'date-fns';
 import { colors, spacing } from '../theme';
 
 interface DateHeaderProps {

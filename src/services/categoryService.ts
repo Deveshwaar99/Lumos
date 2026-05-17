@@ -1,5 +1,5 @@
 import { getDatabase } from '../db/database';
-import { Category } from '../models/types';
+import type { Category } from '../models/types';
 import { generateId } from '../utils/uuid';
 
 function mapRow(row: any): Category {

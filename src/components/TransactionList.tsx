@@ -1,10 +1,10 @@
 import React, { useCallback, useMemo } from 'react';
-import { FlatList, View, StyleSheet } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Divider } from 'react-native-paper';
-import TransactionItem from './TransactionItem';
-import EmptyState from './EmptyState';
+import type { Account, Category, TransactionWithSplits } from '../models/types';
 import { colors, spacing } from '../theme';
-import type { TransactionWithSplits, Category, Account } from '../models/types';
+import EmptyState from './EmptyState';
+import TransactionItem from './TransactionItem';
 
 interface TransactionListProps {
   transactions: TransactionWithSplits[];

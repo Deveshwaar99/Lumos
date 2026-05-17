@@ -1,7 +1,7 @@
 import { getDatabase } from '../db/database';
-import { Budget, BudgetWithSpent } from '../models/types';
-import { generateId } from '../utils/uuid';
+import type { Budget, BudgetWithSpent } from '../models/types';
 import { getMonthRange } from '../utils/dates';
+import { generateId } from '../utils/uuid';
 
 function mapRow(row: any): Budget {
   return {

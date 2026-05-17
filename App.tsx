@@ -10,7 +10,8 @@ import { StatusBar } from 'expo-status-bar';
 import { View, StyleSheet, AppState } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as QuickActions from 'expo-quick-actions';
-import { colors, paperTheme } from './src/theme';
+import { useFonts } from 'expo-font';
+import { colors, interFontAssets, paperTheme } from './src/theme';
 import { getDatabase } from './src/db/database';
 import { seedDatabase } from './src/db/seed';
 import { useSettingsStore } from './src/stores/useSettingsStore';
@@ -21,6 +22,7 @@ import LockScreen from './src/components/LockScreen';
 import type { RootStackParamList } from './src/navigation/types';
 
 export default function App() {
+  const [fontsLoaded] = useFonts(interFontAssets);
   const [ready, setReady] = React.useState(false);
   const [isLocked, setIsLocked] = useState(true);
   const screenLockEnabled = useSettingsStore(
@@ -134,7 +136,7 @@ export default function App() {
     return () => sub.remove();
   }, [ready]);
 
-  if (!ready) {
+  if (!ready || !fontsLoaded) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={colors.primary} />

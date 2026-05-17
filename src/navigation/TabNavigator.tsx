@@ -1,14 +1,14 @@
-import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React from 'react';
 import { Icon } from 'react-native-paper';
-import { colors } from '../theme';
-import type { TabParamList } from './types';
-import HomeScreen from '../screens/HomeScreen';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AccountsScreen from '../screens/AccountsScreen';
 import AnalyticsScreen from '../screens/AnalyticsScreen';
 import BudgetsScreen from '../screens/BudgetsScreen';
-import AccountsScreen from '../screens/AccountsScreen';
 import CategoriesScreen from '../screens/CategoriesScreen';
+import HomeScreen from '../screens/HomeScreen';
+import { colors } from '../theme';
+import type { TabParamList } from './types';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 

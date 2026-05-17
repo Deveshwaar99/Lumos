@@ -1,17 +1,18 @@
-import React, { useEffect, useCallback } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { FAB, Text } from 'react-native-paper';
+import React, { useCallback, useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { Text } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTransactionStore } from '../stores/useTransactionStore';
-import { useCategoryStore } from '../stores/useCategoryStore';
-import { useAccountStore } from '../stores/useAccountStore';
-import { useSettingsStore } from '../stores/useSettingsStore';
-import TransactionList from '../components/TransactionList';
 import FilterBar from '../components/FilterBar';
+import TransactionList from '../components/TransactionList';
+import { GlassCard, GlowFAB } from '../components/ui';
+import type { TransactionWithSplits } from '../models/types';
+import type { RootStackScreenProps } from '../navigation/types';
+import { useAccountStore } from '../stores/useAccountStore';
+import { useCategoryStore } from '../stores/useCategoryStore';
+import { useSettingsStore } from '../stores/useSettingsStore';
+import { useTransactionStore } from '../stores/useTransactionStore';
 import { colors, spacing } from '../theme';
 import { clampMoneyDecimalPlaces } from '../utils/money';
-import type { RootStackScreenProps } from '../navigation/types';
-import type { TransactionWithSplits } from '../models/types';
 
 export default function TransactionsScreen({
   navigation,
@@ -49,14 +50,16 @@ export default function TransactionsScreen({
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text variant="headlineSmall" style={styles.title}>
-          Transactions
-        </Text>
-        <Text variant="bodySmall" style={styles.count}>
-          {totalCount} total
-        </Text>
-      </View>
+      <GlassCard style={styles.headerCard} intensity={26} border>
+        <View style={styles.header}>
+          <Text variant="headlineSmall" style={styles.title}>
+            Transactions
+          </Text>
+          <Text variant="bodySmall" style={styles.count}>
+            {totalCount} total
+          </Text>
+        </View>
+      </GlassCard>
       <FilterBar
         filter={filter}
         onFilterChange={setFilter}
@@ -76,11 +79,10 @@ export default function TransactionsScreen({
         onItemPress={handleItemPress}
         contentContainerStyle={styles.listContent}
       />
-      <FAB
+      <GlowFAB
         icon="plus"
-        style={[styles.fab, { bottom: insets.bottom + 16 }]}
+        bottomInset={insets.bottom + 16}
         onPress={() => navigation.navigate('AddTransaction')}
-        color={colors.onPrimary}
         accessibilityLabel="Add transaction"
       />
     </View>
@@ -89,19 +91,15 @@ export default function TransactionsScreen({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  headerCard: { marginHorizontal: spacing.lg, marginBottom: spacing.sm },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: spacing.lg,
-    paddingBottom: 0,
+    paddingBottom: spacing.md,
   },
   title: { color: colors.text },
   count: { color: colors.textSecondary },
   listContent: { paddingBottom: 100 },
-  fab: {
-    position: 'absolute',
-    right: spacing.lg,
-    backgroundColor: colors.primary,
-  },
 });

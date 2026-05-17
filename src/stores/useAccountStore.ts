@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Account } from '../models/types';
+import type { Account } from '../models/types';
 import { accountService } from '../services/accountService';
 
 interface AccountState {

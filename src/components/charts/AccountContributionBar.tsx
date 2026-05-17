@@ -1,18 +1,11 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
-import { colors } from '../../theme';
-import { formatMoney } from '../../utils/money';
 import type { AccountBalance } from '../../models/types';
+import { CATEGORY_COLORS, colors } from '../../theme';
+import { formatMoney } from '../../utils/money';
 
-const BAR_COLORS = [
-  '#4CAF50',
-  '#2196F3',
-  '#FF9800',
-  '#9C27B0',
-  '#F44336',
-  '#00BCD4',
-];
+const BAR_COLORS = [...CATEGORY_COLORS].slice(0, 8);
 
 interface AccountContributionBarProps {
   data: AccountBalance[];

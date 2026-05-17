@@ -1,5 +1,5 @@
-import { PermissionsAndroid, Platform } from 'react-native';
 import Constants from 'expo-constants';
+import { PermissionsAndroid, Platform } from 'react-native';
 import { STOCK_SMS_READ_TIMEOUT_MS } from '../constants/stockSync';
 import type { SmsPermissionStatus } from '../models/types';
 

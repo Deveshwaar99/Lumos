@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
-import { colors, spacing, radius } from '../theme';
-import { formatMoney } from '../utils/money';
+import { colors, spacing } from '../theme';
+import AmountText from './ui/AmountText';
+import { GlassCard } from './ui/GlassCard';
 
 interface SummaryBarProps {
   income: number;
@@ -21,24 +22,42 @@ function SummaryBar({
 }: SummaryBarProps) {
   return (
     <View style={styles.container}>
-      <View style={[styles.item, { backgroundColor: colors.expense + '14' }]}>
-        <Text style={styles.label}>EXPENSE</Text>
-        <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.amount, { color: colors.expense }]}>
-          {formatMoney(expense, currencySymbol, decimalPlaces)}
-        </Text>
-      </View>
-      <View style={[styles.item, { backgroundColor: colors.income + '14' }]}>
-        <Text style={styles.label}>INCOME</Text>
-        <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.amount, { color: colors.income }]}>
-          {formatMoney(income, currencySymbol, decimalPlaces)}
-        </Text>
-      </View>
-      <View style={[styles.item, { backgroundColor: colors.surfaceVariant }]}>
-        <Text style={styles.label}>BALANCE</Text>
-        <Text numberOfLines={1} adjustsFontSizeToFit style={styles.amount}>
-          {formatMoney(balance, currencySymbol, decimalPlaces)}
-        </Text>
-      </View>
+      <GlassCard style={styles.tile} intensity={22} border>
+        <View style={styles.item}>
+          <Text style={styles.label}>EXPENSE</Text>
+          <AmountText
+            cents={expense}
+            currencySymbol={currencySymbol}
+            decimalPlaces={decimalPlaces}
+            tone="expense"
+            size="title"
+          />
+        </View>
+      </GlassCard>
+      <GlassCard style={styles.tile} intensity={22} border>
+        <View style={styles.item}>
+          <Text style={styles.label}>INCOME</Text>
+          <AmountText
+            cents={income}
+            currencySymbol={currencySymbol}
+            decimalPlaces={decimalPlaces}
+            tone="income"
+            size="title"
+          />
+        </View>
+      </GlassCard>
+      <GlassCard style={styles.tile} intensity={22} border>
+        <View style={styles.item}>
+          <Text style={styles.label}>BALANCE</Text>
+          <AmountText
+            cents={balance}
+            currencySymbol={currencySymbol}
+            decimalPlaces={decimalPlaces}
+            tone="default"
+            size="title"
+          />
+        </View>
+      </GlassCard>
     </View>
   );
 }
@@ -50,11 +69,13 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xs,
     gap: spacing.sm,
   },
-  item: {
+  tile: {
     flex: 1,
+  },
+  item: {
     alignItems: 'center',
     paddingVertical: spacing.md,
-    borderRadius: radius.md,
+    paddingHorizontal: spacing.xs,
   },
   label: {
     color: colors.textSecondary,
@@ -62,11 +83,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1,
     marginBottom: 4,
-  },
-  amount: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '600',
   },
 });
 

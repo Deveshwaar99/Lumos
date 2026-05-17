@@ -1,29 +1,29 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { format } from 'date-fns';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View,
-  ScrollView,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
   Animated,
   Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
   TouchableOpacity,
+  View,
 } from 'react-native';
+import { Icon, Snackbar, Text, TextInput } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TextInput, Text, Icon, Snackbar } from 'react-native-paper';
-import { format } from 'date-fns';
-import { useRecurringStore } from '../stores/useRecurringStore';
-import { useCategoryStore } from '../stores/useCategoryStore';
-import { useAccountStore } from '../stores/useAccountStore';
-import { useSettingsStore } from '../stores/useSettingsStore';
-import { recurringTransactionService } from '../services/recurringTransactionService';
-import CategoryPicker from '../components/CategoryPicker';
 import AccountPicker from '../components/AccountPicker';
+import CategoryPicker from '../components/CategoryPicker';
 import InlineCalendar from '../components/InlineCalendar';
-import { colors, spacing, radius } from '../theme';
-import { dollarsToCents } from '../utils/money';
+import type { RecurrenceFrequency, TransactionType } from '../models/types';
 import type { RootStackScreenProps } from '../navigation/types';
-import type { TransactionType, RecurrenceFrequency } from '../models/types';
+import { recurringTransactionService } from '../services/recurringTransactionService';
+import { useAccountStore } from '../stores/useAccountStore';
+import { useCategoryStore } from '../stores/useCategoryStore';
+import { useRecurringStore } from '../stores/useRecurringStore';
+import { useSettingsStore } from '../stores/useSettingsStore';
+import { colors, radius, spacing } from '../theme';
+import { dollarsToCents } from '../utils/money';
 
 type CalendarTarget = 'start' | 'end';
 

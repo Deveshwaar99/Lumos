@@ -1,22 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View,
-  ScrollView,
-  StyleSheet,
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  StyleSheet,
+  View,
 } from 'react-native';
-import { Button, Text, Snackbar, Switch, TextInput } from 'react-native-paper';
+import { Button, Snackbar, Switch, Text, TextInput } from 'react-native-paper';
+import AmountInput from '../components/AmountInput';
+import CategoryPicker from '../components/CategoryPicker';
+import type { Category } from '../models/types';
+import type { RootStackScreenProps } from '../navigation/types';
 import { useBudgetStore } from '../stores/useBudgetStore';
 import { useCategoryStore } from '../stores/useCategoryStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
-import AmountInput from '../components/AmountInput';
-import CategoryPicker from '../components/CategoryPicker';
-import { colors, spacing, radius } from '../theme';
+import { colors, radius, spacing } from '../theme';
 import { getCurrentMonth } from '../utils/dates';
-import type { RootStackScreenProps } from '../navigation/types';
-import type { Category } from '../models/types';
 
 export default function BudgetFormScreen({
   navigation,

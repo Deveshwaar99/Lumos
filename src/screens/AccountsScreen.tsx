@@ -1,50 +1,51 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { format, formatDistanceToNow } from 'date-fns';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  View,
-  FlatList,
-  StyleSheet,
   Alert,
-  TouchableOpacity,
-  RefreshControl,
-  Platform,
+  FlatList,
   Linking,
+  Platform,
+  RefreshControl,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import {
-  FAB,
-  Snackbar,
-  Icon,
-  Text,
-  Switch,
   Button,
+  Icon,
+  Snackbar,
+  Switch,
+  Text,
   TextInput,
 } from 'react-native-paper';
-import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { format, formatDistanceToNow } from 'date-fns';
+import EmptyState from '../components/EmptyState';
+import { GlowFAB } from '../components/ui';
+import AmountText from '../components/ui/AmountText';
+import { STOCK_MIN_AUTO_SYNC_INTERVAL_MS } from '../constants/stockSync';
+import type { Account, FixedDeposit, RecurringTransaction } from '../models/types';
+import type { TabScreenProps } from '../navigation/types';
 import { useAccountStore } from '../stores/useAccountStore';
 import { useFDStore } from '../stores/useFDStore';
 import { useRecurringStore } from '../stores/useRecurringStore';
-import { useStockStore } from '../stores/useStockStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
-import { colors, spacing, radius, elevation } from '../theme';
-import { clampMoneyDecimalPlaces, formatMoney } from '../utils/money';
+import { useStockStore } from '../stores/useStockStore';
+import { colors, elevation, radius, spacing } from '../theme';
 import {
-  getDaysRemaining,
   calculateFDInterest,
   calculateNetInterest,
+  getDaysRemaining,
 } from '../utils/fdCalculator';
-import EmptyState from '../components/EmptyState';
-import { STOCK_MIN_AUTO_SYNC_INTERVAL_MS } from '../constants/stockSync';
-import type { TabScreenProps } from '../navigation/types';
-import type { Account, FixedDeposit, RecurringTransaction } from '../models/types';
+import { clampMoneyDecimalPlaces } from '../utils/money';
 
 const ACCOUNT_TYPE_COLORS: Record<Account['type'], string> = {
-  cash: '#4CAF50',
-  bank: '#42A5F5',
-  card: '#EF5350',
-  savings: '#FFA726',
-  other: '#78909C',
+  cash: '#5BE49B',
+  bank: '#6FB7FF',
+  card: '#FF6B6B',
+  savings: '#FFB84D',
+  other: '#90A4AE',
 };
 
 const ACCOUNT_TYPE_LABELS: Record<Account['type'], string> = {
@@ -229,7 +230,7 @@ export default function AccountsScreen({
 
     return (
       <LinearGradient
-        colors={[...colors.cardGradient]}
+        colors={[...colors.gradientHero]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.portfolioCard}
@@ -244,20 +245,17 @@ export default function AccountsScreen({
                 Net worth
               </Text>
             </View>
-            <Text
-              style={[
-                styles.portfolioMetricAmount,
-                {
-                  color:
-                    netBalance >= 0 ? colors.income : colors.expense,
-                },
-              ]}
+            <AmountText
+              cents={netBalance}
+              currencySymbol={sym}
+              decimalPlaces={moneyDecimals}
+              tone={netBalance >= 0 ? 'income' : 'expense'}
+              size="hero"
               numberOfLines={2}
               adjustsFontSizeToFit
               minimumFontScale={0.45}
-            >
-              {formatMoney(netBalance, sym, moneyDecimals)}
-            </Text>
+              style={styles.portfolioMetricAmount}
+            />
           </View>
 
           <View style={styles.portfolioMetricDivider} />
@@ -271,14 +269,17 @@ export default function AccountsScreen({
                 Assets
               </Text>
             </View>
-            <Text
-              style={[styles.portfolioMetricAmount, { color: colors.income }]}
+            <AmountText
+              cents={totalAssets}
+              currencySymbol={sym}
+              decimalPlaces={moneyDecimals}
+              tone="income"
+              size="hero"
               numberOfLines={2}
               adjustsFontSizeToFit
               minimumFontScale={0.45}
-            >
-              {formatMoney(totalAssets, sym, moneyDecimals)}
-            </Text>
+              style={styles.portfolioMetricAmount}
+            />
           </View>
 
           <View style={styles.portfolioMetricDivider} />
@@ -296,17 +297,18 @@ export default function AccountsScreen({
                 Liabilities
               </Text>
             </View>
-            <Text
-              style={[
-                styles.portfolioMetricAmount,
-                { color: colors.secondaryLight },
-              ]}
+            <AmountText
+              cents={totalLiabilities}
+              currencySymbol={sym}
+              decimalPlaces={moneyDecimals}
+              tone="custom"
+              customColor={colors.secondaryLight}
+              size="hero"
               numberOfLines={2}
               adjustsFontSizeToFit
               minimumFontScale={0.45}
-            >
-              {formatMoney(totalLiabilities, sym, moneyDecimals)}
-            </Text>
+              style={styles.portfolioMetricAmount}
+            />
           </View>
         </View>
 
@@ -456,14 +458,14 @@ export default function AccountsScreen({
                 })
               }
             >
-              <Text
-                style={[
-                  styles.accountBalance,
-                  balance < 0 && { color: colors.expense },
-                ]}
-              >
-                {formatMoney(balance, sym, moneyDecimals)}
-              </Text>
+              <AmountText
+                cents={balance}
+                currencySymbol={sym}
+                decimalPlaces={moneyDecimals}
+                tone={balance < 0 ? 'expense' : 'default'}
+                size="body"
+                style={styles.accountBalance}
+              />
             </TouchableOpacity>
             <View style={styles.accountRowActions}>
               <TouchableOpacity
@@ -551,16 +553,26 @@ export default function AccountsScreen({
           <View style={styles.fdBody}>
             <View style={styles.fdStat}>
               <Text style={styles.fdStatLabel}>Principal</Text>
-              <Text style={styles.fdStatValue}>
-                {formatMoney(item.principalCents, sym, moneyDecimals)}
-              </Text>
+              <AmountText
+                cents={item.principalCents}
+                currencySymbol={sym}
+                decimalPlaces={moneyDecimals}
+                tone="default"
+                size="body"
+                style={styles.fdStatValue}
+              />
             </View>
             <View style={styles.fdStatDivider} />
             <View style={styles.fdStat}>
               <Text style={styles.fdStatLabel}>Net Interest</Text>
-              <Text style={[styles.fdStatValue, { color: colors.income }]}>
-                {formatMoney(net, sym, moneyDecimals)}
-              </Text>
+              <AmountText
+                cents={net}
+                currencySymbol={sym}
+                decimalPlaces={moneyDecimals}
+                tone="income"
+                size="body"
+                style={styles.fdStatValue}
+              />
             </View>
           </View>
 
@@ -646,9 +658,15 @@ export default function AccountsScreen({
           </View>
           <View style={styles.recurringDetails}>
             <View style={styles.recurringTopRow}>
-              <Text style={styles.recurringAmount} numberOfLines={1}>
-                {formatMoney(item.totalAmountCents, sym, moneyDecimals)}
-              </Text>
+              <AmountText
+                cents={item.totalAmountCents}
+                currencySymbol={sym}
+                decimalPlaces={moneyDecimals}
+                tone="default"
+                size="body"
+                style={styles.recurringAmount}
+                numberOfLines={1}
+              />
               <View style={[styles.frequencyBadge, { backgroundColor: accentColor + '18' }]}>
                 <Text style={[styles.frequencyBadgeText, { color: accentColor }]}>
                   {FREQUENCY_LABELS[item.frequency]}
@@ -938,9 +956,9 @@ export default function AccountsScreen({
           : activeTab === 'recurring'
             ? renderRecurringList()
             : renderStocksList()}
-      <FAB
+      <GlowFAB
         icon="plus"
-        style={[styles.fab, { bottom: insets.bottom + 16 }]}
+        bottomInset={insets.bottom + 16}
         onPress={() => {
           if (activeTab === 'investments') {
             (navigation as any).navigate('FDForm');
@@ -952,7 +970,6 @@ export default function AccountsScreen({
             navigation.navigate('AccountForm');
           }
         }}
-        color={colors.onPrimary}
         accessibilityLabel={
           activeTab === 'investments'
             ? 'Add fixed deposit'
@@ -1462,11 +1479,4 @@ const styles = StyleSheet.create({
   stockCodeText: { color: colors.text, fontSize: 16, fontWeight: '700' },
   stockQtyText: { color: colors.primary, fontSize: 18, fontWeight: '800' },
   stockMetaText: { color: colors.textTertiary, fontSize: 12, marginTop: 2 },
-
-  fab: {
-    position: 'absolute',
-    right: spacing.lg,
-    backgroundColor: colors.primary,
-    ...elevation.lg,
-  },
 });

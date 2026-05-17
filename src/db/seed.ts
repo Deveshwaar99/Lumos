@@ -1,14 +1,14 @@
-import type { SQLiteDatabase } from 'expo-sqlite';
-import * as Crypto from 'expo-crypto';
-import { generateId } from '../utils/uuid';
-import { parseCdsAlert } from '../services/cdsSmsParser';
 import {
-  startOfMonth,
-  endOfMonth,
   addDays,
-  format,
   differenceInDays,
+  endOfMonth,
+  format,
+  startOfMonth,
 } from 'date-fns';
+import * as Crypto from 'expo-crypto';
+import type { SQLiteDatabase } from 'expo-sqlite';
+import { parseCdsAlert } from '../services/cdsSmsParser';
+import { generateId } from '../utils/uuid';
 
 const EXPENSE_CATEGORIES = [
   { id: 'seed-exp-1', name: 'Food & Dining', icon: 'food', color: '#FF6B6B' },

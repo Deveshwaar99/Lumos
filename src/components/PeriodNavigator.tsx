@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Text, Icon } from 'react-native-paper';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Icon, Text } from 'react-native-paper';
 import { colors, spacing } from '../theme';
 
 interface PeriodNavigatorProps {

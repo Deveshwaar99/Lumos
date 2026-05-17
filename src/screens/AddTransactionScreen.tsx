@@ -1,4 +1,3 @@
-import { useFDStore } from '@/stores/useFDStore';
 import { format, parseISO } from 'date-fns';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -23,6 +22,7 @@ import {
   TextInput,
 } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFDStore } from '@/stores/useFDStore';
 import AccountPicker from '../components/AccountPicker';
 import CalculatorPad from '../components/CalculatorPad';
 import CategoryPicker from '../components/CategoryPicker';
@@ -53,6 +53,11 @@ function evalExpression(expr: string): number {
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const MINUTES = Array.from({ length: 12 }, (_, i) => i * 5);
+const FORM_SURFACE = '#171A24';
+const FORM_SURFACE_ELEVATED = '#1D2230';
+const FORM_SURFACE_MUTED = '#23293A';
+const FORM_BORDER = 'rgba(255, 255, 255, 0.10)';
+const FORM_HAIRLINE = 'rgba(255, 255, 255, 0.08)';
 
 /** Snap to 5-minute steps used by the picker wheels */
 function normalizeMinuteForPicker(mm: number): number {
@@ -1019,6 +1024,7 @@ export default function AddTransactionScreen({
               selectedDate={dateStr}
               onDateSelect={(d) => setDateStr(d)}
               onDone={closePanel}
+              surfaceColor={FORM_SURFACE_ELEVATED}
             />
           )}
         </View>
@@ -1209,7 +1215,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.surface,
+    backgroundColor: FORM_SURFACE,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1287,7 +1293,7 @@ const styles = StyleSheet.create({
   amountHero: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: FORM_SURFACE,
     borderRadius: radius.xl,
     borderWidth: 1,
     overflow: 'hidden',
@@ -1348,7 +1354,7 @@ const styles = StyleSheet.create({
 
   /* ── Selectors ── */
   selectorsCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: FORM_SURFACE,
     borderRadius: radius.xl,
     overflow: 'hidden',
     marginBottom: spacing.lg,
@@ -1385,7 +1391,7 @@ const styles = StyleSheet.create({
   },
   selectorDivider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.border,
+    backgroundColor: FORM_HAIRLINE,
     marginLeft: 40 + spacing.lg + spacing.md,
   },
   transferArrowRow: {
@@ -1394,7 +1400,7 @@ const styles = StyleSheet.create({
   },
 
   whenCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: FORM_SURFACE,
     borderRadius: radius.xl,
     overflow: 'hidden',
     marginBottom: spacing.lg,
@@ -1434,7 +1440,7 @@ const styles = StyleSheet.create({
   noteCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: FORM_SURFACE,
     borderRadius: radius.xl,
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.lg,
@@ -1444,7 +1450,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: radius.lg,
-    backgroundColor: colors.surfaceVariant,
+    backgroundColor: FORM_SURFACE_MUTED,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1465,7 +1471,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.45)',
   },
   timeModalSheet: {
-    backgroundColor: colors.surface,
+    backgroundColor: FORM_SURFACE_ELEVATED,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
     paddingHorizontal: spacing.lg,
@@ -1488,7 +1494,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     marginBottom: spacing.xs,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    borderBottomColor: FORM_HAIRLINE,
   },
   timePickerTitle: {
     color: colors.text,
@@ -1510,7 +1516,7 @@ const styles = StyleSheet.create({
   },
   timeColumnDivider: {
     width: StyleSheet.hairlineWidth,
-    backgroundColor: colors.border,
+    backgroundColor: FORM_HAIRLINE,
   },
   timeColumnLabel: {
     color: colors.textSecondary,
@@ -1533,7 +1539,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
   },
   timeOptionActive: {
-    backgroundColor: `${colors.primary}18`,
+    backgroundColor: `${colors.primary}22`,
   },
   timeOptionText: {
     color: colors.textSecondary,
@@ -1550,7 +1556,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.surface,
+    backgroundColor: FORM_SURFACE,
     borderRadius: radius.xl,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
@@ -1580,14 +1586,14 @@ const styles = StyleSheet.create({
   },
 
   splitSection: {
-    backgroundColor: colors.surface,
+    backgroundColor: FORM_SURFACE,
     borderRadius: radius.xl,
     padding: spacing.lg,
     marginBottom: spacing.lg,
     gap: spacing.xs,
   },
   splitAccountCard: {
-    backgroundColor: colors.surfaceVariant,
+    backgroundColor: FORM_SURFACE_MUTED,
     borderRadius: radius.lg,
     padding: spacing.md,
   },
@@ -1639,18 +1645,18 @@ const styles = StyleSheet.create({
   splitConnectorLine: {
     flex: 1,
     height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.border,
+    backgroundColor: FORM_HAIRLINE,
   },
   splitPlusCircle: {
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: colors.surfaceVariant,
+    backgroundColor: FORM_SURFACE_MUTED,
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: spacing.sm,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: FORM_BORDER,
   },
   splitTotalRow: {
     flexDirection: 'row',
@@ -1659,7 +1665,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     paddingTop: spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    borderTopColor: FORM_HAIRLINE,
   },
   splitTotalLabel: {
     color: colors.textSecondary,
@@ -1716,12 +1722,12 @@ const styles = StyleSheet.create({
 
   /* ── Sheets (inline panels) ── */
   sheetSurface: {
-    backgroundColor: colors.surface,
+    backgroundColor: FORM_SURFACE_ELEVATED,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
     overflow: 'hidden',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    borderTopColor: FORM_BORDER,
   },
   calcPanel: {
     paddingTop: spacing.xs,

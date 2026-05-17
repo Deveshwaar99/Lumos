@@ -1,19 +1,19 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import Svg, {
-  Polyline,
+  Defs,
   Line,
+  LinearGradient,
+  Polygon,
+  Polyline,
+  Stop,
   Circle as SvgCircle,
   Text as SvgText,
-  Defs,
-  LinearGradient,
-  Stop,
-  Polygon,
 } from 'react-native-svg';
+import type { DailyCashFlow } from '../../models/types';
 import { colors, spacing } from '../../theme';
 import { formatMoney } from '../../utils/money';
-import type { DailyCashFlow } from '../../models/types';
 
 interface FlowLineChartProps {
   data: DailyCashFlow[];
@@ -118,8 +118,9 @@ function FlowLineChart({
           <Svg width={chartWidth} height={chartHeight}>
             <Defs>
               <LinearGradient id="flowGrad" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0" stopColor={lineColor} stopOpacity="0.2" />
-                <Stop offset="1" stopColor={lineColor} stopOpacity="0.01" />
+                <Stop offset="0" stopColor={lineColor} stopOpacity="0.28" />
+                <Stop offset="0.45" stopColor={colors.accent} stopOpacity="0.12" />
+                <Stop offset="1" stopColor={lineColor} stopOpacity="0.02" />
               </LinearGradient>
             </Defs>
 

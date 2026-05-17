@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { Chip, Menu } from 'react-native-paper';
-import { colors, spacing, radius } from '../theme';
-import type { TransactionFilter, Category, Account } from '../models/types';
+import type { Account, Category, TransactionFilter } from '../models/types';
+import { colors, radius, spacing } from '../theme';
 
 interface FilterBarProps {
   filter: TransactionFilter;

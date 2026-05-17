@@ -1,18 +1,18 @@
+import { useFocusEffect } from '@react-navigation/native';
+import { format } from 'date-fns';
 import React, { useCallback, useState } from 'react';
 import {
-  View,
-  StyleSheet,
   FlatList,
-  TouchableOpacity,
   RefreshControl,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { Text, Button, Icon, Snackbar } from 'react-native-paper';
-import { format } from 'date-fns';
-import { useStockStore } from '../stores/useStockStore';
-import { colors, spacing, radius } from '../theme';
-import type { RootStackScreenProps } from '../navigation/types';
+import { Button, Icon, Snackbar, Text } from 'react-native-paper';
 import type { StockSmsLog } from '../models/types';
+import type { RootStackScreenProps } from '../navigation/types';
+import { useStockStore } from '../stores/useStockStore';
+import { colors, radius, spacing } from '../theme';
 
 const STATUS_COLOR: Record<StockSmsLog['parseStatus'], string> = {
   success: colors.income,

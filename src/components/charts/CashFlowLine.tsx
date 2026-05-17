@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
-import Svg, { Polyline, Line } from 'react-native-svg';
+import Svg, { Line, Polyline } from 'react-native-svg';
+import type { DailyCashFlow } from '../../models/types';
 import { colors } from '../../theme';
 import { formatMoney } from '../../utils/money';
-import type { DailyCashFlow } from '../../models/types';
 
 interface CashFlowLineProps {
   data: DailyCashFlow[];
@@ -54,7 +54,7 @@ function CashFlowLine({ data, currencySymbol }: CashFlowLineProps) {
           <Polyline
             points={points}
             fill="none"
-            stroke={colors.primary}
+            stroke={colors.accent}
             strokeWidth={2}
           />
         </Svg>

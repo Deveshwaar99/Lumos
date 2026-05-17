@@ -1,6 +1,7 @@
-import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Crypto from 'expo-crypto';
+import { Platform } from 'react-native';
+import { STOCK_FIRST_SYNC_WINDOW_DAYS } from '../constants/stockSync';
 import { getDatabase } from '../db/database';
 import type {
   SmsPermissionStatus,
@@ -9,7 +10,6 @@ import type {
   StockMovementInput,
   StockSmsLog,
 } from '../models/types';
-import { STOCK_FIRST_SYNC_WINDOW_DAYS } from '../constants/stockSync';
 import { generateId } from '../utils/uuid';
 import { parseCdsAlert } from './cdsSmsParser';
 import { readCdsAlerts, requestSmsPermission } from './smsReader';

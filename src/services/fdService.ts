@@ -1,14 +1,14 @@
+import { format } from 'date-fns';
 import { getDatabase } from '../db/database';
-import { FixedDeposit, CreateFDInput } from '../models/types';
-import { accountService } from './accountService';
-import { transactionService } from './transactionService';
-import { generateId } from '../utils/uuid';
+import type { CreateFDInput, FixedDeposit } from '../models/types';
 import {
   calculateFDInterest,
   calculateNetInterest,
   calculateTDS,
 } from '../utils/fdCalculator';
-import { format } from 'date-fns';
+import { generateId } from '../utils/uuid';
+import { accountService } from './accountService';
+import { transactionService } from './transactionService';
 
 function mapRow(row: any): FixedDeposit {
   return {

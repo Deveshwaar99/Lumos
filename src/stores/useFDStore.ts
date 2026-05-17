@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { FixedDeposit, CreateFDInput } from '../models/types';
+import type { CreateFDInput, FixedDeposit } from '../models/types';
 import { fdService } from '../services/fdService';
 
 interface FDState {

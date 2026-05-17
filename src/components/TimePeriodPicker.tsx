@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
-import { Text, Icon, Modal, Portal, Divider } from 'react-native-paper';
-import { colors, spacing, radius } from '../theme';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Divider, Icon, Modal, Portal, Text } from 'react-native-paper';
+import { colors, radius, spacing } from '../theme';
 import type { TimePeriod } from '../utils/dates';
 
 interface TimePeriodPickerProps {

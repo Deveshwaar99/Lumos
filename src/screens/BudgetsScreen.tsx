@@ -1,18 +1,20 @@
-import React, { useCallback, useMemo } from 'react';
-import { View, SectionList, StyleSheet, TouchableOpacity } from 'react-native';
-import { Text, FAB, Icon, Snackbar } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import React, { useCallback, useMemo } from 'react';
+import { SectionList, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Icon, Snackbar, Text } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import BudgetProgressBar from '../components/BudgetProgressBar';
+import { GlowFAB } from '../components/ui';
+import AmountText from '../components/ui/AmountText';
+import type { BudgetWithSpent, Category } from '../models/types';
+import type { TabScreenProps } from '../navigation/types';
 import { useBudgetStore } from '../stores/useBudgetStore';
 import { useCategoryStore } from '../stores/useCategoryStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
-import BudgetProgressBar from '../components/BudgetProgressBar';
-import { colors, spacing, radius, elevation } from '../theme';
-import { clampMoneyDecimalPlaces, formatMoney } from '../utils/money';
-import { getMonthLabel, addMonths } from '../utils/dates';
-import type { TabScreenProps } from '../navigation/types';
-import type { BudgetWithSpent, Category } from '../models/types';
+import { colors, elevation, radius, spacing } from '../theme';
+import { addMonths, getMonthLabel } from '../utils/dates';
+import { clampMoneyDecimalPlaces } from '../utils/money';
 
 type SectionItem = BudgetWithSpent | Category;
 interface BudgetSection {
@@ -91,7 +93,7 @@ export default function BudgetsScreen({
 
   const renderSummaryCard = () => (
     <LinearGradient
-      colors={[...colors.cardGradient]}
+      colors={[...colors.gradientHero]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.summaryCard}
@@ -112,18 +114,17 @@ export default function BudgetsScreen({
           <View style={styles.heroRow}>
             <View style={{ flex: 1 }}>
               <Text style={styles.heroCaption}>Remaining</Text>
-              <Text
+              <AmountText
                 numberOfLines={1}
                 adjustsFontSizeToFit
-                style={[
-                  styles.heroAmount,
-                  {
-                    color: totalRemaining >= 0 ? colors.income : colors.expense,
-                  },
-                ]}
-              >
-                {formatMoney(totalRemaining, sym, moneyDecimals)}
-              </Text>
+                minimumFontScale={0.5}
+                cents={totalRemaining}
+                currencySymbol={sym}
+                decimalPlaces={moneyDecimals}
+                tone={totalRemaining >= 0 ? 'income' : 'expense'}
+                size="hero"
+                style={styles.heroAmount}
+              />
             </View>
             <View style={styles.heroPctWrap}>
               <Text
@@ -151,13 +152,17 @@ export default function BudgetsScreen({
                 <Icon source="target" size={14} color={colors.primaryLight} />
                 <Text style={styles.statLabel}>Budgeted</Text>
               </View>
-              <Text
+              <AmountText
                 numberOfLines={1}
                 adjustsFontSizeToFit
+                minimumFontScale={0.5}
+                cents={totalBudgeted}
+                currencySymbol={sym}
+                decimalPlaces={moneyDecimals}
+                tone="default"
+                size="body"
                 style={styles.statValue}
-              >
-                {formatMoney(totalBudgeted, sym, moneyDecimals)}
-              </Text>
+              />
             </View>
 
             <View style={styles.statDivider} />
@@ -167,16 +172,17 @@ export default function BudgetsScreen({
                 <Icon source="cash-minus" size={14} color={colors.expense} />
                 <Text style={styles.statLabel}>Spent</Text>
               </View>
-              <Text
+              <AmountText
                 numberOfLines={1}
                 adjustsFontSizeToFit
-                style={[
-                  styles.statValue,
-                  totalSpent > totalBudgeted && { color: colors.expense },
-                ]}
-              >
-                {formatMoney(totalSpent, sym, moneyDecimals)}
-              </Text>
+                minimumFontScale={0.5}
+                cents={totalSpent}
+                currencySymbol={sym}
+                decimalPlaces={moneyDecimals}
+                tone={totalSpent > totalBudgeted ? 'expense' : 'default'}
+                size="body"
+                style={styles.statValue}
+              />
             </View>
           </View>
         </>
@@ -269,28 +275,39 @@ export default function BudgetsScreen({
                 >
                   {cat?.name ?? 'Unknown'}
                 </Text>
-                <Text
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                  style={styles.budgetMeta}
-                >
-                  {formatMoney(item.spent, sym, moneyDecimals)} of{' '}
-                  {formatMoney(item.limitCents, sym, moneyDecimals)}
-                </Text>
+                <View style={styles.budgetMetaRow}>
+                  <AmountText
+                    cents={item.spent}
+                    currencySymbol={sym}
+                    decimalPlaces={moneyDecimals}
+                    tone="custom"
+                    customColor={colors.textTertiary}
+                    size="body"
+                    style={[styles.budgetMeta, { fontSize: 12, fontWeight: '500' }]}
+                  />
+                  <Text style={styles.budgetMeta}> of </Text>
+                  <AmountText
+                    cents={item.limitCents}
+                    currencySymbol={sym}
+                    decimalPlaces={moneyDecimals}
+                    tone="custom"
+                    customColor={colors.textTertiary}
+                    size="body"
+                    style={[styles.budgetMeta, { fontSize: 12, fontWeight: '500' }]}
+                  />
+                </View>
               </View>
             </View>
             <View style={styles.budgetRight}>
-              <Text
+              <AmountText
                 numberOfLines={1}
-                style={[
-                  styles.remainingAmount,
-                  { color: isOver ? colors.expense : colors.income },
-                ]}
-              >
-                {isOver
-                  ? `−${formatMoney(Math.abs(item.remaining), sym, 2)}`
-                  : formatMoney(item.remaining, sym, 2)}
-              </Text>
+                cents={item.remaining}
+                currencySymbol={sym}
+                decimalPlaces={2}
+                tone={isOver ? 'expense' : 'income'}
+                size="body"
+                style={styles.remainingAmount}
+              />
               <Text
                 style={[
                   styles.remainingLabel,
@@ -420,11 +437,10 @@ export default function BudgetsScreen({
         }
       />
 
-      <FAB
+      <GlowFAB
         icon="plus"
-        style={[styles.fab, { bottom: insets.bottom + 16 }]}
+        bottomInset={insets.bottom + 16}
         onPress={() => navigation.navigate('BudgetForm', { month })}
-        color={colors.onPrimary}
         accessibilityLabel="Add budget"
       />
       <Snackbar
@@ -695,6 +711,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
+  budgetMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    marginTop: 2,
+    gap: 4,
+  },
   budgetMeta: {
     color: colors.textTertiary,
     fontSize: 12,
@@ -785,12 +808,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: spacing.sm,
     textAlign: 'center',
-  },
-
-  fab: {
-    position: 'absolute',
-    right: spacing.lg,
-    backgroundColor: colors.primary,
-    ...elevation.lg,
   },
 });

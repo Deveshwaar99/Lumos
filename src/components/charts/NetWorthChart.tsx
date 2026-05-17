@@ -1,19 +1,19 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, Icon } from 'react-native-paper';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Icon, Text } from 'react-native-paper';
 import Svg, {
-  Polyline,
+  Defs,
   Line,
+  LinearGradient,
+  Polygon,
+  Polyline,
+  Stop,
   Circle as SvgCircle,
   Text as SvgText,
-  Defs,
-  LinearGradient,
-  Stop,
-  Polygon,
 } from 'react-native-svg';
-import { colors, spacing, radius } from '../../theme';
-import { formatMoney } from '../../utils/money';
 import type { NetWorthPoint } from '../../models/types';
+import { colors, radius, spacing } from '../../theme';
+import { formatMoney } from '../../utils/money';
 
 interface NetWorthChartProps {
   data: NetWorthPoint[];

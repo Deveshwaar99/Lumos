@@ -1,20 +1,20 @@
+import { useFocusEffect } from '@react-navigation/native';
+import { format } from 'date-fns';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  View,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
   Alert,
+  FlatList,
   RefreshControl,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { Text, Icon, FAB, Snackbar } from 'react-native-paper';
+import { FAB, Icon, Snackbar, Text } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { format } from 'date-fns';
-import { useStockStore } from '../stores/useStockStore';
-import { colors, spacing, radius, elevation } from '../theme';
-import type { RootStackScreenProps } from '../navigation/types';
 import type { StockMovement } from '../models/types';
+import type { RootStackScreenProps } from '../navigation/types';
+import { useStockStore } from '../stores/useStockStore';
+import { colors, elevation, radius, spacing } from '../theme';
 
 export default function StockDetailScreen({
   navigation,

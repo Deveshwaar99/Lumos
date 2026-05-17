@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import {
-  RecurringTransaction,
+import type {
   CreateRecurringTransactionInput,
+  RecurringTransaction,
 } from '../models/types';
 import { recurringTransactionService } from '../services/recurringTransactionService';
 
