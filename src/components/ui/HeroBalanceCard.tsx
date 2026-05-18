@@ -33,6 +33,7 @@ export function HeroBalanceCard({
 }: HeroBalanceCardProps) {
   const [width, setWidth] = useState(0);
   const pulse = useSharedValue(0.55);
+  const balanceTone = balance >= 0 ? 'income' : 'expense';
 
   useEffect(() => {
     pulse.value = withRepeat(
@@ -80,18 +81,6 @@ export function HeroBalanceCard({
       <View style={styles.content}>
         <View style={styles.summaryRow}>
           <View style={styles.metricBlock}>
-            <Text style={styles.metricLabel}>Expense</Text>
-            <AmountText
-              cents={expense}
-              currencySymbol={currencySymbol}
-              decimalPlaces={decimalPlaces}
-              tone="expense"
-              size="title"
-              style={styles.metricValue}
-            />
-          </View>
-
-          <View style={styles.metricBlock}>
             <Text style={styles.metricLabel}>Income</Text>
             <AmountText
               cents={income}
@@ -104,12 +93,26 @@ export function HeroBalanceCard({
           </View>
 
           <View style={styles.metricBlock}>
-            <Text style={styles.metricLabel}>Balance</Text>
+            <Text style={styles.metricLabel}>Spent</Text>
+            <AmountText
+              cents={expense}
+              currencySymbol={currencySymbol}
+              decimalPlaces={decimalPlaces}
+              signPrefix="-"
+              tone="expense"
+              size="title"
+              style={styles.metricValue}
+            />
+          </View>
+
+          <View style={styles.metricBlock}>
+            <Text style={styles.metricLabel}>Net</Text>
             <AmountText
               cents={balance}
               currencySymbol={currencySymbol}
               decimalPlaces={decimalPlaces}
-              tone="default"
+              signPrefix={balance >= 0 ? '+' : ''}
+              tone={balanceTone}
               size="title"
               style={styles.metricValue}
             />
@@ -152,15 +155,17 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   metricLabel: {
-    ...typography.labelSmall,
+    ...typography.labelMedium,
     color: colors.textSecondary,
-    letterSpacing: 0.8,
+    fontSize: 10,
+    lineHeight: 14,
+    letterSpacing: 0.7,
     textTransform: 'uppercase',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   metricValue: {
-    fontWeight: '700',
-    fontSize: 13,
+    ...typography.titleSmall,
+    fontSize: 14,
     lineHeight: 18,
     textAlign: 'center',
   },

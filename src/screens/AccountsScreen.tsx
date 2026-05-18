@@ -25,14 +25,18 @@ import EmptyState from '../components/EmptyState';
 import { GlowFAB } from '../components/ui';
 import AmountText from '../components/ui/AmountText';
 import { STOCK_MIN_AUTO_SYNC_INTERVAL_MS } from '../constants/stockSync';
-import type { Account, FixedDeposit, RecurringTransaction } from '../models/types';
+import type {
+  Account,
+  FixedDeposit,
+  RecurringTransaction,
+} from '../models/types';
 import type { TabScreenProps } from '../navigation/types';
 import { useAccountStore } from '../stores/useAccountStore';
 import { useFDStore } from '../stores/useFDStore';
 import { useRecurringStore } from '../stores/useRecurringStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { useStockStore } from '../stores/useStockStore';
-import { colors, elevation, radius, spacing } from '../theme';
+import { colors, elevation, radius, spacing, typography } from '../theme';
 import {
   calculateFDInterest,
   calculateNetInterest,
@@ -57,6 +61,7 @@ const ACCOUNT_TYPE_LABELS: Record<Account['type'], string> = {
 };
 
 type Tab = 'accounts' | 'investments' | 'recurring' | 'stocks';
+type FDFilter = 'active' | 'matured' | 'closed' | 'all';
 
 const FREQUENCY_LABELS: Record<string, string> = {
   daily: 'Daily',
@@ -103,6 +108,7 @@ export default function AccountsScreen({
   const { settings } = useSettingsStore();
   const [snackbar, setSnackbar] = useState('');
   const [activeTab, setActiveTab] = useState<Tab>('accounts');
+  const [fdFilter, setFdFilter] = useState<FDFilter>('active');
   const [refreshing, setRefreshing] = useState(false);
   const [senderEditorVisible, setSenderEditorVisible] = useState(false);
   const [senderInput, setSenderInput] = useState('CDS-Alerts');
@@ -175,6 +181,21 @@ export default function AccountsScreen({
       debtPctOfAssets,
     };
   }, [userAccounts, balances, deposits]);
+
+  const filteredDeposits = useMemo(() => {
+    if (fdFilter === 'all') return deposits;
+    return deposits.filter((fd) => fd.status === fdFilter);
+  }, [deposits, fdFilter]);
+
+  const fdFilterCounts = useMemo(
+    () => ({
+      active: deposits.filter((fd) => fd.status === 'active').length,
+      matured: deposits.filter((fd) => fd.status === 'matured').length,
+      closed: deposits.filter((fd) => fd.status === 'closed').length,
+      all: deposits.length,
+    }),
+    [deposits],
+  );
 
   useEffect(() => {
     if (Platform.OS !== 'android' || activeTab !== 'stocks') return;
@@ -251,7 +272,7 @@ export default function AccountsScreen({
               currencySymbol={sym}
               decimalPlaces={moneyDecimals}
               tone={netBalance >= 0 ? 'income' : 'expense'}
-              size="hero"
+              size="title"
               numberOfLines={2}
               adjustsFontSizeToFit
               minimumFontScale={0.45}
@@ -275,7 +296,7 @@ export default function AccountsScreen({
               currencySymbol={sym}
               decimalPlaces={moneyDecimals}
               tone="income"
-              size="hero"
+              size="title"
               numberOfLines={2}
               adjustsFontSizeToFit
               minimumFontScale={0.45}
@@ -304,7 +325,7 @@ export default function AccountsScreen({
               decimalPlaces={moneyDecimals}
               tone="custom"
               customColor={colors.secondaryLight}
-              size="hero"
+              size="title"
               numberOfLines={2}
               adjustsFontSizeToFit
               minimumFontScale={0.45}
@@ -612,6 +633,83 @@ export default function AccountsScreen({
     );
   };
 
+  const fdFilters: Array<{
+    key: FDFilter;
+    label: string;
+    count: number;
+    tone?: string;
+  }> = [
+    {
+      key: 'active',
+      label: 'Active',
+      count: fdFilterCounts.active,
+      tone: STATUS_COLORS.active,
+    },
+    {
+      key: 'matured',
+      label: 'Matured',
+      count: fdFilterCounts.matured,
+      tone: STATUS_COLORS.matured,
+    },
+    {
+      key: 'closed',
+      label: 'Closed',
+      count: fdFilterCounts.closed,
+      tone: STATUS_COLORS.closed,
+    },
+    {
+      key: 'all',
+      label: 'All',
+      count: fdFilterCounts.all,
+    },
+  ];
+
+  const renderFdFilterBar = () => (
+    <View style={styles.fdFilterWrap}>
+      {fdFilters.map(({ key, label, count, tone }) => {
+        const isActive = fdFilter === key;
+        const accentColor = colors.primary;
+        return (
+          <TouchableOpacity
+            key={key}
+            style={[
+              styles.fdFilterChip,
+              { borderColor: isActive ? accentColor : colors.outline },
+              isActive && styles.fdFilterChipActive,
+              isActive && { backgroundColor: `${accentColor}18` },
+            ]}
+            onPress={() => setFdFilter(key)}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[
+                styles.fdFilterChipText,
+                isActive && { color: accentColor },
+              ]}
+            >
+              {label}
+            </Text>
+            <View
+              style={[
+                styles.fdFilterCount,
+                isActive && { backgroundColor: `${accentColor}20` },
+              ]}
+            >
+              <Text
+              style={[
+                styles.fdFilterCountText,
+                isActive && { color: accentColor },
+              ]}
+            >
+                {count}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+
   const handleDeleteRecurring = useCallback(
     (rec: RecurringTransaction) => {
       Alert.alert('Delete Recurring Transaction', 'Stop all future occurrences?', [
@@ -769,21 +867,38 @@ export default function AccountsScreen({
         <View style={styles.emptyInvestments}>
           {showNetWorthCard ? renderPortfolioCard() : null}
           {renderSegmentedControl()}
+          {renderFdFilterBar()}
           <EmptyState
             icon="lock"
             title="No Fixed Deposits"
             subtitle="Create your first FD"
           />
         </View>
+      ) : filteredDeposits.length === 0 ? (
+        <View style={styles.emptyInvestments}>
+          {showNetWorthCard ? renderPortfolioCard() : null}
+          {renderSegmentedControl()}
+          {renderFdFilterBar()}
+          <EmptyState
+            icon="lock"
+            title={`No ${
+              fdFilter === 'all'
+                ? ''
+                : `${fdFilter.charAt(0).toUpperCase()}${fdFilter.slice(1)} `
+            }Fixed Deposits`}
+            subtitle="Try another filter to view your deposit history"
+          />
+        </View>
       ) : (
         <FlatList
-          data={deposits}
+          data={filteredDeposits}
           keyExtractor={(item) => item.id}
           renderItem={renderFDItem}
           ListHeaderComponent={
             <>
               {showNetWorthCard ? renderPortfolioCard() : null}
               {renderSegmentedControl()}
+              {renderFdFilterBar()}
             </>
           }
           contentContainerStyle={styles.listContent}
@@ -1096,9 +1211,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   portfolioMetricAmount: {
-    fontSize: 15,
-    fontWeight: '700',
-    lineHeight: 19,
+    ...typography.titleSmall,
+    fontSize: 14,
+    lineHeight: 18,
     fontVariant: ['tabular-nums'],
     maxWidth: '100%',
   },
@@ -1235,6 +1350,45 @@ const styles = StyleSheet.create({
   accountIconActionDelete: {
     marginLeft: -11,
     alignItems: 'flex-end',
+  },
+  fdFilterWrap: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  fdFilterChip: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.xs + 2,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.capsule,
+    backgroundColor: colors.surfaceVariant,
+    borderWidth: 1,
+  },
+  fdFilterChipActive: {
+    ...elevation.sm,
+  },
+  fdFilterChipText: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  fdFilterCount: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+  },
+  fdFilterCountText: {
+    color: colors.textTertiary,
+    fontSize: 11,
+    fontWeight: '800',
   },
   fdCard: {
     backgroundColor: colors.surface,

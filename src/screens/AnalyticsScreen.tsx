@@ -34,7 +34,7 @@ import type {
 import type { TabScreenProps } from '../navigation/types';
 import { analyticsService } from '../services/analyticsService';
 import { useSettingsStore } from '../stores/useSettingsStore';
-import { colors, radius, spacing } from '../theme';
+import { colors, radius, spacing, typography } from '../theme';
 import {
   getDaysInRange,
   getTimePeriodLabel,
@@ -572,14 +572,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   summaryValue: {
-    fontWeight: '800',
-    fontSize: 14,
+    ...typography.titleSmall,
+    fontSize: 15,
+    lineHeight: 20,
   },
   summaryLabel: {
+    ...typography.labelMedium,
     color: colors.textSecondary,
     fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 0.3,
+    lineHeight: 14,
+    letterSpacing: 0.7,
     marginTop: 2,
   },
   summaryDivider: {
@@ -600,16 +602,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   summaryFooterLabel: {
+    ...typography.labelSmall,
     color: colors.textTertiary,
     fontSize: 9,
-    fontWeight: '600',
     letterSpacing: 0.25,
     marginBottom: 2,
     textAlign: 'center',
   },
   summaryFooterValue: {
-    fontWeight: '700',
-    fontSize: 11,
+    ...typography.labelLarge,
+    fontSize: 12,
+    lineHeight: 18,
   },
   summaryFooterDivider: {
     width: 1,

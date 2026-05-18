@@ -93,7 +93,7 @@ function TransactionItemComponent({
           { backgroundColor: iconBg, borderColor: `${iconColor}40` },
         ]}
       >
-        <Icon source={iconSource as any} size={20} color={iconColor} />
+        <Icon source={iconSource as any} size={18} color={iconColor} />
       </View>
       <View style={styles.details}>
         <Text variant="bodyLarge" numberOfLines={1} ellipsizeMode="tail" style={styles.title}>
@@ -105,6 +105,8 @@ function TransactionItemComponent({
               label={`${fromAcc?.name ?? '?'} → ${toAcc?.name ?? '?'}`}
               backgroundColor={`${colors.transfer}22`}
               textColor={colors.transfer}
+              style={styles.chip}
+              textStyle={styles.chipText}
             />
           </View>
         ) : (
@@ -119,6 +121,8 @@ function TransactionItemComponent({
                   label={name}
                   backgroundColor={`${badgeColor}22`}
                   textColor={badgeColor}
+                  style={styles.chip}
+                  textStyle={styles.chipText}
                 />
               );
             })}
@@ -155,27 +159,35 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: spacing.lg,
+    paddingVertical: 8,
+    paddingHorizontal: spacing.md,
     backgroundColor: colors.background,
   },
   iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
   },
-  details: { flex: 1, marginLeft: spacing.md },
-  title: { color: colors.text, fontWeight: '600', fontSize: 15 },
+  details: { flex: 1, marginLeft: spacing.sm },
+  title: { color: colors.text, fontWeight: '600', fontSize: 14 },
   badgeRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: 4,
     marginTop: 2,
+    marginLeft: -6,
   },
-  note: { color: colors.textSecondary, marginTop: 2 },
-  right: { alignItems: 'flex-end', marginLeft: 8, flexShrink: 0 },
-  date: { color: colors.textTertiary, marginTop: 2 },
+  chip: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
+  chipText: {
+    fontSize: 10,
+  },
+  note: { color: colors.textSecondary, marginTop: 1, fontSize: 11 },
+  right: { alignItems: 'flex-end', marginLeft: 6, flexShrink: 0 },
+  date: { color: colors.textTertiary, marginTop: 1, fontSize: 11 },
 });
