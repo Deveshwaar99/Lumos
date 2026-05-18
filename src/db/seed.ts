@@ -80,6 +80,7 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   decimalPlaces: '2',
   currencyCode: 'USD',
   currencySymbol: '$',
+  showNetWorthCard: 'true',
 };
 
 export async function seedDatabase(db: SQLiteDatabase): Promise<void> {

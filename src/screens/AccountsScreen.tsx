@@ -109,6 +109,7 @@ export default function AccountsScreen({
   const insets = useSafeAreaInsets();
   const sym = settings.currencySymbol;
   const moneyDecimals = clampMoneyDecimalPlaces(settings.decimalPlaces);
+  const showNetWorthCard = settings.showNetWorthCard;
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -696,7 +697,7 @@ export default function AccountsScreen({
     <>
       {recurringTransactions.length === 0 ? (
         <View style={styles.emptyInvestments}>
-          {renderPortfolioCard()}
+          {showNetWorthCard ? renderPortfolioCard() : null}
           {renderSegmentedControl()}
           <EmptyState
             icon="autorenew"
@@ -711,7 +712,7 @@ export default function AccountsScreen({
           renderItem={renderRecurringItem}
           ListHeaderComponent={
             <>
-              {renderPortfolioCard()}
+              {showNetWorthCard ? renderPortfolioCard() : null}
               {renderSegmentedControl()}
             </>
           }
@@ -744,7 +745,7 @@ export default function AccountsScreen({
           renderItem={renderAccountItem}
           ListHeaderComponent={
             <>
-              {renderPortfolioCard()}
+              {showNetWorthCard ? renderPortfolioCard() : null}
               {renderSegmentedControl()}
             </>
           }
@@ -766,7 +767,7 @@ export default function AccountsScreen({
     <>
       {deposits.length === 0 ? (
         <View style={styles.emptyInvestments}>
-          {renderPortfolioCard()}
+          {showNetWorthCard ? renderPortfolioCard() : null}
           {renderSegmentedControl()}
           <EmptyState
             icon="lock"
@@ -781,7 +782,7 @@ export default function AccountsScreen({
           renderItem={renderFDItem}
           ListHeaderComponent={
             <>
-              {renderPortfolioCard()}
+              {showNetWorthCard ? renderPortfolioCard() : null}
               {renderSegmentedControl()}
             </>
           }
@@ -846,7 +847,7 @@ export default function AccountsScreen({
         renderItem={renderStockItem}
         ListHeaderComponent={
           <>
-            {renderPortfolioCard()}
+            {showNetWorthCard ? renderPortfolioCard() : null}
             {renderSegmentedControl()}
             <View style={styles.stocksSummaryCard}>
               <View style={styles.stocksSummaryTop}>

@@ -7,4 +7,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
   lastBackupAt: null,
   username: '',
   screenLockEnabled: false,
+  showNetWorthCard: true,
 };

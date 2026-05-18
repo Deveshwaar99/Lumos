@@ -60,6 +60,7 @@ export interface AppSettings {
   lastBackupAt: string | null;
   username: string;
   screenLockEnabled: boolean;
+  showNetWorthCard: boolean;
 }
 
 export interface TransactionFilter {

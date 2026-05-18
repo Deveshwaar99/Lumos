@@ -360,6 +360,30 @@ export default function SettingsScreen({
             </View>
           </GroupedCard>
 
+          <Text style={styles.sectionHeader}>Display</Text>
+          <GroupedCard>
+            <CardRow
+              icon="chart-arc"
+              title="Show Net Worth Card"
+              right={
+                <Switch
+                  value={settings.showNetWorthCard}
+                  onValueChange={(value) => updateSetting('showNetWorthCard', value)}
+                  trackColor={{
+                    false: colors.outline,
+                    true: colors.primaryLight,
+                  }}
+                  thumbColor={
+                    settings.showNetWorthCard
+                      ? colors.primary
+                      : colors.textSecondary
+                  }
+                />
+              }
+              isLast
+            />
+          </GroupedCard>
+
           <Text style={styles.sectionHeader}>Security</Text>
           <GroupedCard>
             <CardRow

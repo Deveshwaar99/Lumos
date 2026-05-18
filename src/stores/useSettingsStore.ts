@@ -14,7 +14,9 @@ function parseValue(
 ): string | number | boolean | null {
   if (value === 'null') return null;
   if (key === 'decimalPlaces') return parseInt(value, 10) || 0;
-  if (key === 'screenLockEnabled') return value === 'true';
+  if (key === 'screenLockEnabled' || key === 'showNetWorthCard') {
+    return value === 'true';
+  }
   return value;
 }
 
