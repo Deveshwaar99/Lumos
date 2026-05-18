@@ -61,6 +61,18 @@ const VIEW_OPTIONS: { key: AnalysisView; label: string; icon: string }[] = [
   { key: 'net_worth', label: 'Net Worth', icon: 'chart-timeline-variant' },
 ];
 
+const ANALYTICS_PRIMARY_PERIODS: { key: TimePeriod; label: string }[] = [
+  { key: 'week', label: 'Week' },
+  { key: 'month', label: 'Month' },
+  { key: 'year', label: 'Year' },
+];
+
+const ANALYTICS_SECONDARY_PERIOD_LABELS: Partial<Record<TimePeriod, string>> = {
+  day: 'Day',
+  '3months': '3M',
+  '6months': '6M',
+};
+
 export default function AnalyticsScreen({
   navigation,
 }: TabScreenProps<'Analytics'>) {
@@ -117,6 +129,12 @@ export default function AnalyticsScreen({
     () => Math.round(summary.net / periodDayCount),
     [summary.net, periodDayCount],
   );
+  const isPrimaryPeriod = ANALYTICS_PRIMARY_PERIODS.some(
+    (option) => option.key === period,
+  );
+  const moreLabel = isPrimaryPeriod
+    ? 'More'
+    : (ANALYTICS_SECONDARY_PERIOD_LABELS[period] ?? 'More');
 
   const loadedViewRef = useRef<{
     view: AnalysisView;
@@ -407,8 +425,65 @@ export default function AnalyticsScreen({
           label={navLabel}
           onPrev={handlePrev}
           onNext={handleNext}
-          onFilterPress={() => setFilterVisible(true)}
+          showFilterIndicator={false}
         />
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.analyticsPeriodBar}
+        >
+          {ANALYTICS_PRIMARY_PERIODS.map((option) => {
+            const isSelected = option.key === period;
+            return (
+              <TouchableOpacity
+                key={option.key}
+                activeOpacity={0.8}
+                style={[
+                  styles.analyticsPeriodChip,
+                  isSelected && styles.analyticsPeriodChipActive,
+                ]}
+                onPress={() => {
+                  setPeriod(option.key);
+                  setAnchor(new Date());
+                }}
+              >
+                <Text
+                  variant="labelMedium"
+                  style={[
+                    styles.analyticsPeriodChipText,
+                    isSelected && styles.analyticsPeriodChipTextActive,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={[
+              styles.analyticsPeriodChip,
+              styles.analyticsPeriodMoreChip,
+              !isPrimaryPeriod && styles.analyticsPeriodChipActive,
+            ]}
+            onPress={() => setFilterVisible(true)}
+          >
+            <Text
+              variant="labelMedium"
+              style={[
+                styles.analyticsPeriodChipText,
+                !isPrimaryPeriod && styles.analyticsPeriodChipTextActive,
+              ]}
+            >
+              {moreLabel}
+            </Text>
+            <Icon
+              source="chevron-down"
+              size={14}
+              color={!isPrimaryPeriod ? colors.onPrimary : colors.textSecondary}
+            />
+          </TouchableOpacity>
+        </ScrollView>
 
         {/* Summary figures */}
         <GlassCard style={styles.summaryGlass} intensity={30} border>
@@ -543,11 +618,12 @@ export default function AnalyticsScreen({
         visible={filterVisible}
         onDismiss={() => setFilterVisible(false)}
         selected={period}
-        onSelect={(p) => {
-          setPeriod(p);
+        onSelect={(nextPeriod) => {
+          setPeriod(nextPeriod);
           setAnchor(new Date());
         }}
       />
+
     </View>
   );
 }
@@ -556,6 +632,38 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1 },
   content: { paddingBottom: 100 },
+  analyticsPeriodBar: {
+    gap: spacing.xs,
+    paddingHorizontal: spacing.cardInset,
+    paddingBottom: spacing.md,
+  },
+  analyticsPeriodChip: {
+    minHeight: 30,
+    paddingHorizontal: spacing.sm + 2,
+    borderRadius: radius.capsule,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceVariant,
+    borderWidth: 1,
+    borderColor: colors.borderHairline,
+  },
+  analyticsPeriodChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  analyticsPeriodChipText: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  analyticsPeriodChipTextActive: {
+    color: colors.onPrimary,
+  },
+  analyticsPeriodMoreChip: {
+    flexDirection: 'row',
+    gap: spacing.xxs,
+  },
 
   summaryGlass: {
     marginHorizontal: spacing.cardInset,

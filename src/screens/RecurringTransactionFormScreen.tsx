@@ -469,6 +469,7 @@ export default function RecurringTransactionFormScreen({
           )}
 
           {/* Note */}
+          <Text style={styles.sectionLabel}>NOTE (OPTIONAL)</Text>
           <View style={styles.noteCard}>
             <View style={styles.noteIconWrap}>
               <Icon source="text" size={18} color={colors.textTertiary} />
@@ -573,7 +574,7 @@ export default function RecurringTransactionFormScreen({
                 }
               />
               <View>
-                <Text style={styles.dateChipLabel}>End Date</Text>
+                <Text style={styles.dateChipLabel}>End Date (optional)</Text>
                 <Text
                   style={[
                     styles.dateChipValue,

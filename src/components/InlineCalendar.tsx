@@ -25,7 +25,7 @@ export default function InlineCalendar({
   onDone,
   onDismiss,
   onClear,
-  surfaceColor = colors.surface,
+  surfaceColor = colors.surfaceElevated,
   variant = 'fullscreen',
 }: InlineCalendarProps) {
   const handleDismiss = onDismiss ?? onDone;
@@ -118,6 +118,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderHairline,
   },
   header: {
     flexDirection: 'row',
@@ -126,7 +128,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: colors.borderHairline,
   },
   cancelText: {
     color: colors.primary,

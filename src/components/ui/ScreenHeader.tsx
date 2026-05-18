@@ -1,4 +1,3 @@
-import { BlurView } from 'expo-blur';
 import type { ReactNode } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, {
@@ -31,12 +30,6 @@ export function ScreenHeader({
   const insets = useSafeAreaInsets();
 
   const scrimStyle = useAnimatedStyle(() => {
-    const a = interpolate(
-      scrollY.value,
-      [0, threshold],
-      [0.88, 1],
-      Extrapolation.CLAMP,
-    );
     const tint = interpolate(
       scrollY.value,
       [0, threshold],
@@ -44,7 +37,6 @@ export function ScreenHeader({
       Extrapolation.CLAMP,
     );
     return {
-      opacity: a,
       backgroundColor:
         tint < 0.5 ? HEADER_SURFACE : HEADER_SURFACE_SCROLLED,
     };
@@ -62,7 +54,6 @@ export function ScreenHeader({
     >
       <View pointerEvents="none" style={styles.backgroundLayer}>
         <View style={styles.baseLayer} />
-        <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
         <AnimatedView style={[StyleSheet.absoluteFill, scrimStyle]} />
       </View>
       <View style={styles.inner}>{children}</View>

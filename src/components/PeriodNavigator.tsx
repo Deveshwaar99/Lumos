@@ -8,6 +8,7 @@ interface PeriodNavigatorProps {
   onPrev: () => void;
   onNext: () => void;
   onFilterPress?: () => void;
+  showFilterIndicator?: boolean;
   compact?: boolean;
 }
 
@@ -16,6 +17,7 @@ function PeriodNavigator({
   onPrev,
   onNext,
   onFilterPress,
+  showFilterIndicator = true,
   compact = false,
 }: PeriodNavigatorProps) {
   const chevronSize = compact ? 20 : 28;
@@ -34,7 +36,8 @@ function PeriodNavigator({
       <TouchableOpacity
         style={compact ? styles.labelRowCompact : styles.labelRow}
         onPress={onFilterPress}
-        activeOpacity={0.6}
+        activeOpacity={onFilterPress ? 0.6 : 1}
+        disabled={!onFilterPress}
       >
         <Text
           variant={compact ? 'bodyMedium' : 'titleMedium'}
@@ -43,11 +46,13 @@ function PeriodNavigator({
         >
           {label}
         </Text>
-        <Icon
-          source="chevron-down"
-          size={compact ? 14 : 18}
-          color={colors.textSecondary}
-        />
+        {showFilterIndicator ? (
+          <Icon
+            source="chevron-down"
+            size={compact ? 14 : 18}
+            color={colors.textSecondary}
+          />
+        ) : null}
       </TouchableOpacity>
       <TouchableOpacity
         onPress={onNext}

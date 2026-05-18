@@ -23,7 +23,7 @@ import AnimatedReanimated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DateHeader from '../components/DateHeader';
 import PeriodNavigator from '../components/PeriodNavigator';
-import TimePeriodPicker from '../components/TimePeriodPicker';
+import TimePeriodTabs from '../components/TimePeriodTabs';
 import TransactionItem from '../components/TransactionItem';
 import { GlowFAB, HeroBalanceCard } from '../components/ui';
 import type { MonthSummary, TransactionWithSplits } from '../models/types';
@@ -68,7 +68,6 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
 
   const [anchor, setAnchor] = useState(() => new Date());
   const [period, setPeriod] = useState<TimePeriod>('month');
-  const [filterVisible, setFilterVisible] = useState(false);
   const [transactions, setTransactions] = useState<TransactionWithSplits[]>([]);
   const [summary, setSummary] = useState<MonthSummary>({
     totalIncome: 0,
@@ -299,28 +298,37 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
           </View>
         ) : (
           <View style={styles.topBar}>
-            <TouchableOpacity
-              hitSlop={8}
-              onPress={() => navigation.navigate('Settings' as any)}
-              accessibilityLabel="Open settings"
-              accessibilityRole="button"
-            >
-              <Icon source="cog" size={24} color={colors.text} />
-            </TouchableOpacity>
-            <PeriodNavigator
-              label={navLabel}
-              onPrev={handlePrev}
-              onNext={handleNext}
-              onFilterPress={() => setFilterVisible(true)}
+            <View style={styles.topBarRow}>
+              <TouchableOpacity
+                hitSlop={8}
+                onPress={() => navigation.navigate('Settings' as any)}
+                accessibilityLabel="Open settings"
+                accessibilityRole="button"
+              >
+                <Icon source="cog" size={24} color={colors.text} />
+              </TouchableOpacity>
+              <PeriodNavigator
+                label={navLabel}
+                onPrev={handlePrev}
+                onNext={handleNext}
+                showFilterIndicator={false}
+              />
+              <TouchableOpacity
+                hitSlop={8}
+                onPress={openSearch}
+                accessibilityLabel="Search transactions"
+                accessibilityRole="button"
+              >
+                <Icon source="magnify" size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+            <TimePeriodTabs
+              selected={period}
+              onSelect={(nextPeriod) => {
+                setPeriod(nextPeriod);
+                setAnchor(new Date());
+              }}
             />
-            <TouchableOpacity
-              hitSlop={8}
-              onPress={openSearch}
-              accessibilityLabel="Search transactions"
-              accessibilityRole="button"
-            >
-              <Icon source="magnify" size={24} color={colors.text} />
-            </TouchableOpacity>
           </View>
         )}
         {!searchActive ? (
@@ -345,7 +353,7 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
       handleNext,
       openSearch,
       searchInputRef,
-      setFilterVisible,
+      period,
       searchActive,
       summary.totalIncome,
       summary.totalExpense,
@@ -419,16 +427,6 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
         />
       )}
 
-      <TimePeriodPicker
-        visible={filterVisible}
-        onDismiss={() => setFilterVisible(false)}
-        selected={period}
-        onSelect={(p) => {
-          setPeriod(p);
-          setAnchor(new Date());
-        }}
-      />
-
       <Snackbar
         visible={!!snackbar}
         onDismiss={() => setSnackbar('')}
@@ -447,12 +445,15 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xs,
   },
   topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    gap: spacing.xs,
     paddingTop: spacing.sm,
     paddingBottom: spacing.xs,
     paddingHorizontal: spacing.sm + 2,
+  },
+  topBarRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   list: { flex: 1 },
   listContent: { paddingBottom: 100 },

@@ -1,4 +1,5 @@
 import React from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Divider, Icon, Modal, Portal, Text } from 'react-native-paper';
 import { colors, radius, spacing } from '../theme';
@@ -33,41 +34,56 @@ export default function TimePeriodPicker({
         onDismiss={onDismiss}
         contentContainerStyle={styles.modal}
       >
-        <Text variant="titleMedium" style={styles.title}>
-          Time Period
-        </Text>
-        <ScrollView>
-          {OPTIONS.map((item, index) => {
-            const isSelected = selected === item.key;
-            return (
-              <React.Fragment key={item.key}>
-                {index > 0 && <Divider />}
-                <TouchableOpacity
-                  style={[styles.item, isSelected && styles.selected]}
-                  onPress={() => {
-                    onSelect(item.key);
-                    onDismiss();
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.iconCircle}>
-                    <Icon
-                      source={item.icon as any}
-                      size={20}
-                      color={colors.primary}
-                    />
-                  </View>
-                  <Text variant="bodyLarge" style={styles.itemText}>
-                    {item.label}
-                  </Text>
-                  {isSelected && (
-                    <Icon source="check" size={20} color={colors.primary} />
-                  )}
-                </TouchableOpacity>
-              </React.Fragment>
-            );
-          })}
-        </ScrollView>
+        <LinearGradient
+          colors={['#1E163D', '#151A34', '#10141F']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.panel}
+        >
+          <Text variant="titleMedium" style={styles.title}>
+            Time Period
+          </Text>
+          <ScrollView>
+            {OPTIONS.map((item, index) => {
+              const isSelected = selected === item.key;
+              return (
+                <React.Fragment key={item.key}>
+                  {index > 0 && <Divider style={styles.divider} />}
+                  <TouchableOpacity
+                    style={[styles.item, isSelected && styles.selected]}
+                    onPress={() => {
+                      onSelect(item.key);
+                      onDismiss();
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <View
+                      style={[
+                        styles.iconCircle,
+                        isSelected && styles.iconCircleSelected,
+                      ]}
+                    >
+                      <Icon
+                        source={item.icon as any}
+                        size={20}
+                        color={isSelected ? colors.onPrimary : colors.primary}
+                      />
+                    </View>
+                    <Text
+                      variant="bodyLarge"
+                      style={[styles.itemText, isSelected && styles.itemTextSelected]}
+                    >
+                      {item.label}
+                    </Text>
+                    {isSelected && (
+                      <Icon source="check-circle" size={20} color={colors.onPrimary} />
+                    )}
+                  </TouchableOpacity>
+                </React.Fragment>
+              );
+            })}
+          </ScrollView>
+        </LinearGradient>
       </Modal>
     </Portal>
   );
@@ -75,15 +91,32 @@ export default function TimePeriodPicker({
 
 const styles = StyleSheet.create({
   modal: {
-    backgroundColor: colors.surface,
     margin: spacing.lg,
     borderRadius: radius.md,
     maxHeight: '70%',
+  },
+  panel: {
+    borderRadius: radius.md,
     padding: spacing.cardInset,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   title: { marginBottom: 12, textAlign: 'center' },
-  item: { flexDirection: 'row', alignItems: 'center', padding: 12 },
-  selected: { backgroundColor: colors.primary + '10' },
+  divider: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  item: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  selected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
   iconCircle: {
     width: 44,
     height: 44,
@@ -93,5 +126,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary + '15',
     marginRight: 12,
   },
-  itemText: { flex: 1 },
+  iconCircleSelected: {
+    backgroundColor: colors.primary,
+  },
+  itemText: { flex: 1, color: colors.text },
+  itemTextSelected: {
+    color: colors.onPrimary,
+    fontWeight: '700',
+  },
 });

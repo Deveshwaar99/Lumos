@@ -36,10 +36,10 @@ export const colors = {
   onSuccess: '#0B0B12',
 
   background: '#0B0B12',
-  surface: 'rgba(255, 255, 255, 0.04)',
-  surfaceTranslucent: 'rgba(20, 20, 32, 0.55)',
-  surfaceVariant: 'rgba(255, 255, 255, 0.07)',
-  surfaceElevated: 'rgba(255, 255, 255, 0.07)',
+  surface: '#171A24',
+  surfaceTranslucent: '#1D2230',
+  surfaceVariant: '#23293A',
+  surfaceElevated: '#1D2230',
 
   outline: 'rgba(255, 255, 255, 0.08)',
   outlineVariant: 'rgba(255, 255, 255, 0.04)',
