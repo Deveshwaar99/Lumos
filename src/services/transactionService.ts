@@ -102,7 +102,10 @@ export const transactionService = {
     return { ...txn, splits: splits.map(mapSplitRow) };
   },
 
-  async create(data: CreateTransactionInput): Promise<TransactionWithSplits> {
+  async create(
+    data: CreateTransactionInput,
+    options?: { fdId?: string | null },
+  ): Promise<TransactionWithSplits> {
     const db = await getDatabase();
     const id = generateId();
     const now = new Date().toISOString();
@@ -123,7 +126,7 @@ export const transactionService = {
         data.note ?? null,
         data.date,
         null,
-        null,
+        options?.fdId ?? null,
         now,
         now,
       ],
@@ -359,67 +362,6 @@ export const transactionService = {
     );
 
     return { expenseId, incomeId };
-  },
-
-  async createWithFdId(
-    data: CreateTransactionInput,
-    fdId: string,
-  ): Promise<TransactionWithSplits> {
-    const db = await getDatabase();
-    const id = generateId();
-    const now = new Date().toISOString();
-    const account2IdFd =
-      data.type === 'transfer' ? (data.splits[1]?.accountId ?? null) : null;
-    await db.runAsync(
-      `INSERT INTO transactions (id, type, total_amount_cents, currency, category_id, account_id, account2_id, note, date, linked_transaction_id, fd_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        id,
-        data.type,
-        data.totalAmountCents,
-        data.currency,
-        data.categoryId ?? null,
-        data.splits[0].accountId,
-        account2IdFd,
-        data.note ?? null,
-        data.date,
-        null,
-        fdId,
-        now,
-        now,
-      ],
-    );
-
-    const splits: TransactionSplit[] = [];
-    for (const sp of data.splits) {
-      const splitId = generateId();
-      await db.runAsync(
-        'INSERT INTO transaction_splits (id, transaction_id, account_id, amount_cents) VALUES (?, ?, ?, ?)',
-        [splitId, id, sp.accountId, sp.amountCents],
-      );
-      splits.push({
-        id: splitId,
-        transactionId: id,
-        accountId: sp.accountId,
-        amountCents: sp.amountCents,
-      });
-    }
-
-    return {
-      id,
-      type: data.type,
-      totalAmountCents: data.totalAmountCents,
-      currency: data.currency,
-      categoryId: data.categoryId ?? null,
-      accountId: data.splits[0].accountId,
-      account2Id: account2IdFd,
-      note: data.note ?? null,
-      date: data.date,
-      linkedTransactionId: null,
-      createdAt: now,
-      updatedAt: now,
-      splits,
-    };
   },
 
   async getByFdId(fdId: string): Promise<Transaction[]> {

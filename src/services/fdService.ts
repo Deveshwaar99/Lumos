@@ -66,7 +66,7 @@ export const fdService = {
 
   async create(data: CreateFDInput): Promise<FixedDeposit> {
     const fdAccount = await accountService.create({
-      name: `FD — ${data.label}`,
+      name: `FD - ${data.label}`,
       type: 'savings',
       icon: 'lock',
       openingBalanceCents: 0,
@@ -98,14 +98,20 @@ export const fdService = {
       ],
     );
 
-    await transactionService.transfer(
-      data.sourceAccountId,
-      fdAccount.id,
-      data.principalCents,
-      data.currency,
-      `FD opened — ${data.label}`,
-      data.startDate,
-      id,
+    await transactionService.create(
+      {
+        type: 'transfer',
+        totalAmountCents: data.principalCents,
+        currency: data.currency,
+        categoryId: null,
+        note: `FD opened - ${data.label}`,
+        date: data.startDate,
+        splits: [
+          { accountId: data.sourceAccountId, amountCents: data.principalCents },
+          { accountId: fdAccount.id, amountCents: data.principalCents },
+        ],
+      },
+      { fdId: id },
     );
 
     return {
@@ -176,12 +182,6 @@ export const fdService = {
     const fd = await this.getById(id);
     if (!fd || fd.status !== 'active') return false;
 
-    const existing = await transactionService.getByFdId(id);
-    const hasMaturityIncome = existing.some(
-      (t) => t.type === 'income' && t.note?.includes('interest'),
-    );
-    if (hasMaturityIncome) return false;
-
     const grossInterest = calculateFDInterest(
       fd.principalCents,
       fd.annualInterestRate,
@@ -191,30 +191,46 @@ export const fdService = {
     const netInterest = calculateNetInterest(grossInterest, fd.taxRate);
     const tds = calculateTDS(grossInterest, fd.taxRate);
 
-    await transactionService.transfer(
-      fd.fdAccountId,
-      fd.creditAccountId,
-      fd.principalCents,
-      fd.currency,
-      'FD matured — principal return',
-      fd.maturityDate,
-      id,
+    const existing = await transactionService.getByFdId(id);
+    const hasPrincipalReturn = existing.some(
+      (t) => t.type === 'transfer' && t.note === 'FD matured - principal return',
+    );
+    const hasMaturityIncome = existing.some(
+      (t) => t.type === 'income' && t.note?.startsWith('FD interest -'),
     );
 
-    if (netInterest > 0) {
+    if (!hasPrincipalReturn) {
+      await transactionService.create(
+        {
+          type: 'transfer',
+          totalAmountCents: fd.principalCents,
+          currency: fd.currency,
+          categoryId: null,
+          note: 'FD matured - principal return',
+          date: fd.maturityDate,
+          splits: [
+            { accountId: fd.fdAccountId, amountCents: fd.principalCents },
+            { accountId: fd.creditAccountId, amountCents: fd.principalCents },
+          ],
+        },
+        { fdId: id },
+      );
+    }
+
+    if (netInterest > 0 && !hasMaturityIncome) {
       const grossFormatted = (grossInterest / 100).toFixed(2);
       const tdsFormatted = (tds / 100).toFixed(2);
-      await transactionService.createWithFdId(
+      await transactionService.create(
         {
           type: 'income',
           totalAmountCents: netInterest,
           currency: fd.currency,
           categoryId: fd.interestCategoryId,
-          note: `FD interest — gross: ${grossFormatted}, TDS: ${tdsFormatted}`,
+          note: `FD interest - gross: ${grossFormatted}, TDS: ${tdsFormatted}`,
           date: fd.maturityDate,
           splits: [{ accountId: fd.creditAccountId, amountCents: netInterest }],
         },
-        id,
+        { fdId: id },
       );
     }
 
@@ -233,14 +249,20 @@ export const fdService = {
 
     const today = format(new Date(), 'yyyy-MM-dd');
 
-    await transactionService.transfer(
-      fd.fdAccountId,
-      fd.creditAccountId,
-      fd.principalCents,
-      fd.currency,
-      'FD closed early — principal return',
-      today,
-      id,
+    await transactionService.create(
+      {
+        type: 'transfer',
+        totalAmountCents: fd.principalCents,
+        currency: fd.currency,
+        categoryId: null,
+        note: 'FD closed early - principal return',
+        date: today,
+        splits: [
+          { accountId: fd.fdAccountId, amountCents: fd.principalCents },
+          { accountId: fd.creditAccountId, amountCents: fd.principalCents },
+        ],
+      },
+      { fdId: id },
     );
 
     const db = await getDatabase();
