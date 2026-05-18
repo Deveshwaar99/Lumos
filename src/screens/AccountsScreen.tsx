@@ -273,9 +273,10 @@ export default function AccountsScreen({
               decimalPlaces={moneyDecimals}
               tone={netBalance >= 0 ? 'income' : 'expense'}
               size="title"
-              numberOfLines={2}
+              numberOfLines={1}
+              ellipsizeMode="clip"
               adjustsFontSizeToFit
-              minimumFontScale={0.45}
+              minimumFontScale={0.32}
               style={styles.portfolioMetricAmount}
             />
           </View>
@@ -297,9 +298,10 @@ export default function AccountsScreen({
               decimalPlaces={moneyDecimals}
               tone="income"
               size="title"
-              numberOfLines={2}
+              numberOfLines={1}
+              ellipsizeMode="clip"
               adjustsFontSizeToFit
-              minimumFontScale={0.45}
+              minimumFontScale={0.32}
               style={styles.portfolioMetricAmount}
             />
           </View>
@@ -326,9 +328,10 @@ export default function AccountsScreen({
               tone="custom"
               customColor={colors.secondaryLight}
               size="title"
-              numberOfLines={2}
+              numberOfLines={1}
+              ellipsizeMode="clip"
               adjustsFontSizeToFit
-              minimumFontScale={0.45}
+              minimumFontScale={0.32}
               style={styles.portfolioMetricAmount}
             />
           </View>
@@ -1189,7 +1192,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.22)',
     borderRadius: radius.sm,
     paddingVertical: spacing.sm + 2,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.xs,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
   },
@@ -1197,7 +1200,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     justifyContent: 'center',
-    paddingHorizontal: spacing.xs,
+    paddingHorizontal: spacing.xxs,
   },
   portfolioMetricDivider: {
     width: 1,
@@ -1215,7 +1218,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     fontVariant: ['tabular-nums'],
+    letterSpacing: -0.2,
     maxWidth: '100%',
+    includeFontPadding: false,
   },
   portfolioInsight: {
     color: colors.textSecondary,
