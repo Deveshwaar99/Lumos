@@ -1250,6 +1250,8 @@ const styles = StyleSheet.create({
   portfolioBarLiab: {
     backgroundColor: colors.secondaryLight,
   },
+
+  /* ── Account Cards ── */
   summaryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1267,8 +1269,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
-
-  /* ── Account Cards ── */
   accountCard: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,

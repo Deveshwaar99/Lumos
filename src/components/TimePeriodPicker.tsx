@@ -1,5 +1,4 @@
 import React from 'react';
-import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Divider, Icon, Modal, Portal, Text } from 'react-native-paper';
 import { colors, radius, spacing } from '../theme';
@@ -34,12 +33,7 @@ export default function TimePeriodPicker({
         onDismiss={onDismiss}
         contentContainerStyle={styles.modal}
       >
-        <LinearGradient
-          colors={['#1E163D', '#151A34', '#10141F']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.panel}
-        >
+        <View style={styles.panel}>
           <Text variant="titleMedium" style={styles.title}>
             Time Period
           </Text>
@@ -83,7 +77,7 @@ export default function TimePeriodPicker({
               );
             })}
           </ScrollView>
-        </LinearGradient>
+        </View>
       </Modal>
     </Portal>
   );
@@ -96,6 +90,7 @@ const styles = StyleSheet.create({
     maxHeight: '70%',
   },
   panel: {
+    backgroundColor: colors.surface,
     borderRadius: radius.md,
     padding: spacing.cardInset,
     borderWidth: 1,

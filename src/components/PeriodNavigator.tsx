@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { type ReactNode } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Icon, Text } from 'react-native-paper';
 import { colors, spacing } from '../theme';
@@ -9,6 +9,7 @@ interface PeriodNavigatorProps {
   onNext: () => void;
   onFilterPress?: () => void;
   showFilterIndicator?: boolean;
+  accessory?: ReactNode;
   compact?: boolean;
 }
 
@@ -18,6 +19,7 @@ function PeriodNavigator({
   onNext,
   onFilterPress,
   showFilterIndicator = true,
+  accessory,
   compact = false,
 }: PeriodNavigatorProps) {
   const chevronSize = compact ? 20 : 28;
@@ -43,6 +45,7 @@ function PeriodNavigator({
           variant={compact ? 'bodyMedium' : 'titleMedium'}
           style={compact ? styles.labelCompact : styles.label}
           accessibilityRole="header"
+          numberOfLines={1}
         >
           {label}
         </Text>
@@ -54,6 +57,7 @@ function PeriodNavigator({
           />
         ) : null}
       </TouchableOpacity>
+      {accessory ? <View style={styles.accessoryWrap}>{accessory}</View> : null}
       <TouchableOpacity
         onPress={onNext}
         hitSlop={12}
@@ -81,31 +85,42 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     gap: 8,
+    minWidth: 0,
   },
   containerCompact: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    minWidth: 0,
   },
   labelRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    flexShrink: 1,
+    minWidth: 0,
   },
   labelRowCompact: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
+    flexShrink: 1,
+    minWidth: 0,
   },
   label: {
     color: colors.text,
     fontWeight: '700',
     fontSize: 17,
+    flexShrink: 1,
   },
   labelCompact: {
     color: colors.text,
     fontWeight: '600',
     fontSize: 15,
+    flexShrink: 1,
+  },
+  accessoryWrap: {
+    flexShrink: 0,
   },
 });
 

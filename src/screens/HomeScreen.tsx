@@ -23,7 +23,8 @@ import AnimatedReanimated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DateHeader from '../components/DateHeader';
 import PeriodNavigator from '../components/PeriodNavigator';
-import TimePeriodTabs from '../components/TimePeriodTabs';
+import TimePeriodPicker from '../components/TimePeriodPicker';
+import TimePeriodTrigger from '../components/TimePeriodTrigger';
 import TransactionItem from '../components/TransactionItem';
 import { GlowFAB, HeroBalanceCard } from '../components/ui';
 import type { MonthSummary, TransactionWithSplits } from '../models/types';
@@ -68,6 +69,7 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
 
   const [anchor, setAnchor] = useState(() => new Date());
   const [period, setPeriod] = useState<TimePeriod>('month');
+  const [filterVisible, setFilterVisible] = useState(false);
   const [transactions, setTransactions] = useState<TransactionWithSplits[]>([]);
   const [summary, setSummary] = useState<MonthSummary>({
     totalIncome: 0,
@@ -312,6 +314,14 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
                 onPrev={handlePrev}
                 onNext={handleNext}
                 showFilterIndicator={false}
+                compact
+                accessory={
+                  <TimePeriodTrigger
+                    compact
+                    period={period}
+                    onPress={() => setFilterVisible(true)}
+                  />
+                }
               />
               <TouchableOpacity
                 hitSlop={8}
@@ -322,13 +332,6 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
                 <Icon source="magnify" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
-            <TimePeriodTabs
-              selected={period}
-              onSelect={(nextPeriod) => {
-                setPeriod(nextPeriod);
-                setAnchor(new Date());
-              }}
-            />
           </View>
         )}
         {!searchActive ? (
@@ -353,6 +356,7 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
       handleNext,
       openSearch,
       searchInputRef,
+      setFilterVisible,
       period,
       searchActive,
       summary.totalIncome,
@@ -426,6 +430,16 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
           accessibilityLabel="Add transaction"
         />
       )}
+
+      <TimePeriodPicker
+        visible={filterVisible}
+        onDismiss={() => setFilterVisible(false)}
+        selected={period}
+        onSelect={(nextPeriod) => {
+          setPeriod(nextPeriod);
+          setAnchor(new Date());
+        }}
+      />
 
       <Snackbar
         visible={!!snackbar}

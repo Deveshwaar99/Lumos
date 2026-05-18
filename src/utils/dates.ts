@@ -267,6 +267,26 @@ export function getTimePeriodLabel(anchor: Date, period: TimePeriod): string {
   }
 }
 
+export function getTimePeriodOptionLabel(
+  period: TimePeriod,
+  compact = false,
+): string {
+  switch (period) {
+    case 'day':
+      return 'Day';
+    case 'week':
+      return 'Week';
+    case 'month':
+      return 'Month';
+    case '3months':
+      return compact ? '3M' : '3 Months';
+    case '6months':
+      return compact ? '6M' : '6 Months';
+    case 'year':
+      return 'Year';
+  }
+}
+
 /**
  * Returns array of yyyy-MM-dd strings for each day in an arbitrary [start, end) range.
  */

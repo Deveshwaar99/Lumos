@@ -22,6 +22,7 @@ import FlowLineChart from '../components/charts/FlowLineChart';
 import NetWorthChart from '../components/charts/NetWorthChart';
 import PeriodNavigator from '../components/PeriodNavigator';
 import TimePeriodPicker from '../components/TimePeriodPicker';
+import TimePeriodTrigger from '../components/TimePeriodTrigger';
 import AmountText from '../components/ui/AmountText';
 import { GlassCard } from '../components/ui/GlassCard';
 import type {
@@ -60,18 +61,6 @@ const VIEW_OPTIONS: { key: AnalysisView; label: string; icon: string }[] = [
   { key: 'account_analysis', label: 'Accounts', icon: 'chart-bar' },
   { key: 'net_worth', label: 'Net Worth', icon: 'chart-timeline-variant' },
 ];
-
-const ANALYTICS_PRIMARY_PERIODS: { key: TimePeriod; label: string }[] = [
-  { key: 'week', label: 'Week' },
-  { key: 'month', label: 'Month' },
-  { key: 'year', label: 'Year' },
-];
-
-const ANALYTICS_SECONDARY_PERIOD_LABELS: Partial<Record<TimePeriod, string>> = {
-  day: 'Day',
-  '3months': '3M',
-  '6months': '6M',
-};
 
 export default function AnalyticsScreen({
   navigation,
@@ -129,12 +118,8 @@ export default function AnalyticsScreen({
     () => Math.round(summary.net / periodDayCount),
     [summary.net, periodDayCount],
   );
-  const isPrimaryPeriod = ANALYTICS_PRIMARY_PERIODS.some(
-    (option) => option.key === period,
-  );
-  const moreLabel = isPrimaryPeriod
-    ? 'More'
-    : (ANALYTICS_SECONDARY_PERIOD_LABELS[period] ?? 'More');
+  const netTone = summary.net >= 0 ? 'income' : 'expense';
+  const avgNetTone = avgNetPerDay >= 0 ? 'income' : 'expense';
 
   const loadedViewRef = useRef<{
     view: AnalysisView;
@@ -421,147 +406,109 @@ export default function AnalyticsScreen({
         style={styles.container}
         contentContainerStyle={styles.content}
       >
-        <PeriodNavigator
-          label={navLabel}
-          onPrev={handlePrev}
-          onNext={handleNext}
-          showFilterIndicator={false}
-        />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.analyticsPeriodBar}
-        >
-          {ANALYTICS_PRIMARY_PERIODS.map((option) => {
-            const isSelected = option.key === period;
-            return (
-              <TouchableOpacity
-                key={option.key}
-                activeOpacity={0.8}
-                style={[
-                  styles.analyticsPeriodChip,
-                  isSelected && styles.analyticsPeriodChipActive,
-                ]}
-                onPress={() => {
-                  setPeriod(option.key);
-                  setAnchor(new Date());
-                }}
-              >
-                <Text
-                  variant="labelMedium"
-                  style={[
-                    styles.analyticsPeriodChipText,
-                    isSelected && styles.analyticsPeriodChipTextActive,
-                  ]}
-                >
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-          <TouchableOpacity
-            activeOpacity={0.8}
-            style={[
-              styles.analyticsPeriodChip,
-              styles.analyticsPeriodMoreChip,
-              !isPrimaryPeriod && styles.analyticsPeriodChipActive,
-            ]}
-            onPress={() => setFilterVisible(true)}
-          >
-            <Text
-              variant="labelMedium"
-              style={[
-                styles.analyticsPeriodChipText,
-                !isPrimaryPeriod && styles.analyticsPeriodChipTextActive,
-              ]}
-            >
-              {moreLabel}
-            </Text>
-            <Icon
-              source="chevron-down"
-              size={14}
-              color={!isPrimaryPeriod ? colors.onPrimary : colors.textSecondary}
-            />
-          </TouchableOpacity>
-        </ScrollView>
+        <View style={styles.periodHeaderWrap}>
+          <PeriodNavigator
+            label={navLabel}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            showFilterIndicator={false}
+            compact
+            accessory={
+              <TimePeriodTrigger
+                compact
+                period={period}
+                onPress={() => setFilterVisible(true)}
+              />
+            }
+          />
+        </View>
 
         {/* Summary figures */}
         <GlassCard style={styles.summaryGlass} intensity={30} border>
           <View style={styles.summaryRow}>
-            <View style={styles.summaryItem}>
-              <AmountText
-                cents={summary.totalIncome}
-                currencySymbol={settings.currencySymbol}
-                decimalPlaces={moneyDecimals}
-                tone="income"
-                size="body"
-                style={styles.summaryValue}
-              />
-              <Text style={styles.summaryLabel}>Income</Text>
+            <View style={styles.summaryColumn}>
+              <View style={styles.summaryMetric}>
+                <Text style={styles.summaryLabel}>In</Text>
+                <AmountText
+                  cents={summary.totalIncome}
+                  currencySymbol={settings.currencySymbol}
+                  decimalPlaces={moneyDecimals}
+                  tone="income"
+                  size="body"
+                  style={styles.summaryMetricValue}
+                />
+              </View>
+              <View style={styles.summaryColumnDivider} />
+              <View style={styles.summaryAvgBlock}>
+                <Text style={styles.summaryMetaLabel}>Avg In</Text>
+                <AmountText
+                  cents={avgIncomePerDay}
+                  currencySymbol={settings.currencySymbol}
+                  decimalPlaces={moneyDecimals}
+                  tone="income"
+                  size="body"
+                  style={styles.summaryMetaValue}
+                />
+              </View>
             </View>
+
             <View style={styles.summaryDivider} />
-            <View style={styles.summaryItem}>
-              <AmountText
-                cents={summary.totalExpense}
-                currencySymbol={settings.currencySymbol}
-                decimalPlaces={moneyDecimals}
-                signPrefix="-"
-                tone="expense"
-                size="body"
-                style={styles.summaryValue}
-              />
-              <Text style={styles.summaryLabel}>Spent</Text>
+
+            <View style={styles.summaryColumn}>
+              <View style={styles.summaryMetric}>
+                <Text style={styles.summaryLabel}>Out</Text>
+                <AmountText
+                  cents={summary.totalExpense}
+                  currencySymbol={settings.currencySymbol}
+                  decimalPlaces={moneyDecimals}
+                  signPrefix="-"
+                  tone="expense"
+                  size="body"
+                  style={styles.summaryMetricValue}
+                />
+              </View>
+              <View style={styles.summaryColumnDivider} />
+              <View style={styles.summaryAvgBlock}>
+                <Text style={styles.summaryMetaLabel}>Avg Out</Text>
+                <AmountText
+                  cents={avgExpensePerDay}
+                  currencySymbol={settings.currencySymbol}
+                  decimalPlaces={moneyDecimals}
+                  tone="expense"
+                  size="body"
+                  style={styles.summaryMetaValue}
+                />
+              </View>
             </View>
+
             <View style={styles.summaryDivider} />
-            <View style={styles.summaryItem}>
-              <AmountText
-                cents={summary.net}
-                currencySymbol={settings.currencySymbol}
-                decimalPlaces={moneyDecimals}
-                signPrefix={summary.net >= 0 ? '+' : ''}
-                tone={summary.net >= 0 ? 'income' : 'expense'}
-                size="body"
-                style={styles.summaryValue}
-              />
-              <Text style={styles.summaryLabel}>Net</Text>
-            </View>
-          </View>
-          <View style={styles.summaryFooter}>
-            <View style={styles.summaryFooterItem}>
-              <Text style={styles.summaryFooterLabel}>Daily Avg In</Text>
-              <AmountText
-                cents={avgIncomePerDay}
-                currencySymbol={settings.currencySymbol}
-                decimalPlaces={moneyDecimals}
-                tone="income"
-                size="body"
-                style={styles.summaryFooterValue}
-              />
-            </View>
-            <View style={styles.summaryFooterDivider} />
-            <View style={styles.summaryFooterItem}>
-              <Text style={styles.summaryFooterLabel}>Daily Avg Out</Text>
-              <AmountText
-                cents={avgExpensePerDay}
-                currencySymbol={settings.currencySymbol}
-                decimalPlaces={moneyDecimals}
-                tone="expense"
-                size="body"
-                style={styles.summaryFooterValue}
-              />
-            </View>
-            <View style={styles.summaryFooterDivider} />
-            <View style={styles.summaryFooterItem}>
-              <Text style={styles.summaryFooterLabel}>Daily Avg Net</Text>
-              <AmountText
-                cents={avgNetPerDay}
-                currencySymbol={settings.currencySymbol}
-                decimalPlaces={moneyDecimals}
-                signPrefix={avgNetPerDay >= 0 ? '+' : ''}
-                tone={avgNetPerDay >= 0 ? 'income' : 'expense'}
-                size="body"
-                style={styles.summaryFooterValue}
-              />
+
+            <View style={styles.summaryColumn}>
+              <View style={styles.summaryMetric}>
+                <Text style={styles.summaryLabel}>Net</Text>
+                <AmountText
+                  cents={summary.net}
+                  currencySymbol={settings.currencySymbol}
+                  decimalPlaces={moneyDecimals}
+                  signPrefix={summary.net >= 0 ? '+' : ''}
+                  tone={netTone}
+                  size="body"
+                  style={styles.summaryMetricValue}
+                />
+              </View>
+              <View style={styles.summaryColumnDivider} />
+              <View style={styles.summaryAvgBlock}>
+                <Text style={styles.summaryMetaLabel}>Avg Net</Text>
+                <AmountText
+                  cents={avgNetPerDay}
+                  currencySymbol={settings.currencySymbol}
+                  decimalPlaces={moneyDecimals}
+                  signPrefix={avgNetPerDay >= 0 ? '+' : ''}
+                  tone={avgNetTone}
+                  size="body"
+                  style={styles.summaryMetaValue}
+                />
+              </View>
             </View>
           </View>
         </GlassCard>
@@ -632,37 +579,10 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1 },
   content: { paddingBottom: 100 },
-  analyticsPeriodBar: {
-    gap: spacing.xs,
-    paddingHorizontal: spacing.cardInset,
-    paddingBottom: spacing.md,
-  },
-  analyticsPeriodChip: {
-    minHeight: 30,
-    paddingHorizontal: spacing.sm + 2,
-    borderRadius: radius.capsule,
-    justifyContent: 'center',
+  periodHeaderWrap: {
     alignItems: 'center',
-    backgroundColor: colors.surfaceVariant,
-    borderWidth: 1,
-    borderColor: colors.borderHairline,
-  },
-  analyticsPeriodChipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  analyticsPeriodChipText: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
-  analyticsPeriodChipTextActive: {
-    color: colors.onPrimary,
-  },
-  analyticsPeriodMoreChip: {
-    flexDirection: 'row',
-    gap: spacing.xxs,
+    paddingHorizontal: spacing.cardInset,
+    marginBottom: spacing.xs,
   },
 
   summaryGlass: {
@@ -671,61 +591,67 @@ const styles = StyleSheet.create({
   },
   summaryRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: spacing.xs,
+    alignItems: 'stretch',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
   },
-  summaryItem: {
+  summaryColumn: {
     flex: 1,
-    alignItems: 'center',
+    minWidth: 0,
   },
-  summaryValue: {
-    ...typography.titleSmall,
-    fontSize: 15,
-    lineHeight: 20,
+  summaryMetric: {
+    alignItems: 'center',
+    minHeight: 32,
+    justifyContent: 'center',
   },
   summaryLabel: {
     ...typography.labelMedium,
     color: colors.textSecondary,
-    fontSize: 10,
-    lineHeight: 14,
-    letterSpacing: 0.7,
+    fontSize: 9,
+    letterSpacing: 0.45,
+    textTransform: 'uppercase',
+  },
+  summaryMetricValue: {
+    ...typography.titleSmall,
+    fontSize: 14,
+    lineHeight: 18,
     marginTop: 2,
+    fontVariant: ['tabular-nums'],
+    textAlign: 'center',
+    includeFontPadding: false,
   },
   summaryDivider: {
     width: 1,
-    height: 28,
+    alignSelf: 'stretch',
     backgroundColor: colors.border,
+    marginHorizontal: spacing.xs,
   },
-  summaryFooter: {
-    flexDirection: 'row',
+  summaryColumnDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: spacing.xs,
+  },
+  summaryAvgBlock: {
     alignItems: 'center',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-    paddingVertical: spacing.xs + 2,
-    paddingHorizontal: spacing.xs,
+    minHeight: 28,
+    justifyContent: 'center',
   },
-  summaryFooterItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  summaryFooterLabel: {
+  summaryMetaLabel: {
     ...typography.labelSmall,
     color: colors.textTertiary,
     fontSize: 9,
-    letterSpacing: 0.25,
-    marginBottom: 2,
+    letterSpacing: 0.2,
+    marginBottom: 1,
     textAlign: 'center',
+    textTransform: 'uppercase',
   },
-  summaryFooterValue: {
+  summaryMetaValue: {
     ...typography.labelLarge,
-    fontSize: 12,
-    lineHeight: 18,
-  },
-  summaryFooterDivider: {
-    width: 1,
-    height: 20,
-    backgroundColor: colors.border,
+    fontSize: 11,
+    lineHeight: 15,
+    fontVariant: ['tabular-nums'],
+    textAlign: 'center',
+    includeFontPadding: false,
   },
 
   bodyContent: {
