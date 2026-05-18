@@ -1,6 +1,6 @@
 import { Canvas, Fill, LinearGradient as SkiaLinearGradient, vec } from '@shopify/react-native-skia';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { type LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
@@ -171,4 +171,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HeroBalanceCard;
+export default React.memo(HeroBalanceCard);

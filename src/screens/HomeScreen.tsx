@@ -60,10 +60,13 @@ interface TransactionSection {
 }
 
 export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
-  const { loadCategories, categories } = useCategoryStore();
-  const { accounts, loadAccounts } = useAccountStore();
-  const { loadBudgets } = useBudgetStore();
-  const { settings, loadSettings } = useSettingsStore();
+  const categories = useCategoryStore((state) => state.categories);
+  const loadCategories = useCategoryStore((state) => state.loadCategories);
+  const accounts = useAccountStore((state) => state.accounts);
+  const loadAccounts = useAccountStore((state) => state.loadAccounts);
+  const loadBudgets = useBudgetStore((state) => state.loadBudgets);
+  const settings = useSettingsStore((state) => state.settings);
+  const loadSettings = useSettingsStore((state) => state.loadSettings);
   const insets = useSafeAreaInsets();
   const moneyDecimals = clampMoneyDecimalPlaces(settings.decimalPlaces);
 

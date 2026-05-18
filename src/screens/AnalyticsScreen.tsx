@@ -2,7 +2,6 @@ import { useFocusEffect } from '@react-navigation/native';
 import { format } from 'date-fns';
 import React, {
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -65,8 +64,12 @@ const VIEW_OPTIONS: { key: AnalysisView; label: string; icon: string }[] = [
 export default function AnalyticsScreen({
   navigation,
 }: TabScreenProps<'Analytics'>) {
-  const { settings } = useSettingsStore();
-  const moneyDecimals = clampMoneyDecimalPlaces(settings.decimalPlaces);
+  const currencySymbol = useSettingsStore(
+    (state) => state.settings.currencySymbol,
+  );
+  const moneyDecimals = clampMoneyDecimalPlaces(
+    useSettingsStore((state) => state.settings.decimalPlaces),
+  );
   const insets = useSafeAreaInsets();
   const [anchor, setAnchor] = useState(() => new Date());
   const [period, setPeriod] = useState<TimePeriod>('month');
@@ -140,10 +143,11 @@ export default function AnalyticsScreen({
   }, [range.start, range.end]);
 
   const loadViewData = useCallback(
-    async (view: AnalysisView) => {
+    async (view: AnalysisView, options?: { force?: boolean }) => {
       const cacheKey = { view, start: range.start, end: range.end };
       const prev = loadedViewRef.current;
       if (
+        !options?.force &&
         prev &&
         prev.view === cacheKey.view &&
         prev.start === cacheKey.start &&
@@ -215,15 +219,10 @@ export default function AnalyticsScreen({
 
   useFocusEffect(
     useCallback(() => {
-      loadedViewRef.current = null;
       loadSummary();
-      loadViewData(activeView);
+      loadViewData(activeView, { force: true });
     }, [loadSummary, loadViewData, activeView]),
   );
-
-  useEffect(() => {
-    loadViewData(activeView);
-  }, [activeView, loadViewData]);
 
   const totalExpenseForBar = expenseBreakdown.reduce((s, c) => s + c.total, 0);
   const totalIncomeForBar = incomeBreakdown.reduce((s, c) => s + c.total, 0);
@@ -270,7 +269,7 @@ export default function AnalyticsScreen({
                   </Text>
                   <AmountText
                     cents={cat.total}
-                    currencySymbol={settings.currencySymbol}
+                    currencySymbol={currencySymbol}
                     decimalPlaces={moneyDecimals}
                     signPrefix={isExpense ? '-' : ''}
                     tone={isExpense ? 'expense' : 'income'}
@@ -336,7 +335,7 @@ export default function AnalyticsScreen({
             <View style={styles.chartCard}>
               <FlowLineChart
                 data={expenseFlow}
-                currencySymbol={settings.currencySymbol}
+                currencySymbol={currencySymbol}
                 valueKey="expense"
                 lineColor={colors.expense}
               />
@@ -358,7 +357,7 @@ export default function AnalyticsScreen({
             <View style={styles.chartCard}>
               <FlowLineChart
                 data={incomeFlow}
-                currencySymbol={settings.currencySymbol}
+                currencySymbol={currencySymbol}
                 valueKey="income"
                 lineColor={colors.income}
               />
@@ -379,7 +378,7 @@ export default function AnalyticsScreen({
           <View style={styles.chartCard}>
             <AccountAnalysisChart
               data={accountPeriod}
-              currencySymbol={settings.currencySymbol}
+              currencySymbol={currencySymbol}
             />
           </View>
         );
@@ -389,7 +388,7 @@ export default function AnalyticsScreen({
           <View style={styles.chartCard}>
             <NetWorthChart
               data={netWorthHistory}
-              currencySymbol={settings.currencySymbol}
+              currencySymbol={currencySymbol}
               decimalPlaces={moneyDecimals}
             />
           </View>
@@ -431,7 +430,7 @@ export default function AnalyticsScreen({
                 <Text style={styles.summaryLabel}>In</Text>
                 <AmountText
                   cents={summary.totalIncome}
-                  currencySymbol={settings.currencySymbol}
+                  currencySymbol={currencySymbol}
                   decimalPlaces={moneyDecimals}
                   tone="income"
                   size="body"
@@ -443,7 +442,7 @@ export default function AnalyticsScreen({
                 <Text style={styles.summaryMetaLabel}>Avg In</Text>
                 <AmountText
                   cents={avgIncomePerDay}
-                  currencySymbol={settings.currencySymbol}
+                  currencySymbol={currencySymbol}
                   decimalPlaces={moneyDecimals}
                   tone="income"
                   size="body"
@@ -459,7 +458,7 @@ export default function AnalyticsScreen({
                 <Text style={styles.summaryLabel}>Out</Text>
                 <AmountText
                   cents={summary.totalExpense}
-                  currencySymbol={settings.currencySymbol}
+                  currencySymbol={currencySymbol}
                   decimalPlaces={moneyDecimals}
                   signPrefix="-"
                   tone="expense"
@@ -472,7 +471,7 @@ export default function AnalyticsScreen({
                 <Text style={styles.summaryMetaLabel}>Avg Out</Text>
                 <AmountText
                   cents={avgExpensePerDay}
-                  currencySymbol={settings.currencySymbol}
+                  currencySymbol={currencySymbol}
                   decimalPlaces={moneyDecimals}
                   tone="expense"
                   size="body"
@@ -488,7 +487,7 @@ export default function AnalyticsScreen({
                 <Text style={styles.summaryLabel}>Net</Text>
                 <AmountText
                   cents={summary.net}
-                  currencySymbol={settings.currencySymbol}
+                  currencySymbol={currencySymbol}
                   decimalPlaces={moneyDecimals}
                   signPrefix={summary.net >= 0 ? '+' : ''}
                   tone={netTone}
@@ -501,7 +500,7 @@ export default function AnalyticsScreen({
                 <Text style={styles.summaryMetaLabel}>Avg Net</Text>
                 <AmountText
                   cents={avgNetPerDay}
-                  currencySymbol={settings.currencySymbol}
+                  currencySymbol={currencySymbol}
                   decimalPlaces={moneyDecimals}
                   signPrefix={avgNetPerDay >= 0 ? '+' : ''}
                   tone={avgNetTone}

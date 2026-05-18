@@ -87,22 +87,26 @@ export const accountService = {
   async getBalance(id: string): Promise<number> {
     const db = await getDatabase();
     const result = await db.getFirstAsync<{ balance: number }>(
-      `SELECT
-        a.opening_balance_cents +
-        COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
-          JOIN transactions t ON s.transaction_id = t.id
-          WHERE s.account_id = a.id AND t.type = 'income'), 0) -
-        COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
-          JOIN transactions t ON s.transaction_id = t.id
-          WHERE s.account_id = a.id AND t.type = 'expense'), 0) - 
-        COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
-          JOIN transactions t ON s.transaction_id = t.id 
-          WHERE s.account_id = a.id AND t.account_id = a.id AND t.type = 'transfer'), 0) +
-        COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
-          JOIN transactions t ON s.transaction_id = t.id
-          WHERE s.account_id = a.id AND t.account2_id = a.id AND t.type = 'transfer'), 0)
-        as balance
-      FROM accounts a WHERE a.id = ?`,
+      `WITH account_totals AS (
+        SELECT
+          s.account_id,
+          SUM(CASE WHEN t.type = 'income' THEN s.amount_cents ELSE 0 END) AS income_total,
+          SUM(CASE WHEN t.type = 'expense' THEN s.amount_cents ELSE 0 END) AS expense_total,
+          SUM(CASE WHEN t.type = 'transfer' AND t.account_id = s.account_id THEN s.amount_cents ELSE 0 END) AS transfer_out_total,
+          SUM(CASE WHEN t.type = 'transfer' AND t.account2_id = s.account_id THEN s.amount_cents ELSE 0 END) AS transfer_in_total
+        FROM transaction_splits s
+        JOIN transactions t ON t.id = s.transaction_id
+        GROUP BY s.account_id
+      )
+      SELECT
+        a.opening_balance_cents
+        + COALESCE(at.income_total, 0)
+        - COALESCE(at.expense_total, 0)
+        - COALESCE(at.transfer_out_total, 0)
+        + COALESCE(at.transfer_in_total, 0) AS balance
+      FROM accounts a
+      LEFT JOIN account_totals at ON at.account_id = a.id
+      WHERE a.id = ?`,
       [id],
     );
     return result?.balance ?? 0;
@@ -111,22 +115,27 @@ export const accountService = {
   async getAllWithBalances(): Promise<Array<Account & { balance: number }>> {
     const db = await getDatabase();
     const rows = await db.getAllAsync<any>(
-      `SELECT a.*,
-        a.opening_balance_cents +
-        COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
-          JOIN transactions t ON s.transaction_id = t.id
-          WHERE s.account_id = a.id AND t.type = 'income'), 0) -
-        COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
-          JOIN transactions t ON s.transaction_id = t.id
-          WHERE s.account_id = a.id AND t.type = 'expense'), 0) -
-        COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
-          JOIN transactions t ON s.transaction_id = t.id
-          WHERE s.account_id = a.id AND t.account_id = a.id AND t.type = 'transfer'), 0) +
-        COALESCE((SELECT SUM(s.amount_cents) FROM transaction_splits s
-          JOIN transactions t ON s.transaction_id = t.id
-          WHERE s.account_id = a.id AND t.account2_id = a.id AND t.type = 'transfer'), 0)
-        as balance
-      FROM accounts a ORDER BY a.name`,
+      `WITH account_totals AS (
+        SELECT
+          s.account_id,
+          SUM(CASE WHEN t.type = 'income' THEN s.amount_cents ELSE 0 END) AS income_total,
+          SUM(CASE WHEN t.type = 'expense' THEN s.amount_cents ELSE 0 END) AS expense_total,
+          SUM(CASE WHEN t.type = 'transfer' AND t.account_id = s.account_id THEN s.amount_cents ELSE 0 END) AS transfer_out_total,
+          SUM(CASE WHEN t.type = 'transfer' AND t.account2_id = s.account_id THEN s.amount_cents ELSE 0 END) AS transfer_in_total
+        FROM transaction_splits s
+        JOIN transactions t ON t.id = s.transaction_id
+        GROUP BY s.account_id
+      )
+      SELECT
+        a.*,
+        a.opening_balance_cents
+        + COALESCE(at.income_total, 0)
+        - COALESCE(at.expense_total, 0)
+        - COALESCE(at.transfer_out_total, 0)
+        + COALESCE(at.transfer_in_total, 0) AS balance
+      FROM accounts a
+      LEFT JOIN account_totals at ON at.account_id = a.id
+      ORDER BY a.name`,
     );
     return rows.map((row: any) => ({
       ...mapRow(row),

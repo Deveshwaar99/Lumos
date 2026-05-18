@@ -91,21 +91,28 @@ const STATUS_COLORS: Record<string, string> = {
 export default function AccountsScreen({
   navigation,
 }: TabScreenProps<'Accounts'>) {
-  const { accounts, balances, loadAccounts, removeAccount } = useAccountStore();
-  const { deposits, fdAccountIds, loadDeposits } = useFDStore();
-  const { recurringTransactions, loadRecurring, removeRecurring, toggleRecurring } =
-    useRecurringStore();
-  const {
-    holdings,
-    lastSyncAt,
-    isSyncing: stocksSyncing,
-    permissionStatus,
-    sync,
-    loadAll: loadStocks,
-    syncError,
-    setSenderId,
-  } = useStockStore();
-  const { settings } = useSettingsStore();
+  const accounts = useAccountStore((state) => state.accounts);
+  const balances = useAccountStore((state) => state.balances);
+  const loadAccounts = useAccountStore((state) => state.loadAccounts);
+  const removeAccount = useAccountStore((state) => state.removeAccount);
+  const deposits = useFDStore((state) => state.deposits);
+  const fdAccountIds = useFDStore((state) => state.fdAccountIds);
+  const loadDeposits = useFDStore((state) => state.loadDeposits);
+  const recurringTransactions = useRecurringStore(
+    (state) => state.recurringTransactions,
+  );
+  const loadRecurring = useRecurringStore((state) => state.loadRecurring);
+  const removeRecurring = useRecurringStore((state) => state.removeRecurring);
+  const toggleRecurring = useRecurringStore((state) => state.toggleRecurring);
+  const holdings = useStockStore((state) => state.holdings);
+  const lastSyncAt = useStockStore((state) => state.lastSyncAt);
+  const stocksSyncing = useStockStore((state) => state.isSyncing);
+  const permissionStatus = useStockStore((state) => state.permissionStatus);
+  const sync = useStockStore((state) => state.sync);
+  const loadStocks = useStockStore((state) => state.loadAll);
+  const syncError = useStockStore((state) => state.syncError);
+  const setSenderId = useStockStore((state) => state.setSenderId);
+  const settings = useSettingsStore((state) => state.settings);
   const [snackbar, setSnackbar] = useState('');
   const [activeTab, setActiveTab] = useState<Tab>('accounts');
   const [fdFilter, setFdFilter] = useState<FDFilter>('active');
@@ -147,6 +154,10 @@ export default function AccountsScreen({
     () => accounts.filter((a) => !fdAccountIds.has(a.id)),
     [accounts, fdAccountIds],
   );
+  const accountNameById = useMemo(
+    () => Object.fromEntries(accounts.map((account) => [account.id, account.name])),
+    [accounts],
+  );
 
   const portfolioData = useMemo(() => {
     let totalAssets = 0;
@@ -187,15 +198,20 @@ export default function AccountsScreen({
     return deposits.filter((fd) => fd.status === fdFilter);
   }, [deposits, fdFilter]);
 
-  const fdFilterCounts = useMemo(
-    () => ({
-      active: deposits.filter((fd) => fd.status === 'active').length,
-      matured: deposits.filter((fd) => fd.status === 'matured').length,
-      closed: deposits.filter((fd) => fd.status === 'closed').length,
+  const fdFilterCounts = useMemo(() => {
+    const counts = {
+      active: 0,
+      matured: 0,
+      closed: 0,
       all: deposits.length,
-    }),
-    [deposits],
-  );
+    };
+    for (const deposit of deposits) {
+      if (deposit.status === 'active') counts.active += 1;
+      if (deposit.status === 'matured') counts.matured += 1;
+      if (deposit.status === 'closed') counts.closed += 1;
+    }
+    return counts;
+  }, [deposits]);
 
   useEffect(() => {
     if (Platform.OS !== 'android' || activeTab !== 'stocks') return;
@@ -373,19 +389,41 @@ export default function AccountsScreen({
     );
   };
 
-  const segmentTabs: { tab: Tab; label: string; icon: string; count: number }[] = [
-    { tab: 'accounts', label: 'Accounts', icon: 'wallet', count: userAccounts.length },
-    { tab: 'investments', label: 'Invest', icon: 'lock', count: deposits.length },
-    {
-      tab: 'recurring',
-      label: 'Recurring',
-      icon: 'autorenew',
-      count: recurringTransactions.length,
-    },
-    ...(Platform.OS === 'android'
-      ? [{ tab: 'stocks' as const, label: 'Stocks', icon: 'chart-line', count: holdings.length }]
-      : []),
-  ];
+  const segmentTabs = useMemo<
+    { tab: Tab; label: string; icon: string; count: number }[]
+  >(
+    () => [
+      {
+        tab: 'accounts',
+        label: 'Accounts',
+        icon: 'wallet',
+        count: userAccounts.length,
+      },
+      {
+        tab: 'investments',
+        label: 'Invest',
+        icon: 'lock',
+        count: deposits.length,
+      },
+      {
+        tab: 'recurring',
+        label: 'Recurring',
+        icon: 'autorenew',
+        count: recurringTransactions.length,
+      },
+      ...(Platform.OS === 'android'
+        ? [
+            {
+              tab: 'stocks' as const,
+              label: 'Stocks',
+              icon: 'chart-line',
+              count: holdings.length,
+            },
+          ]
+        : []),
+    ],
+    [userAccounts.length, deposits.length, recurringTransactions.length, holdings.length],
+  );
 
   const renderSegmentedControl = () => (
     <View style={styles.segmentContainer}>
@@ -732,7 +770,6 @@ export default function AccountsScreen({
 
   const renderRecurringItem = ({ item }: { item: RecurringTransaction }) => {
     const accentColor = TYPE_COLORS[item.type] ?? colors.primary;
-    const account = accounts.find((a) => a.id === item.accountId);
     const nextDueLabel = format(
       new Date(item.nextDueDate + 'T00:00:00'),
       'MMM d, yyyy',
@@ -776,7 +813,7 @@ export default function AccountsScreen({
               </View>
             </View>
             <Text style={styles.recurringNote} numberOfLines={1}>
-              {item.note || account?.name || item.type}
+              {item.note || accountNameById[item.accountId] || item.type}
             </Text>
             <View style={styles.recurringFooter}>
               <Icon source="calendar-clock" size={13} color={colors.textTertiary} />
