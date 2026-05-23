@@ -102,12 +102,20 @@ export default function AddTransactionScreen({
     type: initialType = 'expense',
   } = params ?? {};
 
-  const { addTransaction, updateTransaction, removeTransaction } =
-    useTransactionStore();
-  const { categories, loadCategories } = useCategoryStore();
-  const { accounts, loadAccounts } = useAccountStore();
-  const { fdAccountIds, loadDeposits } = useFDStore();
-  const { settings } = useSettingsStore();
+  const addTransaction = useTransactionStore((state) => state.addTransaction);
+  const updateTransaction = useTransactionStore(
+    (state) => state.updateTransaction,
+  );
+  const removeTransaction = useTransactionStore(
+    (state) => state.removeTransaction,
+  );
+  const categories = useCategoryStore((state) => state.categories);
+  const loadCategories = useCategoryStore((state) => state.loadCategories);
+  const accounts = useAccountStore((state) => state.accounts);
+  const loadAccounts = useAccountStore((state) => state.loadAccounts);
+  const fdAccountIds = useFDStore((state) => state.fdAccountIds);
+  const loadDeposits = useFDStore((state) => state.loadDeposits);
+  const settings = useSettingsStore((state) => state.settings);
 
   const [existing, setExisting] = useState<Awaited<
     ReturnType<typeof transactionService.getById>
@@ -143,10 +151,10 @@ export default function AddTransactionScreen({
   const selectedAccount2 = accounts.find((a) => a.id === account2Id);
 
   useEffect(() => {
-    loadCategories();
-    loadAccounts();
-    loadDeposits();
-  }, []);
+    void loadCategories();
+    void loadAccounts();
+    void loadDeposits();
+  }, [loadAccounts, loadCategories, loadDeposits]);
   //Set default account when there is no account
   useEffect(() => {
     if (accounts.length > 0 && !account1Id) {

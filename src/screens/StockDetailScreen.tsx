@@ -22,14 +22,14 @@ export default function StockDetailScreen({
 }: RootStackScreenProps<'StockDetail'>) {
   const { stockCode } = route.params;
   const insets = useSafeAreaInsets();
-  const {
-    holdings,
-    movements,
-    loadMovementsForCode,
-    loadAll,
-    deleteMovement,
-    loading,
-  } = useStockStore();
+  const holdings = useStockStore((state) => state.holdings);
+  const movements = useStockStore((state) => state.movements);
+  const loadMovementsForCode = useStockStore(
+    (state) => state.loadMovementsForCode,
+  );
+  const loadAll = useStockStore((state) => state.loadAll);
+  const deleteMovement = useStockStore((state) => state.deleteMovement);
+  const loading = useStockStore((state) => state.loading);
   const [snackbar, setSnackbar] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -48,7 +48,7 @@ export default function StockDetailScreen({
 
   useFocusEffect(
     useCallback(() => {
-      loadData();
+      void loadData();
     }, [loadData]),
   );
 

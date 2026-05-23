@@ -42,10 +42,12 @@ export default function TransactionDetailScreen({
   route,
 }: RootStackScreenProps<'TransactionDetail'>) {
   const { transactionId } = route.params;
-  const { removeTransaction } = useTransactionStore();
-  const { categories } = useCategoryStore();
-  const { accounts } = useAccountStore();
-  const { settings } = useSettingsStore();
+  const removeTransaction = useTransactionStore(
+    (state) => state.removeTransaction,
+  );
+  const categories = useCategoryStore((state) => state.categories);
+  const accounts = useAccountStore((state) => state.accounts);
+  const settings = useSettingsStore((state) => state.settings);
   const moneyDecimals = clampMoneyDecimalPlaces(settings.decimalPlaces);
 
   const [transaction, setTransaction] = useState<TransactionWithSplits | null>(

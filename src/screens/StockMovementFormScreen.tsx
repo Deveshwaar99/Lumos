@@ -24,7 +24,12 @@ export default function StockMovementFormScreen({
   const initialStockCode = route.params?.stockCode ?? '';
   const isEditing = !!movementId;
 
-  const { holdings, loadAll, addManualMovement, updateMovement } = useStockStore();
+  const holdings = useStockStore((state) => state.holdings);
+  const loadAll = useStockStore((state) => state.loadAll);
+  const addManualMovement = useStockStore(
+    (state) => state.addManualMovement,
+  );
+  const updateMovement = useStockStore((state) => state.updateMovement);
   const [stockCode, setStockCode] = useState(initialStockCode.toUpperCase());
   const [direction, setDirection] = useState<StockMovementDirection>('buy');
   const [quantityText, setQuantityText] = useState('');
@@ -34,7 +39,7 @@ export default function StockMovementFormScreen({
   const [snackbar, setSnackbar] = useState('');
 
   useEffect(() => {
-    loadAll();
+    void loadAll();
   }, [loadAll]);
 
   useEffect(() => {

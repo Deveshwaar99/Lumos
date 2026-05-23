@@ -19,7 +19,9 @@ import { colors, elevation, radius, spacing } from '../theme';
 export default function CategoriesScreen({
   navigation,
 }: TabScreenProps<'Categories'>) {
-  const { categories, loadCategories, removeCategory } = useCategoryStore();
+  const categories = useCategoryStore((state) => state.categories);
+  const loadCategories = useCategoryStore((state) => state.loadCategories);
+  const removeCategory = useCategoryStore((state) => state.removeCategory);
   const [selectedType, setSelectedType] = useState<'expense' | 'income'>(
     'expense',
   );
@@ -36,8 +38,8 @@ export default function CategoriesScreen({
 
   useFocusEffect(
     useCallback(() => {
-      loadCategories();
-    }, []),
+      void loadCategories();
+    }, [loadCategories]),
   );
 
   const filtered = useMemo(

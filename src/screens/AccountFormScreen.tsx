@@ -150,8 +150,10 @@ export default function AccountFormScreen({
   route,
 }: RootStackScreenProps<'AccountForm'>) {
   const { accountId } = route.params ?? {};
-  const { accounts, addAccount, updateAccount } = useAccountStore();
-  const { settings } = useSettingsStore();
+  const accounts = useAccountStore((state) => state.accounts);
+  const addAccount = useAccountStore((state) => state.addAccount);
+  const updateAccount = useAccountStore((state) => state.updateAccount);
+  const settings = useSettingsStore((state) => state.settings);
   const isEditing = !!accountId;
   const existing = accountId ? accounts.find((a) => a.id === accountId) : null;
   const [snackbar, setSnackbar] = useState('');
@@ -181,7 +183,7 @@ export default function AccountFormScreen({
     navigation.setOptions({
       title: isEditing ? 'Edit Account' : 'New Account',
     });
-  }, [isEditing]);
+  }, [isEditing, navigation]);
 
   const handleBalanceChange = (text: string) => {
     setBalanceText(text);

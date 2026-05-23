@@ -26,9 +26,9 @@ export default function CategoryTransactionsScreen({
   route,
 }: RootStackScreenProps<'CategoryTransactions'>) {
   const { categoryId, dateFrom, dateTo } = route.params;
-  const { accounts } = useAccountStore();
-  const { categories } = useCategoryStore();
-  const { settings } = useSettingsStore();
+  const accounts = useAccountStore((state) => state.accounts);
+  const categories = useCategoryStore((state) => state.categories);
+  const settings = useSettingsStore((state) => state.settings);
   const insets = useSafeAreaInsets();
   const moneyDecimals = clampMoneyDecimalPlaces(settings.decimalPlaces);
 
@@ -54,7 +54,7 @@ export default function CategoryTransactionsScreen({
 
   useFocusEffect(
     useCallback(() => {
-      loadData();
+      void loadData();
     }, [loadData]),
   );
 

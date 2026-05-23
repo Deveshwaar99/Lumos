@@ -24,10 +24,14 @@ export default function BudgetFormScreen({
 }: RootStackScreenProps<'BudgetForm'>) {
   const { budgetId, month: routeMonth, categoryId: routeCategoryId } =
     route.params ?? {};
-  const { budgets, addBudget, updateBudget, removeBudget, loadBudgets } =
-    useBudgetStore();
-  const { categories, loadCategories } = useCategoryStore();
-  const { settings } = useSettingsStore();
+  const budgets = useBudgetStore((state) => state.budgets);
+  const addBudget = useBudgetStore((state) => state.addBudget);
+  const updateBudget = useBudgetStore((state) => state.updateBudget);
+  const removeBudget = useBudgetStore((state) => state.removeBudget);
+  const loadBudgets = useBudgetStore((state) => state.loadBudgets);
+  const categories = useCategoryStore((state) => state.categories);
+  const loadCategories = useCategoryStore((state) => state.loadCategories);
+  const settings = useSettingsStore((state) => state.settings);
 
   const existing = budgetId ? budgets.find((b) => b.id === budgetId) : null;
   const isEditing = !!existing;
@@ -45,13 +49,13 @@ export default function BudgetFormScreen({
   const [snackbar, setSnackbar] = useState('');
 
   useEffect(() => {
-    loadCategories();
-    loadBudgets(month);
-  }, [month]);
+    void loadCategories();
+    void loadBudgets(month);
+  }, [loadBudgets, loadCategories, month]);
 
   useEffect(() => {
     navigation.setOptions({ title: isEditing ? 'Edit Budget' : 'New Budget' });
-  }, [isEditing]);
+  }, [isEditing, navigation]);
 
   useEffect(() => {
     if (existing) {

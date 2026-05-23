@@ -31,8 +31,10 @@ export default function CategoryFormScreen({
   route,
 }: RootStackScreenProps<'CategoryForm'>) {
   const { categoryId, categoryType } = route.params ?? {};
-  const { categories, loadCategories, addCategory, updateCategory } =
-    useCategoryStore();
+  const categories = useCategoryStore((state) => state.categories);
+  const loadCategories = useCategoryStore((state) => state.loadCategories);
+  const addCategory = useCategoryStore((state) => state.addCategory);
+  const updateCategory = useCategoryStore((state) => state.updateCategory);
   const isEditing = !!categoryId;
   const existing = categoryId
     ? categories.find((c) => c.id === categoryId)

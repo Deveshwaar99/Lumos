@@ -41,10 +41,13 @@ export default function RecurringTransactionFormScreen({
   const insets = useSafeAreaInsets();
   const recurringId = route.params?.recurringId;
 
-  const { addRecurring, updateRecurring } = useRecurringStore();
-  const { categories, loadCategories } = useCategoryStore();
-  const { accounts, loadAccounts } = useAccountStore();
-  const { settings } = useSettingsStore();
+  const addRecurring = useRecurringStore((state) => state.addRecurring);
+  const updateRecurring = useRecurringStore((state) => state.updateRecurring);
+  const categories = useCategoryStore((state) => state.categories);
+  const loadCategories = useCategoryStore((state) => state.loadCategories);
+  const accounts = useAccountStore((state) => state.accounts);
+  const loadAccounts = useAccountStore((state) => state.loadAccounts);
+  const settings = useSettingsStore((state) => state.settings);
 
   const [type, setType] = useState<TransactionType>('expense');
   const [expression, setExpression] = useState('');
@@ -76,9 +79,9 @@ export default function RecurringTransactionFormScreen({
   const selectedAccount2 = accounts.find((a) => a.id === account2Id);
 
   useEffect(() => {
-    loadCategories();
-    loadAccounts();
-  }, []);
+    void loadCategories();
+    void loadAccounts();
+  }, [loadAccounts, loadCategories]);
 
   useEffect(() => {
     if (accounts.length > 0 && !account1Id) {

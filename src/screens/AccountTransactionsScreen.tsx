@@ -26,9 +26,10 @@ export default function AccountTransactionsScreen({
   route,
 }: RootStackScreenProps<'AccountTransactions'>) {
   const { accountId, dateFrom, dateTo } = route.params;
-  const { accounts, balances } = useAccountStore();
-  const { categories } = useCategoryStore();
-  const { settings } = useSettingsStore();
+  const accounts = useAccountStore((state) => state.accounts);
+  const balances = useAccountStore((state) => state.balances);
+  const categories = useCategoryStore((state) => state.categories);
+  const settings = useSettingsStore((state) => state.settings);
   const insets = useSafeAreaInsets();
   const moneyDecimals = clampMoneyDecimalPlaces(settings.decimalPlaces);
 
@@ -60,7 +61,7 @@ export default function AccountTransactionsScreen({
 
   useFocusEffect(
     useCallback(() => {
-      loadData();
+      void loadData();
     }, [loadData]),
   );
 

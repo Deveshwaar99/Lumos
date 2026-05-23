@@ -94,14 +94,18 @@ function formatAppMeta(dbSchemaVersion?: number | null): string {
 export default function SettingsScreen({
   navigation,
 }: RootStackScreenProps<'Settings'>) {
-  const { settings, loadSettings, updateSetting } = useSettingsStore();
-  const { loadTransactions } = useTransactionStore();
-  const { loadCategories } = useCategoryStore();
-  const { loadAccounts } = useAccountStore();
-  const { loadBudgets } = useBudgetStore();
-  const { loadDeposits } = useFDStore();
-  const { loadRecurring } = useRecurringStore();
-  const { loadAll: loadStocks } = useStockStore();
+  const settings = useSettingsStore((state) => state.settings);
+  const loadSettings = useSettingsStore((state) => state.loadSettings);
+  const updateSetting = useSettingsStore((state) => state.updateSetting);
+  const loadTransactions = useTransactionStore(
+    (state) => state.loadTransactions,
+  );
+  const loadCategories = useCategoryStore((state) => state.loadCategories);
+  const loadAccounts = useAccountStore((state) => state.loadAccounts);
+  const loadBudgets = useBudgetStore((state) => state.loadBudgets);
+  const loadDeposits = useFDStore((state) => state.loadDeposits);
+  const loadRecurring = useRecurringStore((state) => state.loadRecurring);
+  const loadStocks = useStockStore((state) => state.loadAll);
   const [snackbar, setSnackbar] = useState('');
   const [localName, setLocalName] = useState(settings.username);
   const [localCode, setLocalCode] = useState(settings.currencyCode);
@@ -110,7 +114,7 @@ export default function SettingsScreen({
   const debounceRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   useEffect(() => {
-    loadSettings();
+    void loadSettings();
     getDatabase()
       .then((db) =>
         db.getFirstAsync<{ version: number | null }>(
@@ -126,7 +130,7 @@ export default function SettingsScreen({
     return () => {
       Object.values(debounceRef.current).forEach(clearTimeout);
     };
-  }, []);
+  }, [loadSettings]);
 
   useEffect(() => {
     setLocalName(settings.username);

@@ -35,10 +35,13 @@ export default function FDFormScreen({
   const { fdId } = route.params ?? {};
   const isEditing = !!fdId;
 
-  const { accounts, loadAccounts } = useAccountStore();
-  const { fdAccountIds, addDeposit } = useFDStore();
-  const { categories, loadCategories } = useCategoryStore();
-  const { settings } = useSettingsStore();
+  const accounts = useAccountStore((state) => state.accounts);
+  const loadAccounts = useAccountStore((state) => state.loadAccounts);
+  const fdAccountIds = useFDStore((state) => state.fdAccountIds);
+  const addDeposit = useFDStore((state) => state.addDeposit);
+  const categories = useCategoryStore((state) => state.categories);
+  const loadCategories = useCategoryStore((state) => state.loadCategories);
+  const settings = useSettingsStore((state) => state.settings);
 
   const incomeCategories = useMemo(
     () => categories.filter((c) => c.type === 'income'),
@@ -67,9 +70,9 @@ export default function FDFormScreen({
   const [categoryPickerVisible, setCategoryPickerVisible] = useState(false);
 
   useEffect(() => {
-    loadAccounts();
-    loadCategories();
-  }, []);
+    void loadAccounts();
+    void loadCategories();
+  }, [loadAccounts, loadCategories]);
 
   useEffect(() => {
     if (userAccounts.length > 0 && !sourceAccountId) {

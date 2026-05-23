@@ -24,13 +24,16 @@ import { colors, radius, spacing } from '../theme';
 export default function BackupRestoreScreen({
   navigation,
 }: RootStackScreenProps<'BackupRestore'>) {
-  const { settings, loadSettings } = useSettingsStore();
-  const { loadTransactions } = useTransactionStore();
-  const { loadCategories } = useCategoryStore();
-  const { loadAccounts } = useAccountStore();
-  const { loadBudgets } = useBudgetStore();
-  const { loadDeposits } = useFDStore();
-  const { loadRecurring } = useRecurringStore();
+  const settings = useSettingsStore((state) => state.settings);
+  const loadSettings = useSettingsStore((state) => state.loadSettings);
+  const loadTransactions = useTransactionStore(
+    (state) => state.loadTransactions,
+  );
+  const loadCategories = useCategoryStore((state) => state.loadCategories);
+  const loadAccounts = useAccountStore((state) => state.loadAccounts);
+  const loadBudgets = useBudgetStore((state) => state.loadBudgets);
+  const loadDeposits = useFDStore((state) => state.loadDeposits);
+  const loadRecurring = useRecurringStore((state) => state.loadRecurring);
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState('');
 

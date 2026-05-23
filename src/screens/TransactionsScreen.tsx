@@ -19,27 +19,27 @@ export default function TransactionsScreen({
 }: {
   navigation: any;
 }) {
-  const {
-    transactions,
-    filter,
-    loading,
-    hasMore,
-    totalCount,
-    loadTransactions,
-    setFilter,
-    loadMore,
-  } = useTransactionStore();
-  const { categories, loadCategories } = useCategoryStore();
-  const { accounts, loadAccounts } = useAccountStore();
-  const { settings } = useSettingsStore();
+  const transactions = useTransactionStore((state) => state.transactions);
+  const filter = useTransactionStore((state) => state.filter);
+  const loading = useTransactionStore((state) => state.loading);
+  const hasMore = useTransactionStore((state) => state.hasMore);
+  const totalCount = useTransactionStore((state) => state.totalCount);
+  const loadTransactions = useTransactionStore((state) => state.loadTransactions);
+  const setFilter = useTransactionStore((state) => state.setFilter);
+  const loadMore = useTransactionStore((state) => state.loadMore);
+  const categories = useCategoryStore((state) => state.categories);
+  const loadCategories = useCategoryStore((state) => state.loadCategories);
+  const accounts = useAccountStore((state) => state.accounts);
+  const loadAccounts = useAccountStore((state) => state.loadAccounts);
+  const settings = useSettingsStore((state) => state.settings);
   const insets = useSafeAreaInsets();
   const moneyDecimals = clampMoneyDecimalPlaces(settings.decimalPlaces);
 
   useEffect(() => {
-    loadCategories();
-    loadAccounts();
-    loadTransactions(true);
-  }, []);
+    void loadCategories();
+    void loadAccounts();
+    void loadTransactions(true);
+  }, [loadAccounts, loadCategories, loadTransactions]);
 
   const handleItemPress = useCallback(
     (txn: TransactionWithSplits) => {

@@ -52,10 +52,12 @@ export default function FDDetailScreen({
 }: RootStackScreenProps<'FDDetail'>) {
   const { fdId } = route.params;
   const insets = useSafeAreaInsets();
-  const { accounts } = useAccountStore();
-  const { categories } = useCategoryStore();
-  const { closeDeposit, removeDeposit, loadDeposits } = useFDStore();
-  const { settings } = useSettingsStore();
+  const accounts = useAccountStore((state) => state.accounts);
+  const categories = useCategoryStore((state) => state.categories);
+  const closeDeposit = useFDStore((state) => state.closeDeposit);
+  const removeDeposit = useFDStore((state) => state.removeDeposit);
+  const loadDeposits = useFDStore((state) => state.loadDeposits);
+  const settings = useSettingsStore((state) => state.settings);
   const sym = settings.currencySymbol;
   const moneyDecimals = clampMoneyDecimalPlaces(settings.decimalPlaces);
 
@@ -74,7 +76,7 @@ export default function FDDetailScreen({
 
   useFocusEffect(
     useCallback(() => {
-      loadData();
+      void loadData();
     }, [loadData]),
   );
 

@@ -26,10 +26,15 @@ interface BudgetSection {
 export default function BudgetsScreen({
   navigation,
 }: TabScreenProps<'Budgets'>) {
-  const { budgets, month, alerts, loading, loadBudgets, setMonth } =
-    useBudgetStore();
-  const { categories, loadCategories } = useCategoryStore();
-  const { settings } = useSettingsStore();
+  const budgets = useBudgetStore((state) => state.budgets);
+  const month = useBudgetStore((state) => state.month);
+  const alerts = useBudgetStore((state) => state.alerts);
+  const loading = useBudgetStore((state) => state.loading);
+  const loadBudgets = useBudgetStore((state) => state.loadBudgets);
+  const setMonth = useBudgetStore((state) => state.setMonth);
+  const categories = useCategoryStore((state) => state.categories);
+  const loadCategories = useCategoryStore((state) => state.loadCategories);
+  const settings = useSettingsStore((state) => state.settings);
   const [snackbar, setSnackbar] = React.useState('');
   const insets = useSafeAreaInsets();
   const sym = settings.currencySymbol;
@@ -37,9 +42,9 @@ export default function BudgetsScreen({
 
   useFocusEffect(
     useCallback(() => {
-      loadCategories();
-      loadBudgets();
-    }, []),
+      void loadCategories();
+      void loadBudgets();
+    }, [loadBudgets, loadCategories]),
   );
 
   const totalBudgeted = useMemo(

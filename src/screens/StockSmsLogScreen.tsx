@@ -23,7 +23,11 @@ const STATUS_COLOR: Record<StockSmsLog['parseStatus'], string> = {
 export default function StockSmsLogScreen({
   navigation,
 }: RootStackScreenProps<'StockSmsLog'>) {
-  const { smsLogs, loadSmsLogs, reparseSms, ignoreSms, reparseAll } = useStockStore();
+  const smsLogs = useStockStore((state) => state.smsLogs);
+  const loadSmsLogs = useStockStore((state) => state.loadSmsLogs);
+  const reparseSms = useStockStore((state) => state.reparseSms);
+  const ignoreSms = useStockStore((state) => state.ignoreSms);
+  const reparseAll = useStockStore((state) => state.reparseAll);
   const [refreshing, setRefreshing] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState('');
@@ -37,7 +41,7 @@ export default function StockSmsLogScreen({
       navigation.setOptions({
         title: 'SMS Import Log',
       });
-      loadData();
+      void loadData();
     }, [navigation, loadData]),
   );
 
