@@ -8,6 +8,7 @@ import {
   Linking,
   Platform,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -18,7 +19,6 @@ import {
   Snackbar,
   Switch,
   Text,
-  TextInput,
 } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import EmptyState from '../components/EmptyState';
@@ -42,7 +42,7 @@ import {
   calculateNetInterest,
   getDaysRemaining,
 } from '../utils/fdCalculator';
-import { clampMoneyDecimalPlaces } from '../utils/money';
+import { clampMoneyDecimalPlaces, formatMoney } from '../utils/money';
 
 const ACCOUNT_TYPE_COLORS: Record<Account['type'], string> = {
   cash: '#5BE49B',
@@ -105,20 +105,33 @@ export default function AccountsScreen({
   const removeRecurring = useRecurringStore((state) => state.removeRecurring);
   const toggleRecurring = useRecurringStore((state) => state.toggleRecurring);
   const holdings = useStockStore((state) => state.holdings);
+  const brokerFundingSummary = useStockStore(
+    (state) => state.brokerFundingSummary,
+  );
+  const brokerFundingSenderIds = useStockStore(
+    (state) => state.brokerFundingSenderIds,
+  );
+  const brokerFundingLastSyncAt = useStockStore(
+    (state) => state.brokerFundingLastSyncAt,
+  );
   const lastSyncAt = useStockStore((state) => state.lastSyncAt);
   const stocksSyncing = useStockStore((state) => state.isSyncing);
+  const brokerFundingSyncing = useStockStore(
+    (state) => state.isBrokerFundingSyncing,
+  );
   const permissionStatus = useStockStore((state) => state.permissionStatus);
   const sync = useStockStore((state) => state.sync);
+  const syncBrokerFunding = useStockStore((state) => state.syncBrokerFunding);
   const loadStocks = useStockStore((state) => state.loadAll);
   const syncError = useStockStore((state) => state.syncError);
-  const setSenderId = useStockStore((state) => state.setSenderId);
+  const brokerFundingSyncError = useStockStore(
+    (state) => state.brokerFundingSyncError,
+  );
   const settings = useSettingsStore((state) => state.settings);
   const [snackbar, setSnackbar] = useState('');
   const [activeTab, setActiveTab] = useState<Tab>('accounts');
   const [fdFilter, setFdFilter] = useState<FDFilter>('active');
   const [refreshing, setRefreshing] = useState(false);
-  const [senderEditorVisible, setSenderEditorVisible] = useState(false);
-  const [senderInput, setSenderInput] = useState('CDS-Alerts');
   const insets = useSafeAreaInsets();
   const sym = settings.currencySymbol;
   const moneyDecimals = clampMoneyDecimalPlaces(settings.decimalPlaces);
@@ -972,135 +985,171 @@ export default function AccountsScreen({
     );
   }, [sync]);
 
-  const handleSaveSender = useCallback(async () => {
-    await setSenderId(senderInput.trim() || 'CDS-Alerts');
-    setSenderEditorVisible(false);
-    setSnackbar('Sender updated for future syncs');
-  }, [senderInput, setSenderId]);
+  const handleBrokerFundingSync = useCallback(async () => {
+    const result = await syncBrokerFunding();
+    if (result.status === 'permission_denied') {
+      setSnackbar('SMS permission is required to scan broker funding messages');
+      return;
+    }
+    if (result.status === 'unsupported') {
+      if (result.unsupportedReason !== 'expo_go') {
+        setSnackbar('Broker funding sync is only available on Android');
+      }
+      return;
+    }
+    if (result.status === 'no_senders') {
+      setSnackbar('Add at least one possible sender before running funding sync');
+      return;
+    }
+    setSnackbar(
+      `Funding sync checked ${result.scanned} SMS and matched ${result.matched}`,
+    );
+  }, [syncBrokerFunding]);
 
-  const renderStockItem = ({ item }: { item: (typeof holdings)[number] }) => (
-    <TouchableOpacity
-      style={styles.stockCard}
-      onPress={() => (navigation as any).navigate('StockDetail', { stockCode: item.stockCode })}
-      activeOpacity={0.7}
+  const handleSyncStocks = useCallback(async () => {
+    await handleStocksSync();
+    await handleBrokerFundingSync();
+  }, [handleBrokerFundingSync, handleStocksSync]);
+
+  const renderStocksHero = () => (
+    <LinearGradient
+      colors={['#101723', '#162132', '#1B2940']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.stocksHeroCard}
     >
-      <View style={styles.stockCodeWrap}>
-        <Text style={styles.stockCodeText}>{item.stockCode}</Text>
-        <Text style={styles.stockMetaText}>Last trade: {item.lastTradeDate}</Text>
+      <View style={styles.stocksHeroTopRow}>
+        <View style={styles.stocksHeroTextCol}>
+          <Text style={styles.stocksHeroEyebrow}>Stocks</Text>
+          <Text style={styles.stocksHeroSubtext}>Total invested</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.stocksSettingsChip}
+          onPress={() => (navigation as any).navigate('StockSettings')}
+          activeOpacity={0.8}
+        >
+          <Icon source="cog-outline" size={16} color="rgba(255,255,255,0.82)" />
+        </TouchableOpacity>
       </View>
-      <View style={{ alignItems: 'flex-end' }}>
-        <Text style={styles.stockQtyText}>{item.netQuantity}</Text>
+
+      <Text style={styles.stocksHeroAmount}>
+        {formatMoney(
+          brokerFundingSummary.totalInvestedCents,
+          sym,
+          moneyDecimals,
+        )}
+      </Text>
+
+      <View style={styles.stocksStatRow}>
+        <View style={styles.stocksStatPill}>
+          <Text style={styles.stocksStatLabel}>Holdings</Text>
+          <Text style={styles.stocksStatValue}>{holdings.length}</Text>
+        </View>
+        <View style={styles.stocksStatPill}>
+          <Text style={styles.stocksStatLabel}>To review</Text>
+          <Text style={styles.stocksStatValue}>
+            {brokerFundingSummary.unmatchedCount}
+          </Text>
+        </View>
       </View>
-    </TouchableOpacity>
+
+      <View style={styles.stocksHeroFooter}>
+        <View style={styles.stocksSyncDot} />
+        <Text style={styles.stocksHeroMeta}>
+          Synced{' '}
+          {lastSyncAt || brokerFundingLastSyncAt
+            ? formatDistanceToNow(
+                new Date(
+                  Math.max(lastSyncAt ?? 0, brokerFundingLastSyncAt ?? 0),
+                ),
+                {
+                  addSuffix: true,
+                },
+              )
+            : 'never'}
+        </Text>
+      </View>
+
+      <View style={styles.stocksHeroActionsWrap}>{renderStocksActionBar()}</View>
+    </LinearGradient>
+  );
+
+  const renderStocksActionBar = () => (
+    <View style={styles.stocksActionBar}>
+      <Button
+        mode="contained"
+        loading={stocksSyncing || brokerFundingSyncing}
+        disabled={stocksSyncing || brokerFundingSyncing}
+        onPress={handleSyncStocks}
+        icon="refresh"
+        compact
+        style={styles.stocksPrimaryAction}
+        contentStyle={styles.stocksPrimaryActionContent}
+        labelStyle={styles.stocksPrimaryActionLabel}
+      >
+        Sync
+      </Button>
+      <View style={styles.stocksInlineActions}>
+        <Button
+          mode="text"
+          onPress={() => (navigation as any).navigate('StockHoldings')}
+          compact
+          style={styles.stocksSecondaryAction}
+          labelStyle={styles.stocksSecondaryActionLabel}
+        >
+          Holdings
+        </Button>
+      </View>
+    </View>
   );
 
   const renderStocksList = () => (
-    <>
-      <FlatList
-        data={holdings}
-        keyExtractor={(item) => item.stockCode}
-        renderItem={renderStockItem}
-        ListHeaderComponent={
-          <>
-            {showNetWorthCard ? renderPortfolioCard() : null}
-            {renderSegmentedControl()}
-            <View style={styles.stocksSummaryCard}>
-              <View style={styles.stocksSummaryTop}>
-                <View style={styles.stocksSummaryTextCol}>
-                  <Text style={styles.stocksSummaryTitle}>
-                    Stocks ({holdings.length})
-                  </Text>
-                  <Text style={styles.stocksSummaryMeta} numberOfLines={1}>
-                    Last sync{' '}
-                    {lastSyncAt
-                      ? formatDistanceToNow(new Date(lastSyncAt), { addSuffix: true })
-                      : 'never'}
-                  </Text>
-                </View>
-                <View style={styles.stocksSyncBtnWrap}>
-                  <Button
-                    mode="contained-tonal"
-                    loading={stocksSyncing}
-                    disabled={stocksSyncing}
-                    onPress={handleStocksSync}
-                    icon="refresh"
-                    compact
-                  >
-                    Sync
-                  </Button>
-                </View>
-              </View>
-              <View style={styles.stocksButtonsRow}>
-                <Button
-                  mode="outlined"
-                  style={styles.stockAuxButton}
-                  onPress={() => (navigation as any).navigate('StockSmsLog')}
-                  icon="message-text"
-                  compact
-                >
-                  SMS log
-                </Button>
-                <Button
-                  mode="outlined"
-                  style={styles.stockAuxButton}
-                  onPress={() => setSenderEditorVisible((v) => !v)}
-                  icon="account-edit"
-                  compact
-                >
-                  Sender
-                </Button>
-              </View>
-              {senderEditorVisible && (
-                <View style={styles.senderEditor}>
-                  <TextInput
-                    mode="outlined"
-                    label="Sender ID"
-                    value={senderInput}
-                    onChangeText={setSenderInput}
-                  />
-                  <Button mode="contained" onPress={handleSaveSender} style={{ marginTop: spacing.sm }}>
-                    Save Sender
-                  </Button>
-                </View>
-              )}
-              {permissionStatus === 'denied' && (
-                <View style={styles.permissionBanner}>
-                  <Icon source="alert-circle-outline" size={16} color={colors.warning} />
-                  <Text style={styles.permissionText}>SMS access denied. Tap sync to request again.</Text>
-                </View>
-              )}
-              {permissionStatus === 'never_ask_again' && (
-                <TouchableOpacity style={styles.permissionBanner} onPress={() => Linking.openSettings()}>
-                  <Icon source="cog" size={16} color={colors.warning} />
-                  <Text style={styles.permissionText}>SMS permission blocked. Open Settings.</Text>
-                </TouchableOpacity>
-              )}
-              {syncError ? (
-                <Text style={styles.syncErrorText} numberOfLines={2}>
-                  {syncError}
-                </Text>
-              ) : null}
-            </View>
-          </>
-        }
-        ListEmptyComponent={
+    <ScrollView
+      contentContainerStyle={styles.listContent}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing || stocksSyncing || brokerFundingSyncing}
+          onRefresh={onRefresh}
+          tintColor={colors.primary}
+          colors={[colors.primary]}
+        />
+      }
+    >
+      {showNetWorthCard ? renderPortfolioCard() : null}
+      {renderSegmentedControl()}
+      {renderStocksHero()}
+      <View style={styles.holdingsListWrap}>
+        {permissionStatus === 'denied' && (
+          <View style={styles.permissionBanner}>
+            <Icon source="alert-circle-outline" size={16} color={colors.warning} />
+            <Text style={styles.permissionText}>SMS access denied. Tap sync to request again.</Text>
+          </View>
+        )}
+        {permissionStatus === 'never_ask_again' && (
+          <TouchableOpacity style={styles.permissionBanner} onPress={() => Linking.openSettings()}>
+            <Icon source="cog" size={16} color={colors.warning} />
+            <Text style={styles.permissionText}>SMS permission blocked. Open Settings.</Text>
+          </TouchableOpacity>
+        )}
+        {syncError ? (
+          <Text style={styles.syncErrorText} numberOfLines={2}>
+            {syncError}
+          </Text>
+        ) : null}
+        {brokerFundingSyncError ? (
+          <Text style={styles.syncErrorText} numberOfLines={2}>
+            {brokerFundingSyncError}
+          </Text>
+        ) : null}
+        {holdings.length === 0 ? (
           <EmptyState
             icon="chart-line"
-            title="No Stocks Yet"
-            subtitle="Tap Sync to import from CDS-Alerts SMS"
+            title="No Holdings Yet"
+            subtitle="Sync trades or funding messages to start building your stocks view"
           />
-        }
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing || stocksSyncing}
-            onRefresh={onRefresh}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
-          />
-        }
-      />
-    </>
+        ) : null}
+      </View>
+    </ScrollView>
   );
 
   return (
@@ -1598,49 +1647,138 @@ const styles = StyleSheet.create({
     marginLeft: spacing.xs,
   },
 
-  stocksSummaryCard: {
-    backgroundColor: colors.surface,
+  stocksHeroCard: {
     borderRadius: radius.lg,
     padding: spacing.md,
     marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
     ...elevation.sm,
   },
-  stocksSummaryTop: {
+  stocksHeroTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: spacing.md,
   },
-  stocksSummaryTextCol: {
+  stocksHeroTextCol: {
     flex: 1,
     minWidth: 0,
   },
-  stocksSyncBtnWrap: {
-    flexShrink: 0,
-    paddingTop: 2,
-  },
-  stocksSummaryTitle: {
-    color: colors.text,
-    fontSize: 16,
+  stocksHeroEyebrow: {
+    color: 'rgba(255,255,255,0.72)',
+    fontSize: 11,
     fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
-  stocksSummaryMeta: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginTop: spacing.xs,
-    lineHeight: 16,
+  stocksHeroAmount: {
+    color: colors.onPrimary,
+    fontSize: 30,
+    fontWeight: '800',
+    marginTop: spacing.md,
+    letterSpacing: -0.6,
   },
-  stocksButtonsRow: {
+  stocksHeroSubtext: {
+    color: 'rgba(255,255,255,0.58)',
+    fontSize: 13,
+    marginTop: spacing.xxs,
+  },
+  stocksSettingsChip: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.capsule,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  stocksStatRow: {
     flexDirection: 'row',
     gap: spacing.sm,
     marginTop: spacing.md,
   },
-  stockAuxButton: {
+  stocksStatPill: {
     flex: 1,
+    borderRadius: radius.md,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
   },
-  senderEditor: {
-    marginTop: spacing.sm,
+  stocksStatValue: {
+    color: colors.onPrimary,
+    fontSize: 18,
+    fontWeight: '800',
+    marginTop: spacing.xxs,
+  },
+  stocksStatLabel: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  stocksHeroFooter: {
+    marginTop: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  stocksHeroActionsWrap: {
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+  },
+  stocksSyncDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#7BE0A0',
+  },
+  stocksHeroMeta: {
+    color: 'rgba(255,255,255,0.62)',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  stocksActionBar: {
+    marginTop: 0,
+    marginBottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: spacing.sm,
+  },
+  stocksInlineActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: spacing.xs,
+    flexShrink: 1,
+  },
+  stocksPrimaryAction: {
+    borderRadius: radius.capsule,
+    flexShrink: 0,
+  },
+  stocksPrimaryActionContent: {
+    height: 36,
+    paddingHorizontal: spacing.xs,
+  },
+  stocksPrimaryActionLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  stocksSecondaryAction: {
+    marginLeft: -spacing.sm,
+  },
+  stocksSecondaryActionLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  holdingsListWrap: {
+    marginBottom: spacing.xs,
   },
   permissionBanner: {
     marginTop: spacing.sm,
@@ -1662,18 +1800,4 @@ const styles = StyleSheet.create({
     color: colors.error,
     fontSize: 12,
   },
-  stockCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    ...elevation.sm,
-  },
-  stockCodeWrap: { flex: 1 },
-  stockCodeText: { color: colors.text, fontSize: 16, fontWeight: '700' },
-  stockQtyText: { color: colors.primary, fontSize: 18, fontWeight: '800' },
-  stockMetaText: { color: colors.textTertiary, fontSize: 12, marginTop: 2 },
 });

@@ -17,35 +17,26 @@ export interface RawSms {
   receivedAt: number;
 }
 
-const SmsAndroid = Platform.OS === 'android' ? require('react-native-get-sms-android') : null;
+const SmsAndroid =
+  Platform.OS === 'android' ? require('react-native-get-sms-android') : null;
 
-export async function requestSmsPermission(): Promise<SmsPermissionStatus> {
-  if (Platform.OS !== 'android') return 'unsupported';
-
-  const existing = await PermissionsAndroid.check(
-    PermissionsAndroid.PERMISSIONS.READ_SMS,
-  );
-  if (existing) return 'granted';
-
-  const status = await PermissionsAndroid.request(
-    PermissionsAndroid.PERMISSIONS.READ_SMS,
-    {
-      title: 'SMS access required',
-      message:
-        'MyMoney needs SMS access to import stock transactions from CDS-Alerts messages.',
-      buttonPositive: 'Allow',
-      buttonNegative: 'Deny',
-      buttonNeutral: 'Ask Later',
-    },
-  );
-
-  if (status === PermissionsAndroid.RESULTS.GRANTED) return 'granted';
-  if (status === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) return 'never_ask_again';
-  return 'denied';
+export function normalizeSender(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
-export async function readCdsAlerts(opts: {
-  senderId: string;
+export function senderMatchesConfiguredIds(
+  messageSender: string,
+  configuredSenderIds: string[],
+): boolean {
+  const sender = normalizeSender(messageSender);
+  const normalizedSenders = configuredSenderIds
+    .map(normalizeSender)
+    .filter(Boolean);
+  return normalizedSenders.some((candidate) => sender === candidate);
+}
+
+async function readSms(filter: {
+  senderId?: string;
   minDateMs: number;
 }): Promise<RawSms[]> {
   if (Platform.OS !== 'android') return [];
@@ -58,16 +49,18 @@ export async function readCdsAlerts(opts: {
     throw new Error('SMS reader module is not available in this build.');
   }
 
-  const filter = JSON.stringify({
+  const query: Record<string, string | number> = {
     box: 'inbox',
-    address: opts.senderId,
-    minDate: opts.minDateMs,
-  });
+    minDate: filter.minDateMs,
+  };
+  if (filter.senderId) {
+    query.address = filter.senderId;
+  }
 
   let listTimeoutId: ReturnType<typeof setTimeout> | undefined;
   const listPromise = new Promise<RawSmsBridgeRow[]>((resolve, reject) => {
     SmsAndroid.list(
-      filter,
+      JSON.stringify(query),
       (fail: string) => reject(new Error(fail || 'Unable to read SMS')),
       (_count: number, smsList: string) => {
         try {
@@ -90,6 +83,7 @@ export async function readCdsAlerts(opts: {
       STOCK_SMS_READ_TIMEOUT_MS,
     );
   });
+
   let rows: RawSmsBridgeRow[];
   try {
     rows = await Promise.race([listPromise, timeoutPromise]);
@@ -104,10 +98,63 @@ export async function readCdsAlerts(opts: {
     .map((row) => ({
       providerSmsId:
         row._id === undefined || row._id === null ? null : String(row._id),
-      sender: row.address ?? opts.senderId,
+      sender: row.address ?? filter.senderId ?? 'unknown',
       body: row.body?.trim() ?? '',
       receivedAt: Number(row.date ?? Date.now()),
     }))
     .sort((a, b) => a.receivedAt - b.receivedAt);
 }
 
+export async function requestSmsPermission(): Promise<SmsPermissionStatus> {
+  if (Platform.OS !== 'android') return 'unsupported';
+
+  const existing = await PermissionsAndroid.check(
+    PermissionsAndroid.PERMISSIONS.READ_SMS,
+  );
+  if (existing) return 'granted';
+
+  const status = await PermissionsAndroid.request(
+    PermissionsAndroid.PERMISSIONS.READ_SMS,
+    {
+      title: 'SMS access required',
+      message:
+        'MyMoney needs SMS access to import stock and broker funding messages.',
+      buttonPositive: 'Allow',
+      buttonNegative: 'Deny',
+      buttonNeutral: 'Ask Later',
+    },
+  );
+
+  if (status === PermissionsAndroid.RESULTS.GRANTED) return 'granted';
+  if (status === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN)
+    return 'never_ask_again';
+  return 'denied';
+}
+
+export async function readCdsAlerts(opts: {
+  senderId: string;
+  minDateMs: number;
+}): Promise<RawSms[]> {
+  return readSms({
+    senderId: opts.senderId,
+    minDateMs: opts.minDateMs,
+  });
+}
+
+export async function readSmsFromSenders(opts: {
+  senderIds: string[];
+  minDateMs: number;
+}): Promise<RawSms[]> {
+  const senderIds = [
+    ...new Set(
+      opts.senderIds.map((senderId) => senderId.trim()).filter(Boolean),
+    ),
+  ];
+  if (senderIds.length === 0) return [];
+
+  const messages = await readSms({ minDateMs: opts.minDateMs });
+
+  return messages.filter((message) =>
+    senderMatchesConfiguredIds(message.sender, senderIds),
+  );
+}

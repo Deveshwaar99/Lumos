@@ -46,8 +46,11 @@ export type RootStackParamList = {
   FDDetail: { fdId: string };
   RecurringTransactionForm: { recurringId?: string } | undefined;
   StockDetail: { stockCode: string };
+  StockHoldings: undefined;
   StockMovementForm: { movementId?: string; stockCode?: string } | undefined;
   StockSmsLog: undefined;
+  StockSettings: undefined;
+  BrokerFundingReview: undefined;
   BackupRestore: undefined;
   Settings: undefined;
 };

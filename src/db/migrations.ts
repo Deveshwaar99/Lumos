@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 async function createSchema(db: SQLiteDatabase): Promise<void> {
   await db.execAsync(`
@@ -255,6 +255,36 @@ async function migrateV6(db: SQLiteDatabase): Promise<void> {
   );
 }
 
+async function migrateV7(db: SQLiteDatabase): Promise<void> {
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS broker_funding_sms_log (
+      id TEXT PRIMARY KEY,
+      provider_sms_id TEXT,
+      sender TEXT NOT NULL,
+      body TEXT NOT NULL,
+      body_hash TEXT NOT NULL UNIQUE,
+      received_at INTEGER NOT NULL,
+      parsed_at TEXT NOT NULL,
+      parse_status TEXT NOT NULL CHECK(parse_status IN ('matched', 'unmatched', 'ignored')),
+      parse_reason TEXT,
+      confidence INTEGER NOT NULL DEFAULT 0,
+      amount_cents INTEGER
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_broker_funding_received_at
+      ON broker_funding_sms_log(received_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_broker_funding_status
+      ON broker_funding_sms_log(parse_status);
+  `);
+
+  await db.runAsync(
+    "INSERT OR IGNORE INTO stock_meta (key, value) VALUES ('brokerFundingSenderIds', '[]')",
+  );
+  await db.runAsync(
+    "INSERT OR IGNORE INTO stock_meta (key, value) VALUES ('brokerFundingKeywords', '[]')",
+  );
+}
+
 export async function runMigrations(db: SQLiteDatabase): Promise<void> {
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS schema_version (
@@ -276,6 +306,7 @@ export async function runMigrations(db: SQLiteDatabase): Promise<void> {
     [4, migrateV4],
     [5, migrateV5],
     [6, migrateV6],
+    [7, migrateV7],
   ]);
   for (let i = currentVersion + 1; i <= SCHEMA_VERSION; i++) {
     const migrationFunc = migrationFunctions.get(i);

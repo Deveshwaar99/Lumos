@@ -5,9 +5,9 @@ import {
   format,
   startOfMonth,
 } from 'date-fns';
-import * as Crypto from 'expo-crypto';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { parseCdsAlert } from '../services/cdsSmsParser';
+import { computeSmsDedupeHash } from '../utils/smsDedupeHash';
 import { generateId } from '../utils/uuid';
 
 const EXPENSE_CATEGORIES = [
@@ -289,11 +289,13 @@ export async function seedDemoStockData(db: SQLiteDatabase): Promise<void> {
     );
     if (exists) continue;
 
-    const bodyHash = await Crypto.digestStringAsync(
-      Crypto.CryptoDigestAlgorithm.SHA256,
-      demo.body,
-    );
     const receivedAt = nowMs - demo.daysAgo * 24 * 60 * 60 * 1000;
+    const bodyHash = await computeSmsDedupeHash({
+      body: demo.body,
+      sender: DEMO_CDS_SENDER,
+      receivedAt,
+      providerSmsId: demo.id,
+    });
 
     await db.runAsync(
       `INSERT INTO stock_sms_log (

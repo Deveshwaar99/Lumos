@@ -1,18 +1,26 @@
 import Constants from 'expo-constants';
-import * as Crypto from 'expo-crypto';
 import { Platform } from 'react-native';
 import { STOCK_FIRST_SYNC_WINDOW_DAYS } from '../constants/stockSync';
 import { getDatabase } from '../db/database';
 import type {
+  BrokerFundingSmsLog,
+  BrokerFundingSummary,
+  BrokerFundingSyncResult,
   SmsPermissionStatus,
   StockHolding,
   StockMovement,
   StockMovementInput,
   StockSmsLog,
 } from '../models/types';
+import { computeSmsDedupeHash } from '../utils/smsDedupeHash';
 import { generateId } from '../utils/uuid';
+import { parseBrokerFundingSms } from './brokerFundingParser';
 import { parseCdsAlert } from './cdsSmsParser';
-import { readCdsAlerts, requestSmsPermission } from './smsReader';
+import {
+  readCdsAlerts,
+  readSmsFromSenders,
+  requestSmsPermission,
+} from './smsReader';
 
 type StockLogRow = {
   id: string;
@@ -39,6 +47,55 @@ type StockMovementRow = {
   created_at: string;
   updated_at: string;
 };
+
+type BrokerFundingLogRow = {
+  id: string;
+  provider_sms_id: string | null;
+  sender: string;
+  body: string;
+  body_hash: string;
+  received_at: number;
+  parsed_at: string;
+  parse_status: 'matched' | 'unmatched' | 'ignored';
+  parse_reason: string | null;
+  confidence: number;
+  amount_cents: number | null;
+};
+
+const DEMO_BROKER_FUNDING_SENDERS = ['DF savings', 'HNB Alerts'];
+const DEMO_BROKER_FUNDING_KEYWORDS = [
+  'softlogic',
+  'softlogic stockbrokers',
+  'softlogic stockbrokers pvt limited',
+];
+const DEMO_BROKER_FUNDING_MESSAGES: Array<{
+  id: string;
+  sender: string;
+  body: string;
+  daysAgo: number;
+}> = [
+  {
+    id: 'demo-broker-funding-1',
+    sender: 'DF savings',
+    body:
+      'Your payment of Rs.60000.00 to SOFTLOGIC STOCKBROKERS PVT LIMITED from DF savings has been made successfully. (ref 176880018106329)',
+    daysAgo: 10,
+  },
+  {
+    id: 'demo-broker-funding-2',
+    sender: 'HNB Alerts',
+    body:
+      'Fund Transfer Debit (FTSTOCKS_SOFTLOGIC STOCKBROKERS PVT LIMITED_177872) of LKR 100,000.00 was performed on your account no 001XXXXXX655. Account Balance - Rs. 19,630.04',
+    daysAgo: 6,
+  },
+  {
+    id: 'demo-broker-funding-3',
+    sender: 'DF savings',
+    body:
+      'Payment of Rs. 25,000.00 to Softlogic Stockbrokers was completed successfully from your DF savings account. Ref 778821',
+    daysAgo: 3,
+  },
+];
 
 function mapSmsRow(row: StockLogRow): StockSmsLog {
   return {
@@ -70,8 +127,53 @@ function mapMovementRow(row: StockMovementRow): StockMovement {
   };
 }
 
+function mapBrokerFundingRow(row: BrokerFundingLogRow): BrokerFundingSmsLog {
+  return {
+    id: row.id,
+    providerSmsId: row.provider_sms_id,
+    sender: row.sender,
+    body: row.body,
+    bodyHash: row.body_hash,
+    receivedAt: row.received_at,
+    parsedAt: row.parsed_at,
+    parseStatus: row.parse_status,
+    parseReason: row.parse_reason,
+    confidence: Number(row.confidence ?? 0),
+    amountCents:
+      row.amount_cents === null || row.amount_cents === undefined
+        ? null
+        : Number(row.amount_cents),
+  };
+}
+
 function sanitizeCode(code: string): string {
   return code.trim().toUpperCase().replace(/[^A-Z]/g, '');
+}
+
+function parseMetaJsonArray(raw: string | null): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((value) => String(value).trim()).filter(Boolean);
+  } catch {
+    return raw
+      .split(/[\n,]/)
+      .map((value) => value.trim())
+      .filter(Boolean);
+  }
+}
+
+async function resetBrokerFundingSyncCursor(): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync('DELETE FROM stock_meta WHERE key = ?', [
+    'brokerFundingLastSyncAt',
+  ]);
+}
+
+async function resetTradeSmsSyncCursor(): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync('DELETE FROM stock_meta WHERE key = ?', ['lastSyncAt']);
 }
 
 async function withTransaction<T>(fn: () => Promise<T>): Promise<T> {
@@ -121,6 +223,24 @@ export const stockService = {
       params,
     );
     return rows.map(mapSmsRow);
+  },
+
+  async listBrokerFundingLogs(opts?: {
+    status?: BrokerFundingSmsLog['parseStatus'];
+    limit?: number;
+  }): Promise<BrokerFundingSmsLog[]> {
+    const db = await getDatabase();
+    const where = opts?.status ? 'WHERE parse_status = ?' : '';
+    const limit = opts?.limit ? 'LIMIT ?' : '';
+    const params: Array<string | number> = [];
+    if (opts?.status) params.push(opts.status);
+    if (opts?.limit) params.push(opts.limit);
+
+    const rows = await db.getAllAsync<BrokerFundingLogRow>(
+      `SELECT * FROM broker_funding_sms_log ${where} ORDER BY received_at DESC ${limit}`,
+      params,
+    );
+    return rows.map(mapBrokerFundingRow);
   },
 
   async listMovements(filter?: {
@@ -274,6 +394,343 @@ export const stockService = {
       .filter((row) => includeClosed || row.netQuantity !== 0);
   },
 
+  async getBrokerFundingSenderIds(): Promise<string[]> {
+    return parseMetaJsonArray(await this.getMeta('brokerFundingSenderIds'));
+  },
+
+  async setBrokerFundingSenderIds(senderIds: string[]): Promise<void> {
+    const normalized = [...new Set(senderIds.map((senderId) => senderId.trim()).filter(Boolean))];
+    await this.setMeta('brokerFundingSenderIds', JSON.stringify(normalized));
+    await resetBrokerFundingSyncCursor();
+  },
+
+  async getBrokerFundingKeywords(): Promise<string[]> {
+    return parseMetaJsonArray(await this.getMeta('brokerFundingKeywords'));
+  },
+
+  async setBrokerFundingKeywords(keywords: string[]): Promise<void> {
+    const normalized = [...new Set(keywords.map((keyword) => keyword.trim()).filter(Boolean))];
+    await this.setMeta('brokerFundingKeywords', JSON.stringify(normalized));
+    await resetBrokerFundingSyncCursor();
+  },
+
+  async getBrokerFundingSummary(): Promise<BrokerFundingSummary> {
+    const db = await getDatabase();
+    const row = await db.getFirstAsync<{
+      total_invested_cents: number | null;
+      matched_count: number | null;
+      unmatched_count: number | null;
+      ignored_count: number | null;
+    }>(`
+      SELECT
+        COALESCE(SUM(CASE WHEN parse_status = 'matched' THEN amount_cents ELSE 0 END), 0) AS total_invested_cents,
+        SUM(CASE WHEN parse_status = 'matched' THEN 1 ELSE 0 END) AS matched_count,
+        SUM(CASE WHEN parse_status = 'unmatched' THEN 1 ELSE 0 END) AS unmatched_count,
+        SUM(CASE WHEN parse_status = 'ignored' THEN 1 ELSE 0 END) AS ignored_count
+      FROM broker_funding_sms_log
+    `);
+
+    return {
+      totalInvestedCents: Number(row?.total_invested_cents ?? 0),
+      matchedCount: Number(row?.matched_count ?? 0),
+      unmatchedCount: Number(row?.unmatched_count ?? 0),
+      ignoredCount: Number(row?.ignored_count ?? 0),
+    };
+  },
+
+  async confirmBrokerFundingSms(id: string, amountCents?: number | null): Promise<void> {
+    const db = await getDatabase();
+    const existing = await db.getFirstAsync<BrokerFundingLogRow>(
+      'SELECT * FROM broker_funding_sms_log WHERE id = ?',
+      [id],
+    );
+    if (!existing) return;
+
+    const nextAmount =
+      amountCents ?? (existing.amount_cents === undefined ? null : existing.amount_cents);
+    if (nextAmount == null || nextAmount <= 0) {
+      throw new Error('Cannot confirm broker funding without a valid amount.');
+    }
+
+    await db.runAsync(
+      `UPDATE broker_funding_sms_log
+       SET parse_status = 'matched', amount_cents = ?, parse_reason = ?, parsed_at = ?, confidence = MAX(confidence, 80)
+       WHERE id = ?`,
+      [nextAmount, 'Manually confirmed', new Date().toISOString(), id],
+    );
+  },
+
+  async ignoreBrokerFundingSms(id: string): Promise<void> {
+    const db = await getDatabase();
+    await db.runAsync(
+      `UPDATE broker_funding_sms_log
+       SET parse_status = 'ignored', parse_reason = ?, parsed_at = ?
+       WHERE id = ?`,
+      ['Ignored by user', new Date().toISOString(), id],
+    );
+  },
+
+  async reparseBrokerFundingSms(id: string): Promise<void> {
+    const db = await getDatabase();
+    const existing = await db.getFirstAsync<BrokerFundingLogRow>(
+      'SELECT * FROM broker_funding_sms_log WHERE id = ?',
+      [id],
+    );
+    if (!existing) return;
+
+    const keywords = await this.getBrokerFundingKeywords();
+    const parsed = parseBrokerFundingSms(existing.body, { keywords });
+    await db.runAsync(
+      `UPDATE broker_funding_sms_log
+       SET parse_status = ?, parse_reason = ?, confidence = ?, amount_cents = ?, parsed_at = ?
+       WHERE id = ?`,
+      [
+        parsed.matched ? 'matched' : 'unmatched',
+        parsed.reason,
+        parsed.confidence,
+        parsed.amountCents,
+        new Date().toISOString(),
+        id,
+      ],
+    );
+  },
+
+  async reparseAllBrokerFundingSms(): Promise<void> {
+    const logs = await this.listBrokerFundingLogs();
+    for (const log of logs) {
+      if (log.parseStatus === 'ignored') continue;
+      await this.reparseBrokerFundingSms(log.id);
+    }
+  },
+
+  async clearTradeSmsLogs(): Promise<void> {
+    await withTransaction(async () => {
+      const db = await getDatabase();
+      await db.execAsync('DELETE FROM stock_movements');
+      await db.execAsync('DELETE FROM stock_sms_log');
+    });
+    await resetTradeSmsSyncCursor();
+  },
+
+  async clearTradeSmsAndResync(): Promise<{
+    status: 'ok' | 'permission_denied' | 'unsupported';
+    permissionStatus: SmsPermissionStatus;
+    newSms: number;
+    newMovements: number;
+    failed: number;
+    unsupportedReason?: 'expo_go';
+  }> {
+    await this.clearTradeSmsLogs();
+    return this.ingestSms();
+  },
+
+  async clearBrokerFundingSmsLogs(): Promise<void> {
+    await withTransaction(async () => {
+      const db = await getDatabase();
+      await db.execAsync('DELETE FROM broker_funding_sms_log');
+    });
+    await resetBrokerFundingSyncCursor();
+  },
+
+  async clearBrokerFundingSmsAndResync(): Promise<BrokerFundingSyncResult> {
+    await this.clearBrokerFundingSmsLogs();
+    return this.syncBrokerFundingSms();
+  },
+
+  async syncBrokerFundingSms(): Promise<BrokerFundingSyncResult> {
+    if (Platform.OS !== 'android') {
+      return {
+        status: 'unsupported',
+        permissionStatus: 'unsupported',
+        scanned: 0,
+        matched: 0,
+        unmatched: 0,
+      };
+    }
+
+    if (Constants.executionEnvironment === 'storeClient') {
+      return {
+        status: 'unsupported',
+        permissionStatus: 'unsupported',
+        scanned: 0,
+        matched: 0,
+        unmatched: 0,
+        unsupportedReason: 'expo_go',
+      };
+    }
+
+    const permissionStatus = await requestSmsPermission();
+    if (permissionStatus !== 'granted') {
+      return {
+        status: 'permission_denied',
+        permissionStatus,
+        scanned: 0,
+        matched: 0,
+        unmatched: 0,
+      };
+    }
+
+    const senderIds = await this.getBrokerFundingSenderIds();
+    if (senderIds.length === 0) {
+      return {
+        status: 'no_senders',
+        permissionStatus,
+        scanned: 0,
+        matched: 0,
+        unmatched: 0,
+      };
+    }
+
+    const keywords = await this.getBrokerFundingKeywords();
+    const lastSyncAtRaw = await this.getMeta('brokerFundingLastSyncAt');
+    const firstSyncWindowDays = Number(
+      (await this.getMeta('firstSyncWindowDays')) ??
+        String(STOCK_FIRST_SYNC_WINDOW_DAYS),
+    );
+    const now = Date.now();
+    const minDateMs = lastSyncAtRaw
+      ? Number(lastSyncAtRaw)
+      : now - Math.max(firstSyncWindowDays, 1) * 24 * 60 * 60 * 1000;
+
+    const smsRows = await readSmsFromSenders({
+      senderIds,
+      minDateMs: Number.isFinite(minDateMs) ? minDateMs : 0,
+    });
+
+    let scanned = 0;
+    let matched = 0;
+    let unmatched = 0;
+
+    await withTransaction(async () => {
+      const db = await getDatabase();
+      for (const sms of smsRows) {
+        const bodyHash = await computeSmsDedupeHash({
+          body: sms.body,
+          sender: sms.sender,
+          receivedAt: sms.receivedAt,
+          providerSmsId: sms.providerSmsId,
+        });
+
+        const existing = await db.getFirstAsync<{ id: string }>(
+          'SELECT id FROM broker_funding_sms_log WHERE body_hash = ?',
+          [bodyHash],
+        );
+        if (existing) continue;
+
+        scanned += 1;
+        const parsedAt = new Date().toISOString();
+        const parsed = parseBrokerFundingSms(sms.body, { keywords });
+
+        await db.runAsync(
+          `INSERT INTO broker_funding_sms_log (
+             id, provider_sms_id, sender, body, body_hash, received_at, parsed_at, parse_status, parse_reason, confidence, amount_cents
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            generateId(),
+            sms.providerSmsId,
+            sms.sender,
+            sms.body,
+            bodyHash,
+            sms.receivedAt,
+            parsedAt,
+            parsed.matched ? 'matched' : 'unmatched',
+            parsed.reason,
+            parsed.confidence,
+            parsed.amountCents,
+          ],
+        );
+
+        if (parsed.matched) {
+          matched += 1;
+        } else {
+          unmatched += 1;
+        }
+      }
+    });
+
+    await this.setMeta('brokerFundingLastSyncAt', String(now));
+    return {
+      status: 'ok',
+      permissionStatus,
+      scanned,
+      matched,
+      unmatched,
+    };
+  },
+
+  async importDemoBrokerFundingSms(): Promise<{
+    inserted: number;
+    matched: number;
+    unmatched: number;
+  }> {
+    const nowMs = Date.now();
+    const existingKeywords = await this.getBrokerFundingKeywords();
+    const existingSenders = await this.getBrokerFundingSenderIds();
+    if (existingKeywords.length === 0) {
+      await this.setBrokerFundingKeywords(DEMO_BROKER_FUNDING_KEYWORDS);
+    }
+    if (existingSenders.length === 0) {
+      await this.setBrokerFundingSenderIds(DEMO_BROKER_FUNDING_SENDERS);
+    }
+
+    const keywords =
+      existingKeywords.length > 0
+        ? existingKeywords
+        : DEMO_BROKER_FUNDING_KEYWORDS;
+    let inserted = 0;
+    let matched = 0;
+    let unmatched = 0;
+
+    await withTransaction(async () => {
+      const db = await getDatabase();
+      for (const sample of DEMO_BROKER_FUNDING_MESSAGES) {
+        const receivedAt = nowMs - sample.daysAgo * 24 * 60 * 60 * 1000;
+        const providerSmsId = `demo:${sample.id}`;
+        const bodyHash = await computeSmsDedupeHash({
+          body: sample.body,
+          sender: sample.sender,
+          receivedAt,
+          providerSmsId,
+        });
+
+        const existing = await db.getFirstAsync<{ id: string }>(
+          'SELECT id FROM broker_funding_sms_log WHERE body_hash = ?',
+          [bodyHash],
+        );
+        if (existing) continue;
+
+        const parsedAt = new Date().toISOString();
+        const parsed = parseBrokerFundingSms(sample.body, { keywords });
+        await db.runAsync(
+          `INSERT INTO broker_funding_sms_log (
+             id, provider_sms_id, sender, body, body_hash, received_at, parsed_at, parse_status, parse_reason, confidence, amount_cents
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            sample.id,
+            providerSmsId,
+            sample.sender,
+            sample.body,
+            bodyHash,
+            receivedAt,
+            parsedAt,
+            parsed.matched ? 'matched' : 'unmatched',
+            `${parsed.reason} | demo sample`,
+            parsed.confidence,
+            parsed.amountCents,
+          ],
+        );
+        inserted += 1;
+        if (parsed.matched) {
+          matched += 1;
+        } else {
+          unmatched += 1;
+        }
+      }
+    });
+
+    return { inserted, matched, unmatched };
+  },
+
   async ignoreSms(smsId: string): Promise<void> {
     await withTransaction(async () => {
       const db = await getDatabase();
@@ -407,10 +864,12 @@ export const stockService = {
     await withTransaction(async () => {
       const db = await getDatabase();
       for (const sms of smsRows) {
-        const bodyHash = await Crypto.digestStringAsync(
-          Crypto.CryptoDigestAlgorithm.SHA256,
-          sms.body,
-        );
+        const bodyHash = await computeSmsDedupeHash({
+          body: sms.body,
+          sender: sms.sender,
+          receivedAt: sms.receivedAt,
+          providerSmsId: sms.providerSmsId,
+        });
 
         const existing = await db.getFirstAsync<{ id: string }>(
           'SELECT id FROM stock_sms_log WHERE body_hash = ?',

@@ -120,6 +120,81 @@ export interface BudgetWithSpent extends Budget {
   percentage: number;
 }
 
+export interface RangeComparison {
+  previousStart: string;
+  previousEnd: string;
+  previousIncomeCents: number;
+  previousExpenseCents: number;
+  previousNetCents: number;
+  incomeDeltaCents: number;
+  expenseDeltaCents: number;
+  netDeltaCents: number;
+  incomeDeltaPct: number | null;
+  expenseDeltaPct: number | null;
+  netDeltaPct: number | null;
+}
+
+export interface TopMoverItem {
+  categoryId: string;
+  categoryName: string;
+  color: string;
+  icon: string;
+  currentTotalCents: number;
+  previousTotalCents: number;
+  deltaCents: number;
+  deltaPct: number | null;
+}
+
+export interface BudgetOverlayItem {
+  categoryId: string;
+  categoryName: string;
+  color: string;
+  icon: string;
+  limitCents: number;
+  spentCents: number;
+  remainingCents: number;
+  percentage: number;
+}
+
+export interface InsightDrillTarget {
+  screen: 'CategoryTransactions' | 'AccountTransactions';
+  categoryId?: string;
+  accountId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export interface InsightItem {
+  id: string;
+  kind: 'comparison' | 'trend' | 'budget' | 'anomaly' | 'guide';
+  title: string;
+  body: string;
+  tone: 'income' | 'expense' | 'neutral' | 'warning';
+  drillTarget?: InsightDrillTarget;
+}
+
+export interface AnomalyItem {
+  id: string;
+  scope: 'day' | 'category';
+  label: string;
+  amountCents: number;
+  baselineCents: number;
+  deltaPct: number;
+  categoryId?: string;
+  date?: string;
+  color?: string;
+  icon?: string;
+}
+
+export interface AnalyticsSnapshot {
+  summary: MonthSummary;
+  comparison: RangeComparison;
+  topMovers: TopMoverItem[];
+  budgetSnapshot: BudgetOverlayItem[];
+  anomalies: AnomalyItem[];
+  insights: InsightItem[];
+}
+
 export interface BackupData {
   version: number;
   exportedAt: string;
@@ -218,6 +293,7 @@ export interface CreateFDInput {
 export type StockMovementDirection = 'buy' | 'sell';
 export type StockMovementSource = 'sms' | 'manual';
 export type StockSmsParseStatus = 'success' | 'failed' | 'ignored';
+export type BrokerFundingParseStatus = 'matched' | 'unmatched' | 'ignored';
 export type SmsPermissionStatus =
   | 'unknown'
   | 'granted'
@@ -266,4 +342,34 @@ export interface StockMovementInput {
   direction: StockMovementDirection;
   tradeDate: string;
   note?: string | null;
+}
+
+export interface BrokerFundingSmsLog {
+  id: string;
+  providerSmsId: string | null;
+  sender: string;
+  body: string;
+  bodyHash: string;
+  receivedAt: number;
+  parsedAt: string;
+  parseStatus: BrokerFundingParseStatus;
+  parseReason: string | null;
+  confidence: number;
+  amountCents: number | null;
+}
+
+export interface BrokerFundingSummary {
+  totalInvestedCents: number;
+  matchedCount: number;
+  unmatchedCount: number;
+  ignoredCount: number;
+}
+
+export interface BrokerFundingSyncResult {
+  status: 'ok' | 'permission_denied' | 'unsupported' | 'no_senders';
+  permissionStatus: SmsPermissionStatus;
+  scanned: number;
+  matched: number;
+  unmatched: number;
+  unsupportedReason?: 'expo_go';
 }
