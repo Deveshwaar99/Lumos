@@ -29,8 +29,16 @@ export type RootStackParamList = {
     | { categoryId?: string; categoryType?: 'income' | 'expense' }
     | undefined;
   AccountForm: { accountId?: string } | undefined;
-  AccountTransactions: { accountId: string };
-  CategoryTransactions: { categoryId: string };
+  AccountTransactions: {
+    accountId: string;
+    dateFrom?: string;
+    dateTo?: string;
+  };
+  CategoryTransactions: {
+    categoryId: string;
+    dateFrom?: string;
+    dateTo?: string;
+  };
   BudgetForm:
     | { budgetId?: string; month?: string; categoryId?: string }
     | undefined;

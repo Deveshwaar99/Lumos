@@ -25,7 +25,7 @@ export default function CategoryTransactionsScreen({
   navigation,
   route,
 }: RootStackScreenProps<'CategoryTransactions'>) {
-  const { categoryId } = route.params;
+  const { categoryId, dateFrom, dateTo } = route.params;
   const { accounts } = useAccountStore();
   const { categories } = useCategoryStore();
   const { settings } = useSettingsStore();
@@ -39,12 +39,18 @@ export default function CategoryTransactionsScreen({
 
   const loadData = useCallback(async () => {
     const txns = await transactionService.getAll(
-      { dateFrom: null, dateTo: null, type: null, accountId: null, categoryId },
+      {
+        dateFrom: dateFrom ?? null,
+        dateTo: dateTo ?? null,
+        type: null,
+        accountId: null,
+        categoryId,
+      },
       200,
       0,
     );
     setTransactions(txns);
-  }, [categoryId]);
+  }, [categoryId, dateFrom, dateTo]);
 
   useFocusEffect(
     useCallback(() => {

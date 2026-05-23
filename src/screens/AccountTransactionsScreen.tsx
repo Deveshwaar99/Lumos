@@ -25,7 +25,7 @@ export default function AccountTransactionsScreen({
   navigation,
   route,
 }: RootStackScreenProps<'AccountTransactions'>) {
-  const { accountId } = route.params;
+  const { accountId, dateFrom, dateTo } = route.params;
   const { accounts, balances } = useAccountStore();
   const { categories } = useCategoryStore();
   const { settings } = useSettingsStore();
@@ -43,8 +43,8 @@ export default function AccountTransactionsScreen({
     try {
       const txns = await transactionService.getAll(
         {
-          dateFrom: null,
-          dateTo: null,
+          dateFrom: dateFrom ?? null,
+          dateTo: dateTo ?? null,
           type: null,
           accountId,
           categoryId: null,
@@ -56,7 +56,7 @@ export default function AccountTransactionsScreen({
     } catch {
       setSnackbar('Failed to load transactions');
     }
-  }, [accountId]);
+  }, [accountId, dateFrom, dateTo]);
 
   useFocusEffect(
     useCallback(() => {
