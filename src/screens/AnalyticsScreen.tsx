@@ -1,6 +1,12 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { format } from 'date-fns';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { ActivityIndicator, Icon, Text } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -361,9 +367,18 @@ export default function AnalyticsScreen({
   useFocusEffect(
     useCallback(() => {
       void loadSnapshot();
-      void loadViewData(activeView, { force: true });
-    }, [activeView, loadSnapshot, loadViewData]),
+    }, [loadSnapshot]),
   );
+
+  useEffect(() => {
+    loadedViewRef.current = null;
+    void loadViewData(activeView, { force: true });
+    // biome-ignore lint/correctness/useExhaustiveDependencies: activeView read for current chip when range changes
+  }, [range.start, range.end, anchor, period, loadViewData]);
+
+  useEffect(() => {
+    void loadViewData(activeView);
+  }, [activeView, loadViewData]);
 
   const totalExpenseForBar = expenseBreakdown.reduce((s, c) => s + c.total, 0);
   const totalIncomeForBar = incomeBreakdown.reduce((s, c) => s + c.total, 0);
@@ -695,7 +710,11 @@ export default function AnalyticsScreen({
                         styles.analysisMetricIconIncome,
                       ]}
                     >
-                      <Icon source="arrow-bottom-left" size={16} color={colors.income} />
+                      <Icon
+                        source="arrow-bottom-left"
+                        size={16}
+                        color={colors.income}
+                      />
                     </View>
                     <Text style={styles.analysisMetricLabel}>Avg In / day</Text>
                   </View>
@@ -721,9 +740,15 @@ export default function AnalyticsScreen({
                         styles.analysisMetricIconExpense,
                       ]}
                     >
-                      <Icon source="arrow-top-right" size={16} color={colors.expense} />
+                      <Icon
+                        source="arrow-top-right"
+                        size={16}
+                        color={colors.expense}
+                      />
                     </View>
-                    <Text style={styles.analysisMetricLabel}>Avg Out / day</Text>
+                    <Text style={styles.analysisMetricLabel}>
+                      Avg Out / day
+                    </Text>
                   </View>
                   <AmountText
                     cents={avgExpensePerDay}
@@ -756,10 +781,14 @@ export default function AnalyticsScreen({
                           avgNetPerDay >= 0 ? 'trending-up' : 'trending-down'
                         }
                         size={16}
-                        color={avgNetPerDay >= 0 ? colors.income : colors.expense}
+                        color={
+                          avgNetPerDay >= 0 ? colors.income : colors.expense
+                        }
                       />
                     </View>
-                    <Text style={styles.analysisMetricLabel}>Avg Net / day</Text>
+                    <Text style={styles.analysisMetricLabel}>
+                      Avg Net / day
+                    </Text>
                   </View>
                   <AmountText
                     cents={avgNetPerDay}
@@ -771,7 +800,9 @@ export default function AnalyticsScreen({
                     style={styles.analysisMetricValue}
                   />
                   <Text style={styles.analysisMetricFootnote}>
-                    {avgNetPerDay >= 0 ? 'Positive pace' : 'Spending pace leads'}
+                    {avgNetPerDay >= 0
+                      ? 'Positive pace'
+                      : 'Spending pace leads'}
                   </Text>
                 </View>
               </View>
@@ -904,7 +935,9 @@ export default function AnalyticsScreen({
                 </View>
                 <View style={styles.analysisReferenceDivider} />
                 <View style={styles.analysisReferenceItem}>
-                  <Text style={styles.analysisReferenceLabel}>Previous Out</Text>
+                  <Text style={styles.analysisReferenceLabel}>
+                    Previous Out
+                  </Text>
                   <AmountText
                     cents={snapshot.comparison.previousExpenseCents}
                     currencySymbol={currencySymbol}
@@ -917,7 +950,9 @@ export default function AnalyticsScreen({
                 </View>
                 <View style={styles.analysisReferenceDivider} />
                 <View style={styles.analysisReferenceItem}>
-                  <Text style={styles.analysisReferenceLabel}>Previous Net</Text>
+                  <Text style={styles.analysisReferenceLabel}>
+                    Previous Net
+                  </Text>
                   <AmountText
                     cents={snapshot.comparison.previousNetCents}
                     currencySymbol={currencySymbol}
@@ -956,7 +991,9 @@ export default function AnalyticsScreen({
                     const featuredInsight = snapshot.insights[0];
                     const narrativeInsights = snapshot.insights.slice(1);
                     const toneColor = getToneColor(featuredInsight.tone);
-                    const toneBackground = getToneBackground(featuredInsight.tone);
+                    const toneBackground = getToneBackground(
+                      featuredInsight.tone,
+                    );
                     const isPressable = !!featuredInsight.drillTarget;
 
                     return (
@@ -967,7 +1004,10 @@ export default function AnalyticsScreen({
                             handleDrillTarget(featuredInsight.drillTarget)
                           }
                           disabled={!isPressable}
-                          style={[styles.insightCard, styles.insightCardFeatured]}
+                          style={[
+                            styles.insightCard,
+                            styles.insightCardFeatured,
+                          ]}
                         >
                           <View
                             style={[
@@ -1004,12 +1044,18 @@ export default function AnalyticsScreen({
                               ) : null}
                             </View>
                             <Text
-                              style={[styles.insightTitle, styles.insightTitleFeatured]}
+                              style={[
+                                styles.insightTitle,
+                                styles.insightTitleFeatured,
+                              ]}
                             >
                               {featuredInsight.title}
                             </Text>
                             <Text
-                              style={[styles.insightBody, styles.insightBodyFeatured]}
+                              style={[
+                                styles.insightBody,
+                                styles.insightBodyFeatured,
+                              ]}
                             >
                               {featuredInsight.body}
                             </Text>
@@ -1035,7 +1081,10 @@ export default function AnalyticsScreen({
                                 index === narrativeInsights.length - 1;
 
                               return (
-                                <View key={insight.id} style={styles.insightTimelineRow}>
+                                <View
+                                  key={insight.id}
+                                  style={styles.insightTimelineRow}
+                                >
                                   <View style={styles.insightTimelineRail}>
                                     <View
                                       style={[
@@ -1044,7 +1093,9 @@ export default function AnalyticsScreen({
                                       ]}
                                     />
                                     {!isLastRow ? (
-                                      <View style={styles.insightTimelineLine} />
+                                      <View
+                                        style={styles.insightTimelineLine}
+                                      />
                                     ) : null}
                                   </View>
                                   <TouchableOpacity
@@ -1244,7 +1295,7 @@ export default function AnalyticsScreen({
                   decimalPlaces={moneyDecimals}
                   tone="income"
                   size="body"
-                    style={styles.summaryMetricValue}
+                  style={styles.summaryMetricValue}
                 />
               </View>
             </View>
@@ -1261,7 +1312,7 @@ export default function AnalyticsScreen({
                   signPrefix="-"
                   tone="expense"
                   size="body"
-                    style={styles.summaryMetricValue}
+                  style={styles.summaryMetricValue}
                 />
               </View>
             </View>
@@ -1278,7 +1329,7 @@ export default function AnalyticsScreen({
                   signPrefix={summary.net >= 0 ? '+' : ''}
                   tone={netTone}
                   size="body"
-                    style={styles.summaryMetricValue}
+                  style={styles.summaryMetricValue}
                 />
               </View>
             </View>

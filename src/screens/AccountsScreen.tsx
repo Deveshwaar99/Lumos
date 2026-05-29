@@ -13,13 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {
-  Button,
-  Icon,
-  Snackbar,
-  Switch,
-  Text,
-} from 'react-native-paper';
+import { Button, Icon, Snackbar, Switch, Text } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import EmptyState from '../components/EmptyState';
 import { GlowFAB } from '../components/ui';
@@ -152,23 +146,30 @@ export default function AccountsScreen({
   }, [loadAccounts, loadDeposits, loadRecurring, loadStocks, sync, activeTab]);
 
   useFocusEffect(
-    // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
     useCallback(() => {
       loadAccounts();
       loadDeposits();
       loadRecurring();
-      if (Platform.OS === 'android') {
-        loadStocks();
+      if (Platform.OS === 'android' && activeTab === 'stocks') {
+        void loadStocks();
       }
-    }, []),
+    }, [activeTab, loadAccounts, loadDeposits, loadRecurring, loadStocks]),
   );
+
+  useEffect(() => {
+    if (Platform.OS !== 'android' || activeTab !== 'stocks') return;
+    if (holdings.length === 0) {
+      void loadStocks();
+    }
+  }, [activeTab, holdings.length, loadStocks]);
 
   const userAccounts = useMemo(
     () => accounts.filter((a) => !fdAccountIds.has(a.id)),
     [accounts, fdAccountIds],
   );
   const accountNameById = useMemo(
-    () => Object.fromEntries(accounts.map((account) => [account.id, account.name])),
+    () =>
+      Object.fromEntries(accounts.map((account) => [account.id, account.name])),
     [accounts],
   );
 
@@ -275,8 +276,13 @@ export default function AccountsScreen({
   };
 
   const renderPortfolioCard = () => {
-    const { totalAssets, totalLiabilities, netBalance, gross, debtPctOfAssets } =
-      portfolioData;
+    const {
+      totalAssets,
+      totalLiabilities,
+      netBalance,
+      gross,
+      debtPctOfAssets,
+    } = portfolioData;
     const showBar = gross > 0;
 
     return (
@@ -290,7 +296,11 @@ export default function AccountsScreen({
           <View style={styles.portfolioMetricCol}>
             <View style={styles.summaryHeader}>
               <View style={styles.portfolioMetricIcon}>
-                <Icon source="chart-arc" size={14} color={colors.primaryLight} />
+                <Icon
+                  source="chart-arc"
+                  size={14}
+                  color={colors.primaryLight}
+                />
               </View>
               <Text style={styles.summaryLabel} numberOfLines={2}>
                 Net worth
@@ -315,7 +325,11 @@ export default function AccountsScreen({
           <View style={styles.portfolioMetricCol}>
             <View style={styles.summaryHeader}>
               <View style={styles.portfolioMetricIcon}>
-                <Icon source="arrow-up-circle" size={14} color={colors.income} />
+                <Icon
+                  source="arrow-up-circle"
+                  size={14}
+                  color={colors.income}
+                />
               </View>
               <Text style={styles.summaryLabel} numberOfLines={2}>
                 Assets
@@ -435,7 +449,12 @@ export default function AccountsScreen({
           ]
         : []),
     ],
-    [userAccounts.length, deposits.length, recurringTransactions.length, holdings.length],
+    [
+      userAccounts.length,
+      deposits.length,
+      recurringTransactions.length,
+      holdings.length,
+    ],
   );
 
   const renderSegmentedControl = () => (
@@ -550,14 +569,13 @@ export default function AccountsScreen({
                 accessibilityRole="button"
                 accessibilityLabel="Edit account"
               >
-                <Icon
-                  source="pencil"
-                  size={16}
-                  color={colors.primaryLight}
-                />
+                <Icon source="pencil" size={16} color={colors.primaryLight} />
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.accountIconAction, styles.accountIconActionDelete]}
+                style={[
+                  styles.accountIconAction,
+                  styles.accountIconActionDelete,
+                ]}
                 onPress={() => handleDelete(item)}
                 accessibilityRole="button"
                 accessibilityLabel="Delete account"
@@ -750,11 +768,11 @@ export default function AccountsScreen({
               ]}
             >
               <Text
-              style={[
-                styles.fdFilterCountText,
-                isActive && { color: accentColor },
-              ]}
-            >
+                style={[
+                  styles.fdFilterCountText,
+                  isActive && { color: accentColor },
+                ]}
+              >
                 {count}
               </Text>
             </View>
@@ -766,17 +784,21 @@ export default function AccountsScreen({
 
   const handleDeleteRecurring = useCallback(
     (rec: RecurringTransaction) => {
-      Alert.alert('Delete Recurring Transaction', 'Stop all future occurrences?', [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            await removeRecurring(rec.id);
-            setSnackbar('Recurring transaction deleted');
+      Alert.alert(
+        'Delete Recurring Transaction',
+        'Stop all future occurrences?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              await removeRecurring(rec.id);
+              setSnackbar('Recurring transaction deleted');
+            },
           },
-        },
-      ]);
+        ],
+      );
     },
     [removeRecurring],
   );
@@ -790,7 +812,9 @@ export default function AccountsScreen({
 
     return (
       <View style={styles.recurringCard}>
-        <View style={[styles.accountAccent, { backgroundColor: accentColor }]} />
+        <View
+          style={[styles.accountAccent, { backgroundColor: accentColor }]}
+        />
         <TouchableOpacity
           style={styles.recurringContent}
           onPress={() =>
@@ -801,7 +825,12 @@ export default function AccountsScreen({
           onLongPress={() => handleDeleteRecurring(item)}
           activeOpacity={0.7}
         >
-          <View style={[styles.recurringIcon, { backgroundColor: accentColor + '1A' }]}>
+          <View
+            style={[
+              styles.recurringIcon,
+              { backgroundColor: accentColor + '1A' },
+            ]}
+          >
             <Icon
               source={TYPE_ICONS[item.type] ?? 'autorenew'}
               size={22}
@@ -819,8 +848,15 @@ export default function AccountsScreen({
                 style={styles.recurringAmount}
                 numberOfLines={1}
               />
-              <View style={[styles.frequencyBadge, { backgroundColor: accentColor + '18' }]}>
-                <Text style={[styles.frequencyBadgeText, { color: accentColor }]}>
+              <View
+                style={[
+                  styles.frequencyBadge,
+                  { backgroundColor: accentColor + '18' },
+                ]}
+              >
+                <Text
+                  style={[styles.frequencyBadgeText, { color: accentColor }]}
+                >
                   {FREQUENCY_LABELS[item.frequency]}
                 </Text>
               </View>
@@ -829,8 +865,14 @@ export default function AccountsScreen({
               {item.note || accountNameById[item.accountId] || item.type}
             </Text>
             <View style={styles.recurringFooter}>
-              <Icon source="calendar-clock" size={13} color={colors.textTertiary} />
-              <Text style={styles.recurringFooterText}>Next: {nextDueLabel}</Text>
+              <Icon
+                source="calendar-clock"
+                size={13}
+                color={colors.textTertiary}
+              />
+              <Text style={styles.recurringFooterText}>
+                Next: {nextDueLabel}
+              </Text>
             </View>
           </View>
           <Switch
@@ -998,7 +1040,9 @@ export default function AccountsScreen({
       return;
     }
     if (result.status === 'no_senders') {
-      setSnackbar('Add at least one possible sender before running funding sync');
+      setSnackbar(
+        'Add at least one possible sender before running funding sync',
+      );
       return;
     }
     setSnackbar(
@@ -1070,7 +1114,9 @@ export default function AccountsScreen({
         </Text>
       </View>
 
-      <View style={styles.stocksHeroActionsWrap}>{renderStocksActionBar()}</View>
+      <View style={styles.stocksHeroActionsWrap}>
+        {renderStocksActionBar()}
+      </View>
     </LinearGradient>
   );
 
@@ -1121,14 +1167,25 @@ export default function AccountsScreen({
       <View style={styles.holdingsListWrap}>
         {permissionStatus === 'denied' && (
           <View style={styles.permissionBanner}>
-            <Icon source="alert-circle-outline" size={16} color={colors.warning} />
-            <Text style={styles.permissionText}>SMS access denied. Tap sync to request again.</Text>
+            <Icon
+              source="alert-circle-outline"
+              size={16}
+              color={colors.warning}
+            />
+            <Text style={styles.permissionText}>
+              SMS access denied. Tap sync to request again.
+            </Text>
           </View>
         )}
         {permissionStatus === 'never_ask_again' && (
-          <TouchableOpacity style={styles.permissionBanner} onPress={() => Linking.openSettings()}>
+          <TouchableOpacity
+            style={styles.permissionBanner}
+            onPress={() => Linking.openSettings()}
+          >
             <Icon source="cog" size={16} color={colors.warning} />
-            <Text style={styles.permissionText}>SMS permission blocked. Open Settings.</Text>
+            <Text style={styles.permissionText}>
+              SMS permission blocked. Open Settings.
+            </Text>
           </TouchableOpacity>
         )}
         {syncError ? (

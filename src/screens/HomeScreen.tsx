@@ -49,10 +49,9 @@ type HomeSectionListProps = SectionListProps<
   TransactionSection
 >;
 
-const AnimatedSectionList =
-  AnimatedReanimated.createAnimatedComponent(SectionList) as unknown as ComponentType<
-    HomeSectionListProps
-  >;
+const AnimatedSectionList = AnimatedReanimated.createAnimatedComponent(
+  SectionList,
+) as unknown as ComponentType<HomeSectionListProps>;
 
 interface TransactionSection {
   title: string;
@@ -148,14 +147,21 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
     };
   }, [searchQuery]);
 
-  const loadData = useCallback(async () => {
+  const staleRef = useRef(true);
+  const lastRangeKeyRef = useRef('');
+
+  const loadReferenceData = useCallback(async () => {
+    await Promise.all([
+      loadCategories(),
+      loadAccounts(),
+      loadBudgets(),
+      loadSettings(),
+    ]);
+  }, [loadCategories, loadAccounts, loadBudgets, loadSettings]);
+
+  const loadHomeTransactions = useCallback(async () => {
+    const rangeKey = `${range.start}|${range.end}`;
     try {
-      await Promise.all([
-        loadCategories(),
-        loadAccounts(),
-        loadBudgets(),
-        loadSettings(),
-      ]);
       const [txns, rangeSummary] = await Promise.all([
         transactionService.getAll(
           {
@@ -171,22 +177,36 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
       ]);
       setTransactions(txns);
       setSummary(rangeSummary);
+      staleRef.current = false;
+      lastRangeKeyRef.current = rangeKey;
     } catch {
       setSnackbar('Failed to load data');
     }
   }, [range.start, range.end]);
 
+  useEffect(() => {
+    void loadReferenceData();
+  }, [loadReferenceData]);
+
   useFocusEffect(
     useCallback(() => {
-      loadData();
-    }, [loadData]),
+      const rangeKey = `${range.start}|${range.end}`;
+      if (staleRef.current || lastRangeKeyRef.current !== rangeKey) {
+        void loadHomeTransactions();
+      }
+    }, [range.start, range.end, loadHomeTransactions]),
   );
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadData();
+    staleRef.current = true;
+    await Promise.all([loadReferenceData(), loadHomeTransactions()]);
     setRefreshing(false);
   };
+
+  const markHomeDataStale = useCallback(() => {
+    staleRef.current = true;
+  }, []);
 
   const handlePrev = () => setAnchor((a) => stepAnchor(a, period, -1));
   const handleNext = () => setAnchor((a) => stepAnchor(a, period, 1));
@@ -233,9 +253,10 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
 
   const handleItemPress = useCallback(
     (transactionId: string) => {
+      markHomeDataStale();
       navigation.navigate('TransactionDetail', { transactionId });
     },
-    [navigation],
+    [navigation, markHomeDataStale],
   );
 
   const renderSectionHeader = useCallback(
@@ -429,7 +450,10 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
         <GlowFAB
           icon="plus"
           bottomInset={insets.bottom + 16}
-          onPress={() => navigation.navigate('AddTransaction')}
+          onPress={() => {
+            markHomeDataStale();
+            navigation.navigate('AddTransaction');
+          }}
           accessibilityLabel="Add transaction"
         />
       )}
