@@ -9,3 +9,9 @@ export const STOCK_MIN_AUTO_SYNC_INTERVAL_MS = 12 * 60 * 60 * 1000;
 
 /** Abort SMS inbox read if the native module never invokes its callback (avoids stuck Sync spinner). */
 export const STOCK_SMS_READ_TIMEOUT_MS = 3 * 60 * 1000;
+
+/** Rows processed per ingest chunk (hash, dedupe, insert) before yielding to the UI thread. */
+export const SMS_INGEST_CHUNK_SIZE = 50;
+
+/** Concurrent reparse operations when rebuilding SMS logs from settings. */
+export const SMS_REPARSE_BATCH_SIZE = 5;

@@ -1,6 +1,9 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
-import { STOCK_FIRST_SYNC_WINDOW_DAYS } from '../constants/stockSync';
+import {
+  SMS_REPARSE_BATCH_SIZE,
+  STOCK_FIRST_SYNC_WINDOW_DAYS,
+} from '../constants/stockSync';
 import { getDatabase } from '../db/database';
 import type {
   BrokerFundingSmsLog,
@@ -16,6 +19,13 @@ import { computeSmsDedupeHash } from '../utils/smsDedupeHash';
 import { generateId } from '../utils/uuid';
 import { parseBrokerFundingSms } from './brokerFundingParser';
 import { parseCdsAlert } from './cdsSmsParser';
+import {
+  findExistingBodyHashes,
+  ingestChunks,
+  prepareSmsBatch,
+  runInParallelBatches,
+  yieldToUi,
+} from './smsIngestHelpers';
 import {
   readCdsAlerts,
   readSmsFromSenders,
@@ -77,22 +87,19 @@ const DEMO_BROKER_FUNDING_MESSAGES: Array<{
   {
     id: 'demo-broker-funding-1',
     sender: 'DF savings',
-    body:
-      'Your payment of Rs.60000.00 to SOFTLOGIC STOCKBROKERS PVT LIMITED from DF savings has been made successfully. (ref 176880018106329)',
+    body: 'Your payment of Rs.60000.00 to SOFTLOGIC STOCKBROKERS PVT LIMITED from DF savings has been made successfully. (ref 176880018106329)',
     daysAgo: 10,
   },
   {
     id: 'demo-broker-funding-2',
     sender: 'HNB Alerts',
-    body:
-      'Fund Transfer Debit (FTSTOCKS_SOFTLOGIC STOCKBROKERS PVT LIMITED_177872) of LKR 100,000.00 was performed on your account no 001XXXXXX655. Account Balance - Rs. 19,630.04',
+    body: 'Fund Transfer Debit (FTSTOCKS_SOFTLOGIC STOCKBROKERS PVT LIMITED_177872) of LKR 100,000.00 was performed on your account no 001XXXXXX655. Account Balance - Rs. 19,630.04',
     daysAgo: 6,
   },
   {
     id: 'demo-broker-funding-3',
     sender: 'DF savings',
-    body:
-      'Payment of Rs. 25,000.00 to Softlogic Stockbrokers was completed successfully from your DF savings account. Ref 778821',
+    body: 'Payment of Rs. 25,000.00 to Softlogic Stockbrokers was completed successfully from your DF savings account. Ref 778821',
     daysAgo: 3,
   },
 ];
@@ -147,7 +154,10 @@ function mapBrokerFundingRow(row: BrokerFundingLogRow): BrokerFundingSmsLog {
 }
 
 function sanitizeCode(code: string): string {
-  return code.trim().toUpperCase().replace(/[^A-Z]/g, '');
+  return code
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z]/g, '');
 }
 
 function parseMetaJsonArray(raw: string | null): string[] {
@@ -399,7 +409,9 @@ export const stockService = {
   },
 
   async setBrokerFundingSenderIds(senderIds: string[]): Promise<void> {
-    const normalized = [...new Set(senderIds.map((senderId) => senderId.trim()).filter(Boolean))];
+    const normalized = [
+      ...new Set(senderIds.map((senderId) => senderId.trim()).filter(Boolean)),
+    ];
     await this.setMeta('brokerFundingSenderIds', JSON.stringify(normalized));
     await resetBrokerFundingSyncCursor();
   },
@@ -409,7 +421,9 @@ export const stockService = {
   },
 
   async setBrokerFundingKeywords(keywords: string[]): Promise<void> {
-    const normalized = [...new Set(keywords.map((keyword) => keyword.trim()).filter(Boolean))];
+    const normalized = [
+      ...new Set(keywords.map((keyword) => keyword.trim()).filter(Boolean)),
+    ];
     await this.setMeta('brokerFundingKeywords', JSON.stringify(normalized));
     await resetBrokerFundingSyncCursor();
   },
@@ -438,7 +452,10 @@ export const stockService = {
     };
   },
 
-  async confirmBrokerFundingSms(id: string, amountCents?: number | null): Promise<void> {
+  async confirmBrokerFundingSms(
+    id: string,
+    amountCents?: number | null,
+  ): Promise<void> {
     const db = await getDatabase();
     const existing = await db.getFirstAsync<BrokerFundingLogRow>(
       'SELECT * FROM broker_funding_sms_log WHERE id = ?',
@@ -447,7 +464,8 @@ export const stockService = {
     if (!existing) return;
 
     const nextAmount =
-      amountCents ?? (existing.amount_cents === undefined ? null : existing.amount_cents);
+      amountCents ??
+      (existing.amount_cents === undefined ? null : existing.amount_cents);
     if (nextAmount == null || nextAmount <= 0) {
       throw new Error('Cannot confirm broker funding without a valid amount.');
     }
@@ -497,10 +515,12 @@ export const stockService = {
 
   async reparseAllBrokerFundingSms(): Promise<void> {
     const logs = await this.listBrokerFundingLogs();
-    for (const log of logs) {
-      if (log.parseStatus === 'ignored') continue;
-      await this.reparseBrokerFundingSms(log.id);
-    }
+    const ids = logs
+      .filter((log) => log.parseStatus !== 'ignored')
+      .map((log) => log.id);
+    await runInParallelBatches(ids, SMS_REPARSE_BATCH_SIZE, (id) =>
+      this.reparseBrokerFundingSms(id),
+    );
   },
 
   async clearTradeSmsLogs(): Promise<void> {
@@ -601,52 +621,51 @@ export const stockService = {
     let matched = 0;
     let unmatched = 0;
 
-    await withTransaction(async () => {
-      const db = await getDatabase();
-      for (const sms of smsRows) {
-        const bodyHash = await computeSmsDedupeHash({
-          body: sms.body,
-          sender: sms.sender,
-          receivedAt: sms.receivedAt,
-          providerSmsId: sms.providerSmsId,
-        });
-
-        const existing = await db.getFirstAsync<{ id: string }>(
-          'SELECT id FROM broker_funding_sms_log WHERE body_hash = ?',
-          [bodyHash],
-        );
-        if (existing) continue;
-
-        scanned += 1;
-        const parsedAt = new Date().toISOString();
-        const parsed = parseBrokerFundingSms(sms.body, { keywords });
-
-        await db.runAsync(
-          `INSERT INTO broker_funding_sms_log (
-             id, provider_sms_id, sender, body, body_hash, received_at, parsed_at, parse_status, parse_reason, confidence, amount_cents
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            generateId(),
-            sms.providerSmsId,
-            sms.sender,
-            sms.body,
-            bodyHash,
-            sms.receivedAt,
-            parsedAt,
-            parsed.matched ? 'matched' : 'unmatched',
-            parsed.reason,
-            parsed.confidence,
-            parsed.amountCents,
-          ],
+    for (const chunk of ingestChunks(smsRows)) {
+      await withTransaction(async () => {
+        const db = await getDatabase();
+        const prepared = await prepareSmsBatch(chunk);
+        const existingHashes = await findExistingBodyHashes(
+          db,
+          'broker_funding_sms_log',
+          prepared.map((row) => row.bodyHash),
         );
 
-        if (parsed.matched) {
-          matched += 1;
-        } else {
-          unmatched += 1;
+        for (const sms of prepared) {
+          if (existingHashes.has(sms.bodyHash)) continue;
+
+          scanned += 1;
+          const parsedAt = new Date().toISOString();
+          const parsed = parseBrokerFundingSms(sms.body, { keywords });
+
+          await db.runAsync(
+            `INSERT INTO broker_funding_sms_log (
+               id, provider_sms_id, sender, body, body_hash, received_at, parsed_at, parse_status, parse_reason, confidence, amount_cents
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              generateId(),
+              sms.providerSmsId,
+              sms.sender,
+              sms.body,
+              sms.bodyHash,
+              sms.receivedAt,
+              parsedAt,
+              parsed.matched ? 'matched' : 'unmatched',
+              parsed.reason,
+              parsed.confidence,
+              parsed.amountCents,
+            ],
+          );
+
+          if (parsed.matched) {
+            matched += 1;
+          } else {
+            unmatched += 1;
+          }
         }
-      }
-    });
+      });
+      await yieldToUi();
+    }
 
     await this.setMeta('brokerFundingLastSyncAt', String(now));
     return {
@@ -734,7 +753,9 @@ export const stockService = {
   async ignoreSms(smsId: string): Promise<void> {
     await withTransaction(async () => {
       const db = await getDatabase();
-      await db.runAsync('DELETE FROM stock_movements WHERE sms_id = ?', [smsId]);
+      await db.runAsync('DELETE FROM stock_movements WHERE sms_id = ?', [
+        smsId,
+      ]);
       await db.runAsync(
         `UPDATE stock_sms_log
          SET parse_status = 'ignored', parse_error = NULL, movement_count = 0, parsed_at = ?
@@ -753,7 +774,9 @@ export const stockService = {
       );
       if (!sms) return;
 
-      await db.runAsync('DELETE FROM stock_movements WHERE sms_id = ?', [smsId]);
+      await db.runAsync('DELETE FROM stock_movements WHERE sms_id = ?', [
+        smsId,
+      ]);
       const now = new Date().toISOString();
       const parsed = parseCdsAlert(sms.body);
       if (!parsed || parsed.movements.length === 0) {
@@ -795,9 +818,10 @@ export const stockService = {
 
   async reparseAll(): Promise<void> {
     const logs = await this.listSmsLogs();
-    for (const log of logs) {
-      await this.reparseSms(log.id);
-    }
+    const ids = logs.map((log) => log.id);
+    await runInParallelBatches(ids, SMS_REPARSE_BATCH_SIZE, (id) =>
+      this.reparseSms(id),
+    );
   },
 
   async ingestSms(): Promise<{
@@ -861,79 +885,78 @@ export const stockService = {
     let newMovements = 0;
     let failed = 0;
 
-    await withTransaction(async () => {
-      const db = await getDatabase();
-      for (const sms of smsRows) {
-        const bodyHash = await computeSmsDedupeHash({
-          body: sms.body,
-          sender: sms.sender,
-          receivedAt: sms.receivedAt,
-          providerSmsId: sms.providerSmsId,
-        });
-
-        const existing = await db.getFirstAsync<{ id: string }>(
-          'SELECT id FROM stock_sms_log WHERE body_hash = ?',
-          [bodyHash],
+    for (const chunk of ingestChunks(smsRows)) {
+      await withTransaction(async () => {
+        const db = await getDatabase();
+        const prepared = await prepareSmsBatch(chunk);
+        const existingHashes = await findExistingBodyHashes(
+          db,
+          'stock_sms_log',
+          prepared.map((row) => row.bodyHash),
         );
-        if (existing) continue;
 
-        const smsId = generateId();
-        const parsedAt = new Date().toISOString();
-        await db.runAsync(
-          `INSERT INTO stock_sms_log (
-             id, provider_sms_id, sender, body, body_hash, received_at, parsed_at, parse_status, parse_error, movement_count
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, 'success', NULL, 0)`,
-          [
-            smsId,
-            sms.providerSmsId,
-            sms.sender,
-            sms.body,
-            bodyHash,
-            sms.receivedAt,
-            parsedAt,
-          ],
-        );
-        newSms += 1;
+        for (const sms of prepared) {
+          if (existingHashes.has(sms.bodyHash)) continue;
 
-        const parsed = parseCdsAlert(sms.body);
-        if (!parsed || parsed.movements.length === 0) {
-          failed += 1;
+          const smsId = generateId();
+          const parsedAt = new Date().toISOString();
           await db.runAsync(
-            `UPDATE stock_sms_log
-             SET parse_status = 'failed', parse_error = ?, movement_count = 0, parsed_at = ?
-             WHERE id = ?`,
-            ['Could not parse CDS-Alerts format', parsedAt, smsId],
-          );
-          continue;
-        }
-
-        for (const movement of parsed.movements) {
-          await db.runAsync(
-            `INSERT INTO stock_movements (
-               id, sms_id, stock_code, quantity, direction, trade_date, source, note, created_at, updated_at
-             ) VALUES (?, ?, ?, ?, ?, ?, 'sms', NULL, ?, ?)`,
+            `INSERT INTO stock_sms_log (
+               id, provider_sms_id, sender, body, body_hash, received_at, parsed_at, parse_status, parse_error, movement_count
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, 'success', NULL, 0)`,
             [
-              generateId(),
               smsId,
-              movement.stockCode,
-              movement.quantity,
-              movement.direction,
-              parsed.tradeDate,
-              parsedAt,
+              sms.providerSmsId,
+              sms.sender,
+              sms.body,
+              sms.bodyHash,
+              sms.receivedAt,
               parsedAt,
             ],
           );
-        }
+          newSms += 1;
 
-        newMovements += parsed.movements.length;
-        await db.runAsync(
-          `UPDATE stock_sms_log
-           SET movement_count = ?, parse_status = 'success', parse_error = NULL, parsed_at = ?
-           WHERE id = ?`,
-          [parsed.movements.length, parsedAt, smsId],
-        );
-      }
-    });
+          const parsed = parseCdsAlert(sms.body);
+          if (!parsed || parsed.movements.length === 0) {
+            failed += 1;
+            await db.runAsync(
+              `UPDATE stock_sms_log
+               SET parse_status = 'failed', parse_error = ?, movement_count = 0, parsed_at = ?
+               WHERE id = ?`,
+              ['Could not parse CDS-Alerts format', parsedAt, smsId],
+            );
+            continue;
+          }
+
+          for (const movement of parsed.movements) {
+            await db.runAsync(
+              `INSERT INTO stock_movements (
+                 id, sms_id, stock_code, quantity, direction, trade_date, source, note, created_at, updated_at
+               ) VALUES (?, ?, ?, ?, ?, ?, 'sms', NULL, ?, ?)`,
+              [
+                generateId(),
+                smsId,
+                movement.stockCode,
+                movement.quantity,
+                movement.direction,
+                parsed.tradeDate,
+                parsedAt,
+                parsedAt,
+              ],
+            );
+          }
+
+          newMovements += parsed.movements.length;
+          await db.runAsync(
+            `UPDATE stock_sms_log
+             SET movement_count = ?, parse_status = 'success', parse_error = NULL, parsed_at = ?
+             WHERE id = ?`,
+            [parsed.movements.length, parsedAt, smsId],
+          );
+        }
+      });
+      await yieldToUi();
+    }
 
     await this.setMeta('lastSyncAt', String(now));
     return {
@@ -945,4 +968,3 @@ export const stockService = {
     };
   },
 };
-

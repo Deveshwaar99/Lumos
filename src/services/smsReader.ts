@@ -2,6 +2,9 @@ import Constants from 'expo-constants';
 import { PermissionsAndroid, Platform } from 'react-native';
 import { STOCK_SMS_READ_TIMEOUT_MS } from '../constants/stockSync';
 import type { SmsPermissionStatus } from '../models/types';
+import { mergeSmsMessages, type RawSms } from './smsMerge';
+
+export type { RawSms } from './smsMerge';
 
 interface RawSmsBridgeRow {
   _id?: string | number;
@@ -10,18 +13,14 @@ interface RawSmsBridgeRow {
   date?: string | number;
 }
 
-export interface RawSms {
-  providerSmsId: string | null;
-  sender: string;
-  body: string;
-  receivedAt: number;
-}
-
 const SmsAndroid =
   Platform.OS === 'android' ? require('react-native-get-sms-android') : null;
 
 export function normalizeSender(value: string): string {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
 }
 
 export function senderMatchesConfiguredIds(
@@ -141,6 +140,8 @@ export async function readCdsAlerts(opts: {
   });
 }
 
+export { mergeSmsMessages, smsDedupeKey } from './smsMerge';
+
 export async function readSmsFromSenders(opts: {
   senderIds: string[];
   minDateMs: number;
@@ -152,9 +153,11 @@ export async function readSmsFromSenders(opts: {
   ];
   if (senderIds.length === 0) return [];
 
-  const messages = await readSms({ minDateMs: opts.minDateMs });
-
-  return messages.filter((message) =>
-    senderMatchesConfiguredIds(message.sender, senderIds),
+  const perSender = await Promise.all(
+    senderIds.map((senderId) =>
+      readSms({ senderId, minDateMs: opts.minDateMs }),
+    ),
   );
+
+  return mergeSmsMessages(perSender.flat());
 }
