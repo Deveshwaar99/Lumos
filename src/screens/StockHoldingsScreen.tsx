@@ -41,7 +41,9 @@ export default function StockHoldingsScreen({
   const renderItem = ({ item }: { item: (typeof holdings)[number] }) => (
     <TouchableOpacity
       style={styles.stockCard}
-      onPress={() => navigation.navigate('StockDetail', { stockCode: item.stockCode })}
+      onPress={() =>
+        navigation.navigate('StockDetail', { stockCode: item.stockCode })
+      }
       activeOpacity={0.75}
     >
       <View style={styles.stockCodeWrap}>
@@ -50,11 +52,14 @@ export default function StockHoldingsScreen({
           Last trade: {item.lastTradeDate}
         </Text>
         <Text style={styles.stockFlowText}>
-          Buy {item.totalBuy.toLocaleString()} • Sell {item.totalSell.toLocaleString()}
+          Buy {item.totalBuy.toLocaleString()} • Sell{' '}
+          {item.totalSell.toLocaleString()}
         </Text>
       </View>
       <View style={styles.stockRight}>
-        <Text style={styles.stockQtyText}>{item.netQuantity.toLocaleString()}</Text>
+        <Text style={styles.stockQtyText}>
+          {item.netQuantity.toLocaleString()}
+        </Text>
         <Text style={styles.stockMetaText}>{item.movementCount} movements</Text>
       </View>
     </TouchableOpacity>

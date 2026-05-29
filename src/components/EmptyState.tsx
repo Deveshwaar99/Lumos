@@ -11,7 +11,13 @@ interface EmptyStateProps {
   actionLabel?: string;
 }
 
-function EmptyState({ icon, title, subtitle, onAction, actionLabel }: EmptyStateProps) {
+function EmptyState({
+  icon,
+  title,
+  subtitle,
+  onAction,
+  actionLabel,
+}: EmptyStateProps) {
   return (
     <View style={styles.container}>
       <Icon source={icon as any} size={64} color={colors.textSecondary} />

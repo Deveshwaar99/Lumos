@@ -26,7 +26,11 @@ const MONTH_MAP: Record<string, number> = {
   DEC: 12,
 };
 
-function normalizeDate(day: string, month: string, year: string): string | null {
+function normalizeDate(
+  day: string,
+  month: string,
+  year: string,
+): string | null {
   const monthNum = MONTH_MAP[month.toUpperCase()];
   if (!monthNum) return null;
 
@@ -42,7 +46,10 @@ function normalizeDate(day: string, month: string, year: string): string | null 
   return `${String(yyyy).padStart(4, '0')}-${String(monthNum).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
 }
 
-function parseSection(section: string, direction: StockMovementDirection): StockMovementDraft[] {
+function parseSection(
+  section: string,
+  direction: StockMovementDirection,
+): StockMovementDraft[] {
   const cleaned = section.replace(/\s+/g, ' ').trim();
   if (!cleaned || cleaned === '0') return [];
 
@@ -80,7 +87,10 @@ export function parseCdsAlert(body: string): ParsedCdsSms | null {
   const salesIdx = text.indexOf('SALES');
   if (purchasesIdx < 0 || salesIdx <= purchasesIdx) return null;
 
-  const purchasesSection = text.slice(purchasesIdx + 'PURCHASES'.length, salesIdx);
+  const purchasesSection = text.slice(
+    purchasesIdx + 'PURCHASES'.length,
+    salesIdx,
+  );
   const salesSection = text.slice(salesIdx + 'SALES'.length);
 
   const movements = [
@@ -90,4 +100,3 @@ export function parseCdsAlert(body: string): ParsedCdsSms | null {
 
   return { tradeDate, movements };
 }
-

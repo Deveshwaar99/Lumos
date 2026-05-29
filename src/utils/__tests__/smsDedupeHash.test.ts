@@ -18,7 +18,10 @@ const body =
     sender: 'GENIE',
     receivedAt: new Date('2025-12-02T18:00:00').getTime(),
   });
-  console.assert(dayOne !== dayTwo, 'same body on different days should differ');
+  console.assert(
+    dayOne !== dayTwo,
+    'same body on different days should differ',
+  );
 
   const byProviderA = await computeSmsDedupeHash({
     body,

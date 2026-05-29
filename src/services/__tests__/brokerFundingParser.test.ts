@@ -22,7 +22,10 @@ const otpMessage =
 const airtelParsed = parseBrokerFundingSms(airtelPayment, {
   keywords: BROKER_KEYWORDS,
 });
-console.assert(!airtelParsed.matched, 'Airtel bill pay should not match broker funding');
+console.assert(
+  !airtelParsed.matched,
+  'Airtel bill pay should not match broker funding',
+);
 
 const softlogicParsed = parseBrokerFundingSms(softlogicPayment, {
   keywords: BROKER_KEYWORDS,
@@ -67,7 +70,9 @@ console.assert(
   'Trading account amount should parse to 300000 cents',
 );
 
-const otpParsed = parseBrokerFundingSms(otpMessage, { keywords: BROKER_KEYWORDS });
+const otpParsed = parseBrokerFundingSms(otpMessage, {
+  keywords: BROKER_KEYWORDS,
+});
 console.assert(!otpParsed.matched, 'OTP message should not match');
 
 console.log('brokerFundingParser tests passed');

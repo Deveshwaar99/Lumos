@@ -24,7 +24,11 @@ import {
   calculateNetInterest,
   calculateTDS,
 } from '../utils/fdCalculator';
-import { clampMoneyDecimalPlaces, dollarsToCents, formatMoney } from '../utils/money';
+import {
+  clampMoneyDecimalPlaces,
+  dollarsToCents,
+  formatMoney,
+} from '../utils/money';
 
 type CalendarTarget = 'none' | 'start' | 'maturity';
 

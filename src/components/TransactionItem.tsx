@@ -68,9 +68,8 @@ function TransactionItemComponent({
   const titleText = isTransfer ? 'Transfer' : (category?.name ?? 'Unknown');
 
   const { accountId: fromAid, account2Id: toAid } = transaction;
-  const fromAcc =
-    isTransfer && fromAid ? accountMap[fromAid] ?? null : null;
-  const toAcc = isTransfer && toAid ? accountMap[toAid] ?? null : null;
+  const fromAcc = isTransfer && fromAid ? (accountMap[fromAid] ?? null) : null;
+  const toAcc = isTransfer && toAid ? (accountMap[toAid] ?? null) : null;
 
   const amountStr = formatMoney(
     transaction.totalAmountCents,
@@ -96,7 +95,12 @@ function TransactionItemComponent({
         <Icon source={iconSource as any} size={18} color={iconColor} />
       </View>
       <View style={styles.details}>
-        <Text variant="bodyLarge" numberOfLines={1} ellipsizeMode="tail" style={styles.title}>
+        <Text
+          variant="bodyLarge"
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={styles.title}
+        >
           {titleText}
         </Text>
         {isTransfer ? (
@@ -129,7 +133,12 @@ function TransactionItemComponent({
           </View>
         )}
         {transaction.note ? (
-          <Text variant="bodySmall" style={styles.note} numberOfLines={1} ellipsizeMode="tail">
+          <Text
+            variant="bodySmall"
+            style={styles.note}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {transaction.note}
           </Text>
         ) : null}

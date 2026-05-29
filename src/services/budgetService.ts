@@ -43,7 +43,14 @@ export const budgetService = {
     const id = generateId();
     await db.runAsync(
       'INSERT INTO budgets (id, month, category_id, limit_cents, alert_threshold_pct, enabled) VALUES (?, ?, ?, ?, ?, ?)',
-      [id, data.month, data.categoryId, data.limitCents, data.alertThresholdPct, data.enabled ? 1 : 0],
+      [
+        id,
+        data.month,
+        data.categoryId,
+        data.limitCents,
+        data.alertThresholdPct,
+        data.enabled ? 1 : 0,
+      ],
     );
     return { id, ...data };
   },

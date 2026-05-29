@@ -28,8 +28,7 @@ export const useRecurringStore = create<RecurringState>((set, get) => ({
   loadRecurring: async () => {
     set({ loading: true });
     try {
-      const recurringTransactions =
-        await recurringTransactionService.getAll();
+      const recurringTransactions = await recurringTransactionService.getAll();
       set({ recurringTransactions, loading: false });
     } catch {
       set({ loading: false });
@@ -59,9 +58,7 @@ export const useRecurringStore = create<RecurringState>((set, get) => ({
   removeRecurring: async (id) => {
     await recurringTransactionService.delete(id);
     set((s) => ({
-      recurringTransactions: s.recurringTransactions.filter(
-        (r) => r.id !== id,
-      ),
+      recurringTransactions: s.recurringTransactions.filter((r) => r.id !== id),
     }));
   },
 
@@ -76,8 +73,7 @@ export const useRecurringStore = create<RecurringState>((set, get) => ({
 
   processDue: async () => {
     try {
-      const count =
-        await recurringTransactionService.processDueTransactions();
+      const count = await recurringTransactionService.processDueTransactions();
       if (count > 0) {
         await get().loadRecurring();
       }

@@ -142,7 +142,12 @@ export default function AccountPicker({
                   placeholderTextColor={colors.textTertiary}
                   autoFocus
                   dense
-                  left={<TextInput.Icon icon="magnify" color={colors.textSecondary} />}
+                  left={
+                    <TextInput.Icon
+                      icon="magnify"
+                      color={colors.textSecondary}
+                    />
+                  }
                 />
                 <TouchableOpacity
                   onPress={closeSearch}
@@ -185,10 +190,17 @@ export default function AccountPicker({
                     <View key={type} style={styles.section}>
                       <View style={styles.sectionHeader}>
                         <View
-                          style={[styles.sectionAccent, { backgroundColor: accent }]}
+                          style={[
+                            styles.sectionAccent,
+                            { backgroundColor: accent },
+                          ]}
                         />
-                        <Text style={styles.sectionTitle}>{typeLabel(type)}</Text>
-                        <Text style={styles.sectionCount}>{sectionAccounts.length}</Text>
+                        <Text style={styles.sectionTitle}>
+                          {typeLabel(type)}
+                        </Text>
+                        <Text style={styles.sectionCount}>
+                          {sectionAccounts.length}
+                        </Text>
                       </View>
                       <View style={styles.pillGrid}>
                         {sectionAccounts.map((item) => {
@@ -216,10 +228,7 @@ export default function AccountPicker({
                                 size={16}
                                 color={accent}
                               />
-                              <Text
-                                style={styles.pillLabel}
-                                numberOfLines={1}
-                              >
+                              <Text style={styles.pillLabel} numberOfLines={1}>
                                 {item.name}
                               </Text>
                               {selected ? (

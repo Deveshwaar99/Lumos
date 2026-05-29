@@ -252,32 +252,27 @@ export async function seedDemoStockData(db: SQLiteDatabase): Promise<void> {
   const demos: { id: string; body: string; daysAgo: number }[] = [
     {
       id: 'demo-stock-sms-1',
-      body:
-        'ARR XXXXXXX27 LI 0 24-APR-26 PURCHASES JKH 3000 NTB 235 SALES JKH 200 NTB 10',
+      body: 'ARR XXXXXXX27 LI 0 24-APR-26 PURCHASES JKH 3000 NTB 235 SALES JKH 200 NTB 10',
       daysAgo: 14,
     },
     {
       id: 'demo-stock-sms-2',
-      body:
-        'ARR XXXXXXX27 LI 0 27-APR-26 PURCHASES NTB 20 ALUM 2250 SALES ALUM 150 NTB 5',
+      body: 'ARR XXXXXXX27 LI 0 27-APR-26 PURCHASES NTB 20 ALUM 2250 SALES ALUM 150 NTB 5',
       daysAgo: 11,
     },
     {
       id: 'demo-stock-sms-3',
-      body:
-        'ARR XXXXXXX27 LI 0 30-APR-26 PURCHASES COCR 4 JKH 25 VONE 6 SALES JKH 10 VONE 2',
+      body: 'ARR XXXXXXX27 LI 0 30-APR-26 PURCHASES COCR 4 JKH 25 VONE 6 SALES JKH 10 VONE 2',
       daysAgo: 8,
     },
     {
       id: 'demo-stock-sms-4',
-      body:
-        'ARR XXXXXXX27 LI 0 02-MAY-26 PURCHASES LIOC 500 CAR 120 SALES LIOC 80 CAR 40',
+      body: 'ARR XXXXXXX27 LI 0 02-MAY-26 PURCHASES LIOC 500 CAR 120 SALES LIOC 80 CAR 40',
       daysAgo: 5,
     },
     {
       id: 'demo-stock-sms-5',
-      body:
-        'ARR XXXXXXX27 LI 0 03-MAY-26 PURCHASES JKH 50 SALES JKH 50',
+      body: 'ARR XXXXXXX27 LI 0 03-MAY-26 PURCHASES JKH 50 SALES JKH 50',
       daysAgo: 2,
     },
   ];
@@ -302,14 +297,7 @@ export async function seedDemoStockData(db: SQLiteDatabase): Promise<void> {
         id, provider_sms_id, sender, body, body_hash, received_at,
         parsed_at, parse_status, parse_error, movement_count
       ) VALUES (?, NULL, ?, ?, ?, ?, ?, 'success', NULL, 0)`,
-      [
-        demo.id,
-        DEMO_CDS_SENDER,
-        demo.body,
-        bodyHash,
-        receivedAt,
-        parsedAt,
-      ],
+      [demo.id, DEMO_CDS_SENDER, demo.body, bodyHash, receivedAt, parsedAt],
     );
 
     const parsed = parseCdsAlert(demo.body);

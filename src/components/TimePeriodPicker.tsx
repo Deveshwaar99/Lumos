@@ -65,12 +65,19 @@ export default function TimePeriodPicker({
                     </View>
                     <Text
                       variant="bodyLarge"
-                      style={[styles.itemText, isSelected && styles.itemTextSelected]}
+                      style={[
+                        styles.itemText,
+                        isSelected && styles.itemTextSelected,
+                      ]}
                     >
                       {item.label}
                     </Text>
                     {isSelected && (
-                      <Icon source="check-circle" size={20} color={colors.onPrimary} />
+                      <Icon
+                        source="check-circle"
+                        size={20}
+                        color={colors.onPrimary}
+                      />
                     )}
                   </TouchableOpacity>
                 </React.Fragment>

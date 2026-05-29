@@ -22,8 +22,11 @@ export default function BudgetFormScreen({
   navigation,
   route,
 }: RootStackScreenProps<'BudgetForm'>) {
-  const { budgetId, month: routeMonth, categoryId: routeCategoryId } =
-    route.params ?? {};
+  const {
+    budgetId,
+    month: routeMonth,
+    categoryId: routeCategoryId,
+  } = route.params ?? {};
   const budgets = useBudgetStore((state) => state.budgets);
   const addBudget = useBudgetStore((state) => state.addBudget);
   const updateBudget = useBudgetStore((state) => state.updateBudget);

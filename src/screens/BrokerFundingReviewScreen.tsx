@@ -66,7 +66,8 @@ export default function BrokerFundingReviewScreen({
   };
 
   const reviewCount = useMemo(
-    () => brokerFundingLogs.filter((log) => log.parseStatus === 'unmatched').length,
+    () =>
+      brokerFundingLogs.filter((log) => log.parseStatus === 'unmatched').length,
     [brokerFundingLogs],
   );
 
@@ -101,7 +102,9 @@ export default function BrokerFundingReviewScreen({
       <View style={styles.card}>
         <TouchableOpacity
           style={styles.cardHeader}
-          onPress={() => setExpandedId((prev) => (prev === item.id ? null : item.id))}
+          onPress={() =>
+            setExpandedId((prev) => (prev === item.id ? null : item.id))
+          }
         >
           <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
           <View style={styles.headerText}>

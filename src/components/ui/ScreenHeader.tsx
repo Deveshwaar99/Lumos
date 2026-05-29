@@ -37,8 +37,7 @@ export function ScreenHeader({
       Extrapolation.CLAMP,
     );
     return {
-      backgroundColor:
-        tint < 0.5 ? HEADER_SURFACE : HEADER_SURFACE_SCROLLED,
+      backgroundColor: tint < 0.5 ? HEADER_SURFACE : HEADER_SURFACE_SCROLLED,
     };
   });
 

@@ -22,14 +22,21 @@ type TimelineNodeProps = {
   children: React.ReactNode;
 };
 
-function TimelineNode({ dotColor, label, isLast, children }: TimelineNodeProps) {
+function TimelineNode({
+  dotColor,
+  label,
+  isLast,
+  children,
+}: TimelineNodeProps) {
   return (
     <View style={styles.timelineRow}>
       <View style={styles.timelineTrack}>
         <View style={[styles.timelineDot, { backgroundColor: dotColor }]} />
         {!isLast && <View style={styles.timelineLine} />}
       </View>
-      <View style={[styles.timelineContent, isLast && styles.timelineContentLast]}>
+      <View
+        style={[styles.timelineContent, isLast && styles.timelineContentLast]}
+      >
         <Text style={styles.nodeLabel}>{label}</Text>
         {children}
       </View>
@@ -72,7 +79,12 @@ export default function TransactionDetailScreen({
 
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <View
+        style={[
+          styles.container,
+          { justifyContent: 'center', alignItems: 'center' },
+        ]}
+      >
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -133,23 +145,26 @@ export default function TransactionDetailScreen({
       : colors.expense;
 
   const { accountId: fromAid, account2Id: toAid } = transaction;
-  const fromAcc =
-    isTransfer && fromAid ? accountMap[fromAid] ?? null : null;
-  const toAcc = isTransfer && toAid ? accountMap[toAid] ?? null : null;
+  const fromAcc = isTransfer && fromAid ? (accountMap[fromAid] ?? null) : null;
+  const toAcc = isTransfer && toAid ? (accountMap[toAid] ?? null) : null;
 
   const hasNote = !!transaction.note;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* ── Hero ── */}
-      <LinearGradient
-        colors={[...colors.cardGradient]}
-        style={styles.hero}
-      >
-        <View style={[styles.heroIconCircle, { backgroundColor: amountColor + '25' }]}>
+      <LinearGradient colors={[...colors.cardGradient]} style={styles.hero}>
+        <View
+          style={[
+            styles.heroIconCircle,
+            { backgroundColor: amountColor + '25' },
+          ]}
+        >
           <Icon source={heroIcon} size={30} color={amountColor} />
         </View>
-        <View style={[styles.heroBadge, { backgroundColor: amountColor + '20' }]}>
+        <View
+          style={[styles.heroBadge, { backgroundColor: amountColor + '20' }]}
+        >
           <Text style={[styles.heroBadgeText, { color: amountColor }]}>
             {heroLabel}
             {isSplit ? ' \u00B7 Split' : ''}
@@ -167,22 +182,33 @@ export default function TransactionDetailScreen({
 
       {/* ── Timeline ── */}
       <View style={styles.timeline}>
-
         {/* Node: Date */}
         <TimelineNode
           dotColor={colors.textTertiary}
           label="Date"
-          isLast={isTransfer ? !fromAcc && !toAcc && !hasNote : !category && transaction.splits.length === 0 && !hasNote}
+          isLast={
+            isTransfer
+              ? !fromAcc && !toAcc && !hasNote
+              : !category && transaction.splits.length === 0 && !hasNote
+          }
         >
           <View style={styles.nodeCard}>
-            <Icon source="calendar-month-outline" size={18} color={colors.textSecondary} />
+            <Icon
+              source="calendar-month-outline"
+              size={18}
+              color={colors.textSecondary}
+            />
             <Text variant="bodyLarge" style={styles.nodeValueText}>
               {dateLabel}
             </Text>
             {timeLabel && (
               <>
                 <View style={styles.nodeDotSep} />
-                <Icon source="clock-outline" size={16} color={colors.textSecondary} />
+                <Icon
+                  source="clock-outline"
+                  size={16}
+                  color={colors.textSecondary}
+                />
                 <Text variant="bodyMedium" style={styles.nodeValueText}>
                   {timeLabel}
                 </Text>
@@ -197,16 +223,33 @@ export default function TransactionDetailScreen({
             <TimelineNode dotColor={colors.expense} label="From" isLast={false}>
               <View style={styles.nodeCard}>
                 {fromAcc && (
-                  <View style={[styles.iconBubble, { backgroundColor: colors.expense + '20' }]}>
-                    <Icon source={fromAcc.icon as any} size={18} color={colors.expense} />
+                  <View
+                    style={[
+                      styles.iconBubble,
+                      { backgroundColor: colors.expense + '20' },
+                    ]}
+                  >
+                    <Icon
+                      source={fromAcc.icon as any}
+                      size={18}
+                      color={colors.expense}
+                    />
                   </View>
                 )}
                 <View style={styles.nodeCardBody}>
-                  <Text variant="bodyLarge" style={styles.nodeValueText} numberOfLines={1}>
+                  <Text
+                    variant="bodyLarge"
+                    style={styles.nodeValueText}
+                    numberOfLines={1}
+                  >
                     {fromAcc?.name ?? 'Unknown'}
                   </Text>
                   <Text variant="bodySmall" style={styles.nodeSubText}>
-                    {formatMoney(transaction.totalAmountCents, settings.currencySymbol, moneyDecimals)}
+                    {formatMoney(
+                      transaction.totalAmountCents,
+                      settings.currencySymbol,
+                      moneyDecimals,
+                    )}
                   </Text>
                 </View>
               </View>
@@ -215,16 +258,33 @@ export default function TransactionDetailScreen({
             <TimelineNode dotColor={colors.income} label="To" isLast={!hasNote}>
               <View style={styles.nodeCard}>
                 {toAcc && (
-                  <View style={[styles.iconBubble, { backgroundColor: colors.income + '20' }]}>
-                    <Icon source={toAcc.icon as any} size={18} color={colors.income} />
+                  <View
+                    style={[
+                      styles.iconBubble,
+                      { backgroundColor: colors.income + '20' },
+                    ]}
+                  >
+                    <Icon
+                      source={toAcc.icon as any}
+                      size={18}
+                      color={colors.income}
+                    />
                   </View>
                 )}
                 <View style={styles.nodeCardBody}>
-                  <Text variant="bodyLarge" style={styles.nodeValueText} numberOfLines={1}>
+                  <Text
+                    variant="bodyLarge"
+                    style={styles.nodeValueText}
+                    numberOfLines={1}
+                  >
                     {toAcc?.name ?? 'Unknown'}
                   </Text>
                   <Text variant="bodySmall" style={styles.nodeSubText}>
-                    {formatMoney(transaction.totalAmountCents, settings.currencySymbol, moneyDecimals)}
+                    {formatMoney(
+                      transaction.totalAmountCents,
+                      settings.currencySymbol,
+                      moneyDecimals,
+                    )}
                   </Text>
                 </View>
               </View>
@@ -240,11 +300,27 @@ export default function TransactionDetailScreen({
             >
               <View style={styles.nodeCard}>
                 {category && (
-                  <View style={[styles.iconBubble, { backgroundColor: (category.color ?? colors.primary) + '20' }]}>
-                    <Icon source={category.icon as any} size={18} color={category.color} />
+                  <View
+                    style={[
+                      styles.iconBubble,
+                      {
+                        backgroundColor:
+                          (category.color ?? colors.primary) + '20',
+                      },
+                    ]}
+                  >
+                    <Icon
+                      source={category.icon as any}
+                      size={18}
+                      color={category.color}
+                    />
                   </View>
                 )}
-                <Text variant="bodyLarge" style={styles.nodeValueText} numberOfLines={1}>
+                <Text
+                  variant="bodyLarge"
+                  style={styles.nodeValueText}
+                  numberOfLines={1}
+                >
                   {category?.name ?? 'Unknown'}
                 </Text>
               </View>
@@ -262,19 +338,35 @@ export default function TransactionDetailScreen({
                 return (
                   <View
                     key={split.id}
-                    style={[styles.nodeCard, idx > 0 && { marginTop: spacing.sm }]}
+                    style={[
+                      styles.nodeCard,
+                      idx > 0 && { marginTop: spacing.sm },
+                    ]}
                   >
                     {acc && (
-                      <View style={[styles.iconBubble, { backgroundColor: tint + '20' }]}>
+                      <View
+                        style={[
+                          styles.iconBubble,
+                          { backgroundColor: tint + '20' },
+                        ]}
+                      >
                         <Icon source={acc.icon as any} size={18} color={tint} />
                       </View>
                     )}
                     <View style={styles.nodeCardBody}>
-                      <Text variant="bodyLarge" style={styles.nodeValueText} numberOfLines={1}>
+                      <Text
+                        variant="bodyLarge"
+                        style={styles.nodeValueText}
+                        numberOfLines={1}
+                      >
                         {acc?.name ?? 'Unknown'}
                       </Text>
                       <Text variant="bodySmall" style={styles.nodeSubText}>
-                        {formatMoney(split.amountCents, settings.currencySymbol, moneyDecimals)}
+                        {formatMoney(
+                          split.amountCents,
+                          settings.currencySymbol,
+                          moneyDecimals,
+                        )}
                       </Text>
                     </View>
                   </View>
@@ -288,7 +380,11 @@ export default function TransactionDetailScreen({
         {hasNote && (
           <TimelineNode dotColor={amountColor} label="Note" isLast>
             <View style={styles.noteContainer}>
-              <Text variant="bodyLarge" style={styles.noteText} numberOfLines={6}>
+              <Text
+                variant="bodyLarge"
+                style={styles.noteText}
+                numberOfLines={6}
+              >
                 {transaction.note}
               </Text>
             </View>

@@ -96,7 +96,13 @@ export default function RootNavigator() {
       <Stack.Screen
         name="RecurringTransactionForm"
         component={RecurringTransactionFormScreen}
-        options={{ title: 'Recurring Transaction', headerShown: false, presentation: 'modal', animation: 'slide_from_bottom', animationDuration: 300 }}
+        options={{
+          title: 'Recurring Transaction',
+          headerShown: false,
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+          animationDuration: 300,
+        }}
       />
       <Stack.Screen
         name="StockDetail"

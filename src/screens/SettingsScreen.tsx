@@ -328,11 +328,7 @@ export default function SettingsScreen({
           <Text style={styles.sectionHeader}>Formatting</Text>
           <GroupedCard>
             <View style={styles.cardRow}>
-              <Icon
-                source="decimal"
-                size={20}
-                color={colors.textSecondary}
-              />
+              <Icon source="decimal" size={20} color={colors.textSecondary} />
               <Text variant="bodyLarge" style={styles.cardRowTitle}>
                 Decimal Places
               </Text>
@@ -372,7 +368,9 @@ export default function SettingsScreen({
               right={
                 <Switch
                   value={settings.showNetWorthCard}
-                  onValueChange={(value) => updateSetting('showNetWorthCard', value)}
+                  onValueChange={(value) =>
+                    updateSetting('showNetWorthCard', value)
+                  }
                   trackColor={{
                     false: colors.outline,
                     true: colors.primaryLight,

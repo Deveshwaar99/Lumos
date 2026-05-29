@@ -1,4 +1,10 @@
-import { StyleSheet, Text, type TextStyle, View, type ViewStyle } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  type TextStyle,
+  View,
+  type ViewStyle,
+} from 'react-native';
 import { colors, radius } from '../../theme';
 
 export type ChipProps = {
@@ -19,7 +25,11 @@ export function Chip({
 }: ChipProps) {
   return (
     <View style={[styles.wrap, { backgroundColor }, style]}>
-      <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.text, { color: textColor }, textStyle]}>
+      <Text
+        numberOfLines={1}
+        ellipsizeMode="tail"
+        style={[styles.text, { color: textColor }, textStyle]}
+      >
         {label}
       </Text>
     </View>

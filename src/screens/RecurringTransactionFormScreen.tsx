@@ -122,14 +122,11 @@ export default function RecurringTransactionFormScreen({
     }).start();
   }, [type]);
 
-  const openCalendar = useCallback(
-    (target: CalendarTarget) => {
-      Keyboard.dismiss();
-      setCalendarTarget(target);
-      setShowCalendar(true);
-    },
-    [],
-  );
+  const openCalendar = useCallback((target: CalendarTarget) => {
+    Keyboard.dismiss();
+    setCalendarTarget(target);
+    setShowCalendar(true);
+  }, []);
 
   const onSubmit = async () => {
     const totalDollars = parseFloat(expression) || 0;
@@ -186,7 +183,12 @@ export default function RecurringTransactionFormScreen({
 
   if (!loaded) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <View
+        style={[
+          styles.container,
+          { justifyContent: 'center', alignItems: 'center' },
+        ]}
+      >
         <Text style={{ color: colors.textSecondary }}>Loading...</Text>
       </View>
     );
@@ -271,9 +273,7 @@ export default function RecurringTransactionFormScreen({
               <Icon
                 source={iconMap[t]}
                 size={16}
-                color={
-                  type === t ? colors.onPrimary : colors.textSecondary
-                }
+                color={type === t ? colors.onPrimary : colors.textSecondary}
               />
               <Text
                 style={[
@@ -601,9 +601,7 @@ export default function RecurringTransactionFormScreen({
         <View style={StyleSheet.absoluteFill}>
           <InlineCalendar
             selectedDate={
-              calendarTarget === 'start'
-                ? startDate
-                : endDate ?? startDate
+              calendarTarget === 'start' ? startDate : (endDate ?? startDate)
             }
             onDateSelect={(d) => {
               if (calendarTarget === 'start') {
@@ -614,9 +612,7 @@ export default function RecurringTransactionFormScreen({
             }}
             onDone={() => setShowCalendar(false)}
             onClear={
-              calendarTarget === 'end'
-                ? () => setEndDate(null)
-                : undefined
+              calendarTarget === 'end' ? () => setEndDate(null) : undefined
             }
           />
         </View>
@@ -925,5 +921,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 1,
   },
-
 });

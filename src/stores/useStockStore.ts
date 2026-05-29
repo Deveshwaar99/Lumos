@@ -62,7 +62,10 @@ interface StockState {
     matched: number;
     unmatched: number;
   }>;
-  confirmBrokerFundingSms: (id: string, amountCents?: number | null) => Promise<void>;
+  confirmBrokerFundingSms: (
+    id: string,
+    amountCents?: number | null,
+  ) => Promise<void>;
   ignoreBrokerFundingSms: (id: string) => Promise<void>;
   reparseBrokerFundingSms: (id: string) => Promise<void>;
   reparseAllBrokerFundingSms: () => Promise<void>;
@@ -130,7 +133,10 @@ export const useStockStore = create<StockState>((set, get) => ({
         loading: false,
       });
     } catch (error: any) {
-      set({ loading: false, syncError: error?.message ?? 'Failed to load stocks' });
+      set({
+        loading: false,
+        syncError: error?.message ?? 'Failed to load stocks',
+      });
     }
   },
 
@@ -254,7 +260,9 @@ export const useStockStore = create<StockState>((set, get) => ({
     const refreshCode = patch.stockCode ?? before?.stockCode;
     const [holdings, movements] = await Promise.all([
       stockService.computeHoldings(),
-      refreshCode ? stockService.getMovementsByCode(refreshCode) : Promise.resolve([]),
+      refreshCode
+        ? stockService.getMovementsByCode(refreshCode)
+        : Promise.resolve([]),
     ]);
     set({ holdings, movements });
   },
@@ -264,7 +272,9 @@ export const useStockStore = create<StockState>((set, get) => ({
     await stockService.deleteMovement(id);
     const [holdings, movements] = await Promise.all([
       stockService.computeHoldings(),
-      before ? stockService.getMovementsByCode(before.stockCode) : Promise.resolve([]),
+      before
+        ? stockService.getMovementsByCode(before.stockCode)
+        : Promise.resolve([]),
     ]);
     set({ holdings, movements });
   },
@@ -302,12 +312,16 @@ export const useStockStore = create<StockState>((set, get) => ({
 
   setBrokerFundingSenderIds: async (senderIds: string[]) => {
     await stockService.setBrokerFundingSenderIds(senderIds);
-    set({ brokerFundingSenderIds: await stockService.getBrokerFundingSenderIds() });
+    set({
+      brokerFundingSenderIds: await stockService.getBrokerFundingSenderIds(),
+    });
   },
 
   setBrokerFundingKeywords: async (keywords: string[]) => {
     await stockService.setBrokerFundingKeywords(keywords);
-    set({ brokerFundingKeywords: await stockService.getBrokerFundingKeywords() });
+    set({
+      brokerFundingKeywords: await stockService.getBrokerFundingKeywords(),
+    });
   },
 
   importDemoBrokerFundingSms: async () => {
@@ -470,4 +484,3 @@ export const useStockStore = create<StockState>((set, get) => ({
     }
   },
 }));
-

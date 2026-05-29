@@ -29,7 +29,10 @@ function toDateString(date: Date): string {
   return format(date, 'yyyy-MM-dd');
 }
 
-function getPreviousRange(start: string, end: string): {
+function getPreviousRange(
+  start: string,
+  end: string,
+): {
   start: string;
   end: string;
 } {
@@ -144,7 +147,9 @@ function buildAnomalies(
     [],
   );
 
-  const categorySpike = categoryCandidates.sort((a, b) => b.deltaPct - a.deltaPct)[0];
+  const categorySpike = categoryCandidates.sort(
+    (a, b) => b.deltaPct - a.deltaPct,
+  )[0];
 
   if (categorySpike) {
     anomalies.push(categorySpike);
@@ -250,7 +255,9 @@ function buildInsights(
     });
   }
 
-  const highestExpenseDay = [...expenseFlow].sort((a, b) => b.expense - a.expense)[0];
+  const highestExpenseDay = [...expenseFlow].sort(
+    (a, b) => b.expense - a.expense,
+  )[0];
   if (highestExpenseDay && highestExpenseDay.expense > 0) {
     insights.push({
       id: 'highest-expense-day',
@@ -666,7 +673,10 @@ export const analyticsService = {
     }));
   },
 
-  async getComparisonForRange(start: string, end: string): Promise<RangeComparison> {
+  async getComparisonForRange(
+    start: string,
+    end: string,
+  ): Promise<RangeComparison> {
     const previousRange = getPreviousRange(start, end);
     const [currentSummary, previousSummary] = await Promise.all([
       this.getSummaryForRange(start, end),
@@ -679,7 +689,8 @@ export const analyticsService = {
       previousIncomeCents: previousSummary.totalIncome,
       previousExpenseCents: previousSummary.totalExpense,
       previousNetCents: previousSummary.net,
-      incomeDeltaCents: currentSummary.totalIncome - previousSummary.totalIncome,
+      incomeDeltaCents:
+        currentSummary.totalIncome - previousSummary.totalIncome,
       expenseDeltaCents:
         currentSummary.totalExpense - previousSummary.totalExpense,
       netDeltaCents: currentSummary.net - previousSummary.net,
@@ -742,18 +753,23 @@ export const analyticsService = {
     period: TimePeriod,
   ): Promise<InsightItem[]> {
     const previousRange = getPreviousRange(start, end);
-    const [summary, comparison, currentExpenseCategories, previousExpenseCategories, expenseFlow] =
-      await Promise.all([
-        this.getSummaryForRange(start, end),
-        this.getComparisonForRange(start, end),
-        this.getCategoryBreakdownForRange(start, end, 'expense'),
-        this.getCategoryBreakdownForRange(
-          previousRange.start,
-          previousRange.end,
-          'expense',
-        ),
-        this.getDailyExpenseFlowForRange(start, end),
-      ]);
+    const [
+      summary,
+      comparison,
+      currentExpenseCategories,
+      previousExpenseCategories,
+      expenseFlow,
+    ] = await Promise.all([
+      this.getSummaryForRange(start, end),
+      this.getComparisonForRange(start, end),
+      this.getCategoryBreakdownForRange(start, end, 'expense'),
+      this.getCategoryBreakdownForRange(
+        previousRange.start,
+        previousRange.end,
+        'expense',
+      ),
+      this.getDailyExpenseFlowForRange(start, end),
+    ]);
     const topMovers = buildTopMovers(
       currentExpenseCategories,
       previousExpenseCategories,

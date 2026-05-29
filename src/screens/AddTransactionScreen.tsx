@@ -1,5 +1,11 @@
 import { format, parseISO } from 'date-fns';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Alert,
   FlatList,
@@ -232,7 +238,7 @@ export default function AddTransactionScreen({
 
     const t = setTimeout(align, 60);
     return () => clearTimeout(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- scroll wheels only when modal opens (timeStr read from opening render)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- scroll wheels only when modal opens (timeStr read from opening render)
   }, [showTimePicker]);
 
   const splitSumError = useMemo(() => {
@@ -540,7 +546,9 @@ export default function AddTransactionScreen({
             <Icon
               source="arrow-bottom-left"
               size={16}
-              color={type === 'income' ? colors.onPrimary : colors.textSecondary}
+              color={
+                type === 'income' ? colors.onPrimary : colors.textSecondary
+              }
             />
             <Text
               style={[
@@ -658,7 +666,11 @@ export default function AddTransactionScreen({
                     {selectedAccount1?.name ?? 'Select account'}
                   </Text>
                 </View>
-                <Icon source="menu-down" size={22} color={colors.textTertiary} />
+                <Icon
+                  source="menu-down"
+                  size={22}
+                  color={colors.textTertiary}
+                />
               </TouchableOpacity>
 
               <View style={styles.selectorDivider} />
@@ -692,7 +704,11 @@ export default function AddTransactionScreen({
                     {selectedAccount2?.name ?? 'Select account'}
                   </Text>
                 </View>
-                <Icon source="menu-down" size={22} color={colors.textTertiary} />
+                <Icon
+                  source="menu-down"
+                  size={22}
+                  color={colors.textTertiary}
+                />
               </TouchableOpacity>
             </View>
           ) : (
@@ -1005,39 +1021,38 @@ export default function AddTransactionScreen({
           <View style={{ height: 40 }} />
         </ScrollView>
 
-      {/* ── Sheets (calculator / calendar / time) ── */}
-      {activePanel !== 'none' && (
-        <View style={styles.sheetSurface}>
-          {activePanel === 'calculator' && (
-            <View style={styles.calcPanel}>
-              <View style={styles.calcHeader}>
-                <Text style={styles.calcHeaderLabel}>Calculator</Text>
-                <Text style={[styles.calcAmountText, { color: amountColor }]}>
-                  {settings.currencySymbol} {expression || '0'}
-                </Text>
+        {/* ── Sheets (calculator / calendar / time) ── */}
+        {activePanel !== 'none' && (
+          <View style={styles.sheetSurface}>
+            {activePanel === 'calculator' && (
+              <View style={styles.calcPanel}>
+                <View style={styles.calcHeader}>
+                  <Text style={styles.calcHeaderLabel}>Calculator</Text>
+                  <Text style={[styles.calcAmountText, { color: amountColor }]}>
+                    {settings.currencySymbol} {expression || '0'}
+                  </Text>
+                </View>
+                <CalculatorPad
+                  onDigit={handleDigit}
+                  onOperator={handleOperator}
+                  onDecimal={handleDecimal}
+                  onBackspace={handleBackspace}
+                  onEquals={handleEquals}
+                  onClear={handleClear}
+                />
               </View>
-              <CalculatorPad
-                onDigit={handleDigit}
-                onOperator={handleOperator}
-                onDecimal={handleDecimal}
-                onBackspace={handleBackspace}
-                onEquals={handleEquals}
-                onClear={handleClear}
+            )}
+            {activePanel === 'calendar' && (
+              <InlineCalendar
+                variant="sheet"
+                selectedDate={dateStr}
+                onDateSelect={(d) => setDateStr(d)}
+                onDone={closePanel}
+                surfaceColor={FORM_SURFACE_ELEVATED}
               />
-            </View>
-          )}
-          {activePanel === 'calendar' && (
-            <InlineCalendar
-              variant="sheet"
-              selectedDate={dateStr}
-              onDateSelect={(d) => setDateStr(d)}
-              onDone={closePanel}
-              surfaceColor={FORM_SURFACE_ELEVATED}
-            />
-          )}
-        </View>
-      )}
-
+            )}
+          </View>
+        )}
       </KeyboardAvoidingView>
 
       <Modal
@@ -1756,5 +1771,4 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '800',
   },
-
 });

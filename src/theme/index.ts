@@ -1,7 +1,11 @@
 import { configureFonts, MD3DarkTheme } from 'react-native-paper';
 import { CATEGORY_COLORS, colors } from './colors';
 import { elevation } from './elevation';
-import { interFontAssets, interFontFamily, interPaperFontConfig } from './fonts';
+import {
+  interFontAssets,
+  interFontFamily,
+  interPaperFontConfig,
+} from './fonts';
 import { radius } from './radius';
 import { spacing } from './spacing';
 import { typography } from './typography';

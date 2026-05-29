@@ -193,7 +193,8 @@ export const fdService = {
 
     const existing = await transactionService.getByFdId(id);
     const hasPrincipalReturn = existing.some(
-      (t) => t.type === 'transfer' && t.note === 'FD matured - principal return',
+      (t) =>
+        t.type === 'transfer' && t.note === 'FD matured - principal return',
     );
     const hasMaturityIncome = existing.some(
       (t) => t.type === 'income' && t.note?.startsWith('FD interest -'),

@@ -1,4 +1,9 @@
-import { Canvas, Fill, LinearGradient as SkiaLinearGradient, vec } from '@shopify/react-native-skia';
+import {
+  Canvas,
+  Fill,
+  LinearGradient as SkiaLinearGradient,
+  vec,
+} from '@shopify/react-native-skia';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import { type LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
@@ -60,7 +65,10 @@ export function HeroBalanceCard({
         style={StyleSheet.absoluteFill}
       />
       {width > 0 ? (
-        <AnimatedView style={[styles.skia, skiaPulseStyle]} pointerEvents="none">
+        <AnimatedView
+          style={[styles.skia, skiaPulseStyle]}
+          pointerEvents="none"
+        >
           <Canvas style={StyleSheet.absoluteFill} pointerEvents="none">
             <Fill>
               <SkiaLinearGradient

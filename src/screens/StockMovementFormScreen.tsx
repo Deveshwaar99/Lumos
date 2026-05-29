@@ -26,9 +26,7 @@ export default function StockMovementFormScreen({
 
   const holdings = useStockStore((state) => state.holdings);
   const loadAll = useStockStore((state) => state.loadAll);
-  const addManualMovement = useStockStore(
-    (state) => state.addManualMovement,
-  );
+  const addManualMovement = useStockStore((state) => state.addManualMovement);
   const updateMovement = useStockStore((state) => state.updateMovement);
   const [stockCode, setStockCode] = useState(initialStockCode.toUpperCase());
   const [direction, setDirection] = useState<StockMovementDirection>('buy');
@@ -205,7 +203,9 @@ export default function StockMovementFormScreen({
           <TextInput
             label="Quantity"
             value={quantityText}
-            onChangeText={(text) => setQuantityText(text.replace(/[^0-9]/g, ''))}
+            onChangeText={(text) =>
+              setQuantityText(text.replace(/[^0-9]/g, ''))
+            }
             mode="outlined"
             keyboardType="number-pad"
             style={styles.input}
@@ -283,7 +283,11 @@ const styles = StyleSheet.create({
   },
   codeChipText: { color: colors.text, fontWeight: '600', fontSize: 12 },
   codeChipTextActive: { color: colors.primary },
-  directionRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
+  directionRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
   directionBtn: {
     flex: 1,
     flexDirection: 'row',
@@ -335,4 +339,3 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
 });
-

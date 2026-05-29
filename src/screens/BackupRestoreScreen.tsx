@@ -126,8 +126,8 @@ export default function BackupRestoreScreen({
             </Text>
             <Text variant="bodyMedium" style={styles.description}>
               Create a full backup of your data (categories, accounts,
-              transactions, splits, budgets, fixed deposits, recurring rules, and
-              settings) as a JSON file.
+              transactions, splits, budgets, fixed deposits, recurring rules,
+              and settings) as a JSON file.
             </Text>
             {settings.lastBackupAt && (
               <Text variant="bodySmall" style={styles.lastBackup}>

@@ -4,7 +4,11 @@ import { Text } from 'react-native-paper';
 import { colors, radius, spacing } from '../theme';
 import type { TimePeriod } from '../utils/dates';
 
-const PERIOD_OPTIONS: { key: TimePeriod; label: string; compactLabel?: string }[] = [
+const PERIOD_OPTIONS: {
+  key: TimePeriod;
+  label: string;
+  compactLabel?: string;
+}[] = [
   { key: 'day', label: 'Day' },
   { key: 'week', label: 'Week' },
   { key: 'month', label: 'Month' },
@@ -53,7 +57,7 @@ function TimePeriodTabs({
                 isSelected && styles.chipTextSelected,
               ]}
             >
-              {compact ? option.compactLabel ?? option.label : option.label}
+              {compact ? (option.compactLabel ?? option.label) : option.label}
             </Text>
           </TouchableOpacity>
         );

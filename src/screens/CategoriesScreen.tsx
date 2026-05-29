@@ -174,7 +174,7 @@ export default function CategoriesScreen({
   const renderItem = ({ item }: { item: Category }) => (
     <View style={styles.categoryCard}>
       <View style={[styles.categoryAccent, { backgroundColor: item.color }]} />
-        <TouchableOpacity
+      <TouchableOpacity
         activeOpacity={0.7}
         style={styles.categoryContent}
         onPress={() =>

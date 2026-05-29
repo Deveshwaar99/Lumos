@@ -24,7 +24,9 @@ export default function TransactionsScreen({
   const loading = useTransactionStore((state) => state.loading);
   const hasMore = useTransactionStore((state) => state.hasMore);
   const totalCount = useTransactionStore((state) => state.totalCount);
-  const loadTransactions = useTransactionStore((state) => state.loadTransactions);
+  const loadTransactions = useTransactionStore(
+    (state) => state.loadTransactions,
+  );
   const setFilter = useTransactionStore((state) => state.setFilter);
   const loadMore = useTransactionStore((state) => state.loadMore);
   const categories = useCategoryStore((state) => state.categories);

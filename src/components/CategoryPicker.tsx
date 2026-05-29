@@ -90,7 +90,12 @@ export default function CategoryPicker({
                   placeholderTextColor={colors.textTertiary}
                   autoFocus
                   dense
-                  left={<TextInput.Icon icon="magnify" color={colors.textSecondary} />}
+                  left={
+                    <TextInput.Icon
+                      icon="magnify"
+                      color={colors.textSecondary}
+                    />
+                  }
                 />
                 <TouchableOpacity
                   onPress={closeSearch}
@@ -119,9 +124,7 @@ export default function CategoryPicker({
 
             {filtered.length === 0 ? (
               <Text style={styles.emptyText}>
-                {categories.length === 0
-                  ? 'No categories yet'
-                  : 'No matches'}
+                {categories.length === 0 ? 'No categories yet' : 'No matches'}
               </Text>
             ) : (
               <ScrollView

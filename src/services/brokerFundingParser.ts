@@ -54,7 +54,11 @@ const BROKER_DESTINATION_PHRASES = [
   'brokerage account',
 ];
 
-const STRUCTURAL_PATTERNS: Array<{ regex: RegExp; reason: string; score: number }> = [
+const STRUCTURAL_PATTERNS: Array<{
+  regex: RegExp;
+  reason: string;
+  score: number;
+}> = [
   {
     regex:
       /\bpayment\s+of\s+(?:rs\.?|lkr)\s*[0-9,]+(?:\.[0-9]{1,2})?\s+to\s+.+?\s+from\s+.+?\s+has\s+been\s+made\s+successfully\b/i,
@@ -87,7 +91,11 @@ const BROKER_ENTITY_PATTERNS = [
 ];
 
 function normalizeKeywords(keywords: string[]): string[] {
-  return [...new Set(keywords.map((keyword) => keyword.trim().toLowerCase()).filter(Boolean))];
+  return [
+    ...new Set(
+      keywords.map((keyword) => keyword.trim().toLowerCase()).filter(Boolean),
+    ),
+  ];
 }
 
 function normalizeEntity(value: string): string {
@@ -143,7 +151,10 @@ function extractBrokerCandidates(text: string): string[] {
   return [...new Set(candidates.filter((candidate) => candidate.length >= 4))];
 }
 
-function computeAliasScore(candidate: string, aliases: string[]): {
+function computeAliasScore(
+  candidate: string,
+  aliases: string[],
+): {
   score: number;
   matchedAliases: string[];
 } {
@@ -172,7 +183,9 @@ function computeAliasScore(candidate: string, aliases: string[]): {
     const aliasTokens = tokenizeEntity(alias);
     if (aliasTokens.length === 0) continue;
 
-    const overlap = aliasTokens.filter((token) => candidateTokens.has(token)).length;
+    const overlap = aliasTokens.filter((token) =>
+      candidateTokens.has(token),
+    ).length;
     const ratio = overlap / aliasTokens.length;
     if (overlap >= 2 || ratio >= 0.6) {
       score = Math.max(score, Math.round(18 + ratio * 14));
@@ -183,7 +196,10 @@ function computeAliasScore(candidate: string, aliases: string[]): {
   return { score, matchedAliases: [...new Set(matchedAliases)] };
 }
 
-function computeBodyAliasScore(text: string, aliases: string[]): {
+function computeBodyAliasScore(
+  text: string,
+  aliases: string[],
+): {
   score: number;
   matchedAliases: string[];
 } {
@@ -233,7 +249,9 @@ export function parseBrokerFundingSms(
     break;
   }
 
-  const matchedTransferHint = TRANSFER_HINTS.find((hint) => lower.includes(hint));
+  const matchedTransferHint = TRANSFER_HINTS.find((hint) =>
+    lower.includes(hint),
+  );
   if (matchedTransferHint) {
     confidence += 15;
     reasons.push(`transfer hint: ${matchedTransferHint}`);
@@ -255,7 +273,9 @@ export function parseBrokerFundingSms(
     candidate,
     ...computeAliasScore(candidate, keywords),
   }));
-  const bestCandidateScore = candidateScores.sort((a, b) => b.score - a.score)[0];
+  const bestCandidateScore = candidateScores.sort(
+    (a, b) => b.score - a.score,
+  )[0];
   const keywordMatches = [
     ...new Set([
       ...directKeywordScore.matchedAliases,
@@ -283,7 +303,11 @@ export function parseBrokerFundingSms(
     reasons.push(`payee candidate: ${brokerCandidates[0]}`);
   }
 
-  if (/\b(?:account\s+no|from\s+[a-z0-9 ]+savings|from\s+[a-z0-9 ]+current)\b/i.test(text)) {
+  if (
+    /\b(?:account\s+no|from\s+[a-z0-9 ]+savings|from\s+[a-z0-9 ]+current)\b/i.test(
+      text,
+    )
+  ) {
     confidence += 5;
     reasons.push('account debit context');
   }

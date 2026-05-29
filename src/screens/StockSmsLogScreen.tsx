@@ -76,7 +76,9 @@ export default function StockSmsLogScreen({
       <View style={styles.card}>
         <TouchableOpacity
           style={styles.cardHeader}
-          onPress={() => setExpandedId((prev) => (prev === item.id ? null : item.id))}
+          onPress={() =>
+            setExpandedId((prev) => (prev === item.id ? null : item.id))
+          }
         >
           <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
           <View style={{ flex: 1 }}>
@@ -155,7 +157,11 @@ export default function StockSmsLogScreen({
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Icon source="message-alert-outline" size={44} color={colors.textTertiary} />
+            <Icon
+              source="message-alert-outline"
+              size={44}
+              color={colors.textTertiary}
+            />
             <Text style={styles.emptyText}>No SMS logs available yet.</Text>
           </View>
         }
@@ -215,4 +221,3 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', paddingTop: 64 },
   emptyText: { color: colors.textSecondary, marginTop: spacing.md },
 });
-

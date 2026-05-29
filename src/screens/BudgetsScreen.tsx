@@ -288,7 +288,10 @@ export default function BudgetsScreen({
                     tone="custom"
                     customColor={colors.textTertiary}
                     size="body"
-                    style={[styles.budgetMeta, { fontSize: 12, fontWeight: '500' }]}
+                    style={[
+                      styles.budgetMeta,
+                      { fontSize: 12, fontWeight: '500' },
+                    ]}
                   />
                   <Text style={styles.budgetMeta}> of </Text>
                   <AmountText
@@ -298,7 +301,10 @@ export default function BudgetsScreen({
                     tone="custom"
                     customColor={colors.textTertiary}
                     size="body"
-                    style={[styles.budgetMeta, { fontSize: 12, fontWeight: '500' }]}
+                    style={[
+                      styles.budgetMeta,
+                      { fontSize: 12, fontWeight: '500' },
+                    ]}
                   />
                 </View>
               </View>

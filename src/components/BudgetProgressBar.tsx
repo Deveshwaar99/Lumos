@@ -33,11 +33,7 @@ function BudgetProgressBar({
       <ProgressBar progress={progress} color={color} style={styles.bar} />
       {showLabels && (
         <View style={styles.labels}>
-          <Text
-            numberOfLines={1}
-            variant="bodySmall"
-            style={{ color }}
-          >
+          <Text numberOfLines={1} variant="bodySmall" style={{ color }}>
             {formatMoney(spent, currencySymbol, decimalPlaces)} of{' '}
             {formatMoney(limit, currencySymbol, decimalPlaces)}
           </Text>

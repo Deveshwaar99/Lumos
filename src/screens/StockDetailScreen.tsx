@@ -84,7 +84,9 @@ export default function StockDetailScreen({
             navigation.navigate('StockMovementForm', { movementId: item.id })
           }
         >
-          <View style={[styles.rowAccent, { backgroundColor: directionColor }]} />
+          <View
+            style={[styles.rowAccent, { backgroundColor: directionColor }]}
+          />
           <View style={styles.rowBody}>
             <View style={styles.rowLine}>
               <Text style={styles.rowDate} numberOfLines={1}>
@@ -93,7 +95,9 @@ export default function StockDetailScreen({
               <Text style={[styles.rowDir, { color: directionColor }]}>
                 {isBuy ? 'Buy' : 'Sell'}
               </Text>
-              <Text style={styles.rowQty}>{item.quantity.toLocaleString()}</Text>
+              <Text style={styles.rowQty}>
+                {item.quantity.toLocaleString()}
+              </Text>
               <Icon
                 source={item.source === 'sms' ? 'message-text' : 'pencil'}
                 size={12}
@@ -169,7 +173,10 @@ export default function StockDetailScreen({
             </View>
           ) : null
         }
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 100 }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: insets.bottom + 100 },
+        ]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -321,7 +328,11 @@ const styles = StyleSheet.create({
   },
 
   empty: { alignItems: 'center', paddingTop: spacing.xxl },
-  emptyText: { color: colors.textSecondary, marginTop: spacing.sm, fontSize: 14 },
+  emptyText: {
+    color: colors.textSecondary,
+    marginTop: spacing.sm,
+    fontSize: 14,
+  },
 
   fab: {
     position: 'absolute',

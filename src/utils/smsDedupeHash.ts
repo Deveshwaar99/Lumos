@@ -24,8 +24,5 @@ export async function computeSmsDedupeHash(
     input.body.replace(/\s+/g, ' ').trim(),
   ].join('|');
 
-  return Crypto.digestStringAsync(
-    Crypto.CryptoDigestAlgorithm.SHA256,
-    payload,
-  );
+  return Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, payload);
 }

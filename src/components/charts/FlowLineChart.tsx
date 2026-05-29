@@ -119,7 +119,11 @@ function FlowLineChart({
             <Defs>
               <LinearGradient id="flowGrad" x1="0" y1="0" x2="0" y2="1">
                 <Stop offset="0" stopColor={lineColor} stopOpacity="0.28" />
-                <Stop offset="0.45" stopColor={colors.accent} stopOpacity="0.12" />
+                <Stop
+                  offset="0.45"
+                  stopColor={colors.accent}
+                  stopOpacity="0.12"
+                />
                 <Stop offset="1" stopColor={lineColor} stopOpacity="0.02" />
               </LinearGradient>
             </Defs>
