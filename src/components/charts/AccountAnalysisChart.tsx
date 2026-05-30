@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Icon, Text } from 'react-native-paper';
 import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
 import type { AccountPeriodBalance } from '../../models/types';
@@ -9,6 +9,7 @@ import { formatMoney } from '../../utils/money';
 interface AccountAnalysisChartProps {
   data: AccountPeriodBalance[];
   currencySymbol?: string;
+  onAccountPress?: (accountId: string) => void;
 }
 
 const ACCOUNT_ICONS: Record<string, string> = {
@@ -31,6 +32,7 @@ function formatCompactY(val: number, currencySymbol?: string): string {
 function AccountAnalysisChart({
   data,
   currencySymbol,
+  onAccountPress,
 }: AccountAnalysisChartProps) {
   if (data.length === 0) {
     return (
@@ -177,8 +179,10 @@ function AccountAnalysisChart({
       {data.map((item, idx) => {
         const net = item.periodIncome - item.periodExpense;
         return (
-          <View
+          <TouchableOpacity
             key={item.accountId}
+            activeOpacity={0.7}
+            onPress={() => onAccountPress?.(item.accountId)}
             style={[
               styles.accountRow,
               idx < data.length - 1 && styles.accountRowBorder,
@@ -227,7 +231,7 @@ function AccountAnalysisChart({
               {net >= 0 ? '+' : ''}
               {formatMoney(net, currencySymbol, 0)}
             </Text>
-          </View>
+          </TouchableOpacity>
         );
       })}
     </View>

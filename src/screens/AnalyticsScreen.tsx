@@ -542,6 +542,8 @@ export default function AnalyticsScreen({
               onPress={() =>
                 navigation.navigate('CategoryTransactions', {
                   categoryId: cat.categoryId,
+                  dateFrom: range.start,
+                  dateTo: range.end,
                 })
               }
               style={[
@@ -1239,6 +1241,13 @@ export default function AnalyticsScreen({
             <AccountAnalysisChart
               data={accountPeriod}
               currencySymbol={currencySymbol}
+              onAccountPress={(accountId) =>
+                navigation.navigate('AccountTransactions', {
+                  accountId,
+                  dateFrom: range.start,
+                  dateTo: range.end,
+                })
+              }
             />
           </View>
         );
