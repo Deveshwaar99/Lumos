@@ -11,6 +11,7 @@ import type {
   InsightItem,
   MonthSummary,
   NetWorthPoint,
+  PeriodTrendPoint,
   RangeComparison,
   TopMoverItem,
 } from '../models/types';
@@ -18,6 +19,8 @@ import {
   getDaysInMonth,
   getDaysInRange,
   getMonthRange,
+  getTimePeriodRange,
+  stepAnchor,
   type TimePeriod,
 } from '../utils/dates';
 
@@ -50,6 +53,23 @@ function getDeltaPct(current: number, previous: number): number | null {
     return current === 0 ? 0 : null;
   }
   return ((current - previous) / Math.abs(previous)) * 100;
+}
+
+function getTrendPointLabel(start: string, period: TimePeriod): string {
+  const date = parseDateStart(start);
+  switch (period) {
+    case 'day':
+      return format(date, 'MMM d');
+    case 'week':
+      return format(date, 'MMM d');
+    case 'month':
+      return format(date, 'MMM');
+    case '3months':
+    case '6months':
+      return format(date, 'MMM');
+    case 'year':
+      return format(date, 'yyyy');
+  }
 }
 
 function mapCategoryRows(rows: any[]): CategoryBreakdown[] {
@@ -534,6 +554,40 @@ export const analyticsService = {
         netWorth: openingBalance + cumulativeIncome - cumulativeExpense,
       });
     }
+
+    return points;
+  },
+
+  async getIncomeExpenseTrend({
+    anchor,
+    period,
+    count = 12,
+  }: {
+    anchor: Date;
+    period: TimePeriod;
+    count?: number;
+  }): Promise<PeriodTrendPoint[]> {
+    const anchors: Date[] = [];
+    let cursor = anchor;
+    for (let i = 0; i < count; i++) {
+      anchors.push(cursor);
+      cursor = stepAnchor(cursor, period, -1);
+    }
+    anchors.reverse();
+
+    const points = await Promise.all(
+      anchors.map(async (periodAnchor) => {
+        const range = getTimePeriodRange(periodAnchor, period);
+        const summary = await this.getSummaryForRange(range.start, range.end);
+        return {
+          label: getTrendPointLabel(range.start, period),
+          start: range.start,
+          income: summary.totalIncome,
+          expense: summary.totalExpense,
+          net: summary.net,
+        };
+      }),
+    );
 
     return points;
   },

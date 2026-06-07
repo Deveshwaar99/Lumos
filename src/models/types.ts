@@ -114,6 +114,14 @@ export interface NetWorthPoint {
   netWorth: number;
 }
 
+export interface PeriodTrendPoint {
+  label: string;
+  start: string;
+  income: number;
+  expense: number;
+  net: number;
+}
+
 export interface BudgetWithSpent extends Budget {
   spent: number;
   remaining: number;

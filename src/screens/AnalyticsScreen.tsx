@@ -14,6 +14,8 @@ import AccountAnalysisChart from '../components/charts/AccountAnalysisChart';
 import CalendarGrid from '../components/charts/CalendarGrid';
 import CategoryDonutChart from '../components/charts/CategoryDonutChart';
 import FlowLineChart from '../components/charts/FlowLineChart';
+import IncomeExpenseTrendChart from '../components/charts/IncomeExpenseTrendChart';
+import NetTrendLine from '../components/charts/NetTrendLine';
 import NetWorthChart from '../components/charts/NetWorthChart';
 import PeriodNavigator from '../components/PeriodNavigator';
 import TimePeriodPicker from '../components/TimePeriodPicker';
@@ -29,6 +31,7 @@ import type {
   InsightDrillTarget,
   InsightItem,
   NetWorthPoint,
+  PeriodTrendPoint,
 } from '../models/types';
 import type { TabScreenProps } from '../navigation/types';
 import { analyticsService } from '../services/analyticsService';
@@ -46,6 +49,7 @@ import { clampMoneyDecimalPlaces } from '../utils/money';
 type AnalysisView =
   | 'analysis'
   | 'insights'
+  | 'trend'
   | 'expense_overview'
   | 'income_overview'
   | 'expense_flow'
@@ -56,13 +60,16 @@ type AnalysisView =
 const VIEW_OPTIONS: { key: AnalysisView; label: string; icon: string }[] = [
   { key: 'analysis', label: 'Analysis', icon: 'calculator-variant-outline' },
   { key: 'insights', label: 'Insights', icon: 'lightbulb-on-outline' },
+  { key: 'trend', label: 'In vs Out', icon: 'chart-bar' },
   { key: 'expense_overview', label: 'Expenses', icon: 'chart-donut' },
-  { key: 'income_overview', label: 'Income', icon: 'chart-donut' },
   { key: 'expense_flow', label: 'Exp. Flow', icon: 'chart-line' },
+  { key: 'income_overview', label: 'Income', icon: 'chart-donut' },
   { key: 'income_flow', label: 'Inc. Flow', icon: 'chart-line' },
   { key: 'account_analysis', label: 'Accounts', icon: 'chart-bar' },
   { key: 'net_worth', label: 'Net Worth', icon: 'chart-timeline-variant' },
 ];
+
+const TREND_PERIOD_COUNT = 12;
 
 const EMPTY_SNAPSHOT: AnalyticsSnapshot = {
   summary: { totalIncome: 0, totalExpense: 0, net: 0 },
@@ -167,6 +174,12 @@ function getHelpCopy(
         title: 'Insights will appear here',
         body: 'As your data builds up, this view will summarize the most important changes and call out what needs attention first.',
       };
+    case 'trend':
+      return {
+        icon: 'chart-bar',
+        title: 'No trend to show yet',
+        body: 'Add income and expense transactions over a few periods to compare them side by side and see your net per period.',
+      };
     case 'expense_overview':
       return {
         icon: 'chart-donut',
@@ -216,7 +229,7 @@ export default function AnalyticsScreen({
   const [filterVisible, setFilterVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [snapshotLoading, setSnapshotLoading] = useState(true);
-  const [activeView, setActiveView] = useState<AnalysisView>('insights');
+  const [activeView, setActiveView] = useState<AnalysisView>('analysis');
   const [snapshot, setSnapshot] = useState<AnalyticsSnapshot>(EMPTY_SNAPSHOT);
   const [expenseBreakdown, setExpenseBreakdown] = useState<CategoryBreakdown[]>(
     [],
@@ -230,6 +243,7 @@ export default function AnalyticsScreen({
     [],
   );
   const [netWorthHistory, setNetWorthHistory] = useState<NetWorthPoint[]>([]);
+  const [trend, setTrend] = useState<PeriodTrendPoint[]>([]);
 
   const range = useMemo(
     () => getTimePeriodRange(anchor, period),
@@ -353,6 +367,15 @@ export default function AnalyticsScreen({
             setNetWorthHistory(data);
             break;
           }
+          case 'trend': {
+            const data = await analyticsService.getIncomeExpenseTrend({
+              anchor,
+              period,
+              count: TREND_PERIOD_COUNT,
+            });
+            setTrend(data);
+            break;
+          }
         }
         loadedViewRef.current = cacheKey;
       } catch (e) {
@@ -361,7 +384,7 @@ export default function AnalyticsScreen({
         setLoading(false);
       }
     },
-    [monthKey, range.end, range.start],
+    [anchor, period, monthKey, range.end, range.start],
   );
 
   useFocusEffect(
@@ -424,6 +447,15 @@ export default function AnalyticsScreen({
       null,
     [accountPeriod],
   );
+  const trendStats = useMemo(() => {
+    const active = trend.filter((p) => p.income > 0 || p.expense > 0);
+    if (active.length === 0) return null;
+    const surplusCount = active.filter((p) => p.net >= 0).length;
+    const bestNet = [...active].sort((a, b) => b.net - a.net)[0];
+    return { activeCount: active.length, surplusCount, bestNet };
+  }, [trend]);
+  const hasTrend = trendStats !== null;
+
   const netWorthTrend = useMemo(() => {
     if (netWorthHistory.length < 2) return null;
     const recent = netWorthHistory.slice(-6);
@@ -441,6 +473,10 @@ export default function AnalyticsScreen({
     switch (activeView) {
       case 'analysis':
         return `Averages and period-over-period changes for ${periodDayCount} day${periodDayCount === 1 ? '' : 's'}.`;
+      case 'trend':
+        return trendStats
+          ? `Net was positive in ${trendStats.surplusCount} of the last ${trendStats.activeCount} active periods. Best period: ${trendStats.bestNet.label}.`
+          : 'Compare income against expense across recent periods and track your net.';
       case 'expense_overview':
         return topExpenseShare
           ? `Your top 3 expense categories make up ${topExpenseShare.share.toFixed(
@@ -482,6 +518,8 @@ export default function AnalyticsScreen({
     topIncomeShare,
     topAccountInflow,
     topAccountOutflow,
+    trendStats,
+    periodDayCount,
   ]);
 
   const handleDrillTarget = useCallback(
@@ -1149,6 +1187,35 @@ export default function AnalyticsScreen({
             {renderBudgetOverlay(snapshot.budgetSnapshot)}
           </>
         );
+
+      case 'trend': {
+        if (!hasTrend) return renderHelpState('trend');
+        return (
+          <>
+            <View style={styles.chartCard}>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.sectionTitle}>Income vs Expense</Text>
+                <Text style={styles.sectionCaption}>Per period</Text>
+              </View>
+              <Text style={styles.chartNote}>{activeViewIntro}</Text>
+              <IncomeExpenseTrendChart
+                data={trend}
+                currencySymbol={currencySymbol}
+              />
+            </View>
+            <View style={styles.chartCard}>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.sectionTitle}>Net per period</Text>
+                <Text style={styles.sectionCaption}>Trend</Text>
+              </View>
+              <Text style={styles.chartNote}>
+                Surplus or deficit each period (not total net worth).
+              </Text>
+              <NetTrendLine data={trend} currencySymbol={currencySymbol} />
+            </View>
+          </>
+        );
+      }
 
       case 'expense_overview':
         return (
